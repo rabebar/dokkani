@@ -55,6 +55,8 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .order-btn-wrap{position:fixed;bottom:0;left:0;right:0;padding:12px 14px 16px;background:#fff;box-shadow:0 -4px 20px rgba(0,0,0,.1);z-index:100}
 .order-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--g4),var(--g2));color:#fff;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 4px 14px rgba(46,125,50,.35);transition:all .2s}
 .order-btn:active{transform:scale(.98)}
+.order-btn:disabled{background:#ccc;box-shadow:none;cursor:not-allowed}
+
 .empty{text-align:center;padding:40px 20px;color:var(--g400)}
 .empty-ico{font-size:50px;margin-bottom:12px}
 </style>
@@ -120,7 +122,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 <!-- زر الطلب -->
 <div class="order-btn-wrap">
-  <button class="order-btn" onclick="placeOrder()">✅ تأكيد الطلب الآن</button>
+  <button class="order-btn" id="main-order-btn" onclick="placeOrder()">✅ تأكيد الطلب الآن</button>
 </div>
 
 <script>
@@ -134,6 +136,7 @@ function renderCart(){
   if(!cart.length){
     container.innerHTML = '<div class="empty"><div class="empty-ico">🛒</div><div>السلة فارغة</div></div>';
     document.getElementById('cart-sub').textContent = 'السلة فارغة';
+    document.getElementById('main-order-btn').disabled = true;
     return;
   }
   container.innerHTML = cart.map((item,i) => `
@@ -185,42 +188,65 @@ function selectPay(method, el){
 }
 
 function placeOrder(){
+  const btn = document.getElementById('main-order-btn');
+  
+  // 1. القفل الفوري والمنع
+  if(btn.disabled) return; 
   if(!cart.length){ alert('⚠️ السلة فارغة!'); return; }
-  if(!profile.name){ window.location.href='/'; return; }
+  if(!profile.name){ alert('⚠️ يرجى إكمال بيانات الملف الشخصي أولاً'); window.location.href='/'; return; }
+
+  // 2. تعطيل الزر فوراً لمنع الضغط المتعدد
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري إرسال طلبك...';
 
   const sub = cart.reduce((s,i)=>s+i.price*i.qty, 0);
   const total = sub + DELIVERY;
 
-  const order = {
-    name: profile.name, phone: profile.phone,
-    whatsapp: profile.whatsapp, neighborhood: profile.neighborhood,
-    address: profile.address, lat: profile.lat, lng: profile.lng,
-    items: cart, total, delivery: DELIVERY, payment: payMethod,
+  // 3. تجميع البيانات بشكل نظيف (Aggregation)
+  const orderData = {
+    name: profile.name,
+    phone: profile.phone,
+    whatsapp: profile.whatsapp,
+    neighborhood: profile.neighborhood,
+    address: profile.address,
+    lat: profile.lat,
+    lng: profile.lng,
+    items: cart.map(item => ({
+      name: item.name,
+      price: item.price,
+      qty: item.qty,
+      unit: item.unit || 'حبة'
+    })),
+    total: total,
+    delivery: DELIVERY,
+    payment: payMethod,
     notes: document.getElementById('notes').value
   };
 
-  const btn = document.querySelector('.order-btn');
-  btn.textContent = '⏳ جاري الإرسال...';
-  btn.disabled = true;
-
+  // 4. الإرسال للسيرفر
   fetch('/api/order', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(order)
+    body: JSON.stringify(orderData)
   })
-  .then(r=>r.json())
-  .then(data=>{
+  .then(r => r.json())
+  .then(data => {
     if(data.success){
-      // تفريغ السلة تلقائياً ✅
+      // نجاح: تفريغ السلة والتوجه لصفحة النجاح
       localStorage.removeItem('dokkani_cart');
-      localStorage.setItem('dokkani_last_order', data.order_id);
       window.location.href = '/success';
+    } else {
+      // فشل من جهة السيرفر (مثل طلب مكرر)
+      alert(data.message || '❌ حدث خطأ أثناء إرسال الطلب');
+      btn.disabled = false;
+      btn.textContent = '✅ تأكيد الطلب الآن';
     }
   })
-  .catch(()=>{
-    btn.textContent = '✅ تأكيد الطلب الآن';
+  .catch(err => {
+    console.error(err);
+    alert('❌ فشل الاتصال بالسيرفر، تأكد من الإنترنت وحاول مجدداً');
     btn.disabled = false;
-    alert('❌ خطأ في الاتصال، حاول مرة أخرى');
+    btn.textContent = '✅ تأكيد الطلب الآن';
   });
 }
 
