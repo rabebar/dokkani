@@ -145,7 +145,7 @@ tr:hover td{background:#fafff9}
       </div>
       <div class="sc r">
         <div class="sc-ico">💰</div>
-        <div class="sc-val">{{ stats.total_profit }}₪</div>
+        <div class="sc-val">{{ stats.daily_profit }}₪</div>
         <div class="sc-lbl">ربح اليوم</div>
         <div class="sc-tr">↑ متراكم</div>
       </div>
@@ -180,33 +180,33 @@ tr:hover td{background:#fafff9}
         </thead>
         <tbody>
           {% for o in orders %}
-          <tr data-status="{{ o.status }}">
-            <td><span class="oid">#{{ o.id }}</span></td>
+          <tr data-status="{{ o['status'] }}">
+            <td><span class="oid">#{{ o['id'] }}</span></td>
             <td>
-              <b>{{ o.name }}</b><br>
-              <small style="color:var(--g400);direction:ltr;display:inline-block">{{ o.phone }}</small>
+              <b>{{ o['name'] }}</b><br>
+              <small style="color:var(--g400);direction:ltr;display:inline-block">{{ o['phone'] }}</small>
             </td>
-            <td>📍 {{ o.neighborhood }}</td>
-            <td>{{ o.items | length }} منتج</td>
-            <td><b>{{ o.total }}₪</b></td>
-            <td><b style="color:var(--g2)">{{ o.profit }}₪</b></td>
+            <td>📍 {{ o['neighborhood'] }}</td>
+            <td>{{ o['items'] | length }} منتج</td>
+            <td><b>{{ o['total'] }}₪</b></td>
+            <td><b style="color:var(--g2)">{{ o['profit'] }}₪</b></td>
             <td>
-              <span class="sp sp-{{ o.status }}">{{ o.status_text }}</span>
+              <span class="sp sp-{{ o['status'] }}">{{ o['status_text'] }}</span>
             </td>
             <td>
               <div class="act-btns">
-                {% if o.lat and o.lng %}
-                <button class="abt abt-map" title="فتح الموقع" onclick="openMap({{ o.lat }}, {{ o.lng }})">🗺️</button>
+                {% if o['lat'] and o['lng'] %}
+                <button class="abt abt-map" title="فتح الموقع" onclick="openMap({{ o['lat'] }}, {{ o['lng'] }})">🗺️</button>
                 {% endif %}
-                {% if o.whatsapp %}
-                <button class="abt abt-wa" title="واتساب" onclick="openWA('{{ o.whatsapp }}', '#{{ o.id }}')">💬</button>
+                {% if o['whatsapp'] %}
+                <button class="abt abt-wa" title="واتساب" onclick="openWA('{{ o['whatsapp'] }}', '#{{ o['id'] }}')">💬</button>
                 {% endif %}
-                <select class="sel-status" onchange="updateStatus({{ o.id }}, this)">
-                  <option value="new" {% if o.status=='new' %}selected{% endif %}>🆕 جديد</option>
-                  <option value="prep" {% if o.status=='prep' %}selected{% endif %}>⏳ تحضير</option>
-                  <option value="delivering" {% if o.status=='delivering' %}selected{% endif %}>🚗 توصيل</option>
-                  <option value="done" {% if o.status=='done' %}selected{% endif %}>✅ تم</option>
-                  <option value="cancelled" {% if o.status=='cancelled' %}selected{% endif %}>❌ ملغي</option>
+                <select class="sel-status" onchange="updateStatus({{ o['id'] }}, this)">
+                  <option value="new" {% if o['status']=='new' %}selected{% endif %}>🆕 جديد</option>
+                  <option value="prep" {% if o['status']=='prep' %}selected{% endif %}>⏳ تحضير</option>
+                  <option value="delivering" {% if o['status']=='delivering' %}selected{% endif %}>🚗 توصيل</option>
+                  <option value="done" {% if o['status']=='done' %}selected{% endif %}>✅ تم</option>
+                  <option value="cancelled" {% if o['status']=='cancelled' %}selected{% endif %}>❌ ملغي</option>
                 </select>
               </div>
             </td>
