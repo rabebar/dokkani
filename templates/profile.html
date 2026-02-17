@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>دكّاني — بياناتك</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2e7d32">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="دكّاني">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%,#2e7d32 60%,#1b5e20 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -31,9 +36,33 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
 .err{color:#e53935;font-size:11px;margin-top:4px;display:none}
 .foot{text-align:center;padding:14px 24px 18px;border-top:1px solid #f0f0f0;font-size:12px;color:#aaa}
 .foot a{color:#2e7d32;font-weight:700;text-decoration:none;direction:ltr;display:inline-block}
+/* شريط التثبيت */
+.install-bar{position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#1b5e20,#2e7d32);padding:14px 16px;display:none;align-items:center;justify-content:space-between;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);animation:slideDown .4s ease}
+@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+.install-bar.show{display:flex}
+.install-txt .t1{color:#fff;font-size:14px;font-weight:900}
+.install-txt .t2{color:rgba(255,255,255,.8);font-size:11px;margin-top:2px}
+.install-btn{background:#00c853;color:#1b5e20;border:none;padding:10px 20px;border-radius:10px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:900;cursor:pointer}
+.install-close{color:rgba(255,255,255,.7);background:none;border:none;font-size:22px;cursor:pointer;padding:0 6px}
 </style>
 </head>
 <body>
+
+<!-- شريط التثبيت الفوري -->
+<div class="install-bar" id="install-bar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div style="font-size:28px">📲</div>
+    <div class="install-txt">
+      <div class="t1">ثبّت دكّاني على هاتفك!</div>
+      <div class="t2">وصول سريع بضغطة واحدة 🚀</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px">
+    <button class="install-btn" onclick="installApp()">تثبيت</button>
+    <button class="install-close" onclick="closeInstall()">✕</button>
+  </div>
+</div>
+
 <div class="card">
   <div class="hdr">
     <div class="logo">🛒</div>
@@ -87,10 +116,43 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
     للدعم: <a href="tel:+970{{ app_phone }}" dir="ltr">{{ app_phone }}</a>
   </div>
 </div>
-<script>
-let uLat=null, uLng=null;
 
-// ✅ إذا البيانات موجودة مسبقاً — انتقل مباشرة للمتجر
+<script>
+let uLat = null, uLng = null, deferredPrompt = null;
+
+// تسجيل Service Worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/service-worker.js')
+    .catch(e => console.log('SW error:', e));
+}
+
+// اعتراض حدث التثبيت
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-bar').classList.add('show');
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-bar').classList.remove('show');
+  deferredPrompt = null;
+});
+
+async function installApp(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const result = await deferredPrompt.userChoice;
+  if(result.outcome === 'accepted'){
+    document.getElementById('install-bar').classList.remove('show');
+  }
+  deferredPrompt = null;
+}
+
+function closeInstall(){
+  document.getElementById('install-bar').classList.remove('show');
+}
+
+// إذا البيانات موجودة — انتقل للمتجر
 window.onload = () => {
   const saved = localStorage.getItem('dokkani_profile');
   if(saved){

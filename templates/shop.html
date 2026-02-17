@@ -10,6 +10,11 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);padding-bottom:calc(var(--nav) + 16px)}
 
+/* PWA INSTALL BANNER */
+.pwa-banner{position:fixed;top:15px;left:16px;right:16px;background:var(--w);padding:12px 15px;border-radius:16px;box-shadow:0 8px 25px rgba(0,0,0,0.15);z-index:1000;display:none;align-items:center;gap:12px;border:2px solid var(--acc);animation:slideDown 0.5s ease-out}
+@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+.pwa-btn{background:var(--g1);color:#fff;border:none;padding:7px 15px;border-radius:10px;font-family:'Cairo',sans-serif;font-weight:700;font-size:12px;cursor:pointer}
+
 /* HEADER */
 .hdr{background:linear-gradient(135deg,#1a4a1e,var(--g2));position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.25)}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 8px}
@@ -58,6 +63,16 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 </style>
 </head>
 <body>
+
+<!-- PWA Banner -->
+<div id="pwa-banner" class="pwa-banner">
+  <div class="brand-ico" style="width:40px;height:40px;font-size:22px">🛒</div>
+  <div style="flex:1">
+    <div style="font-size:13px;font-weight:900">تثبيت تطبيق دكّاني</div>
+    <div style="font-size:10px;color:var(--g400)">للوصول السريع وتجربة أفضل</div>
+  </div>
+  <button class="pwa-btn" id="pwa-install-btn">تثبيت</button>
+</div>
 
 <div class="hdr">
   <div class="hdr-top">
@@ -200,6 +215,26 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 <script>
 let cart = JSON.parse(localStorage.getItem('dokkani_cart') || '[]');
+
+// PWA Install Logic
+let deferredPrompt;
+const pwaBanner = document.getElementById('pwa-banner');
+const installBtn = document.getElementById('pwa-install-btn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  pwaBanner.style.display = 'flex';
+});
+
+installBtn.addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') pwaBanner.style.display = 'none';
+    deferredPrompt = null;
+  }
+});
 
 function updateUI(){
   const count = cart.reduce((s,i)=>s+i.qty,0);
