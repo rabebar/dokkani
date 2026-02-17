@@ -107,4 +107,4 @@ def notify_order_status(order_id, status):
     }
     text = status_map.get(status)
     if text:
-        send_telegram(f"{text}\nرقم الطلب: <b>#{order_id + 846}</b>")
+        send_telegram(f"{text}\nرقم الطلب: <b>#{order_id}</b>")

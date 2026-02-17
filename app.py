@@ -7,6 +7,7 @@ from flask import Flask, render_template, request, jsonify, redirect
 from config import Config
 from telegram_notify import notify_new_order, notify_order_status
 from database import (
+    execute_query,
     init_db,
     get_categories, add_category, update_category, toggle_category, delete_category,
     get_subcategories, add_subcategory, update_subcategory, toggle_subcategory, delete_subcategory,
@@ -46,9 +47,7 @@ def shop():
 
 @app.route('/category/<int:cat_id>')
 def category_page(cat_id):
-    conn = __import__('database').get_db()
-    cat = dict(conn.execute('SELECT * FROM categories WHERE id=?', (cat_id,)).fetchone() or {})
-    conn.close()
+    cat = execute_query('SELECT * FROM categories WHERE id=?', (cat_id,), fetchone=True)
     if not cat:
         return redirect('/shop')
     subcats  = get_subcategories(category_id=cat_id)
@@ -61,16 +60,11 @@ def category_page(cat_id):
 
 @app.route('/subcategory/<int:sub_id>')
 def subcategory_page(sub_id):
-    conn = __import__('database').get_db()
-    sub = dict(conn.execute('SELECT * FROM subcategories WHERE id=?', (sub_id,)).fetchone() or {})
-    conn.close()
+    sub = execute_query('SELECT * FROM subcategories WHERE id=?', (sub_id,), fetchone=True)
     if not sub:
         return redirect('/shop')
     products = get_products_with_sell_price(subcategory_id=sub_id)
-    cat_id   = sub.get('category_id')
-    cat_conn = __import__('database').get_db()
-    cat = dict(cat_conn.execute('SELECT * FROM categories WHERE id=?', (cat_id,)).fetchone() or {})
-    cat_conn.close()
+    cat = execute_query('SELECT * FROM categories WHERE id=?', (sub.get('category_id'),), fetchone=True)
     return render_template('subcategory.html',
                            sub=sub,
                            cat=cat,
@@ -152,32 +146,39 @@ def admin_customers():
 @app.route('/api/order', methods=['POST'])
 def place_order():
     data = request.json
+    # 1. حساب الربح بناءً على المنتجات
     data['profit'] = get_order_profit(data.get('items', []))
-    order_id = add_order(data)
-    # تنبيه تيليجرام — طلب جديد 🔔
-    data['id'] = order_id
-    notify_new_order(data)
-    return jsonify({'success': True, 'order_id': order_id})
+    
+    # 2. إضافة الطلب والحصول على الرقم التسلسلي (المضاف له 846)
+    order_display_id = add_order(data)
+    
+    # 3. إرسال التنبيه الفوري لتيليجرام 🔔
+    order_data_for_notify = data.copy()
+    order_data_for_notify['id'] = order_display_id
+    try:
+        notify_new_order(order_data_for_notify)
+    except Exception as e:
+        app.logger.error(f"Telegram Notification Error: {e}")
+        
+    return jsonify({'success': True, 'order_id': order_display_id})
 
 @app.route('/api/order/<int:order_id>/status', methods=['POST'])
 def update_status(order_id):
     status = request.json.get('status')
-    update_order_status(order_id, status)
-    # تنبيه تيليجرام — تغيير الحالة 🔔
-    notify_order_status(order_id, status)
+    
+    # تحويل رقم العرض (Display ID) إلى الرقم الحقيقي في قاعدة البيانات
+    db_id = order_id - 846
+    
+    # 1. تحديث قاعدة البيانات
+    update_order_status(db_id, status)
+    
+    # 2. إشعار بتغيير الحالة لتيليجرام 🔔
+    try:
+        notify_order_status(order_id, status)
+    except Exception as e:
+        app.logger.error(f"Telegram Status Update Error: {e}")
+        
     return jsonify({'success': True})
-
-@app.route('/api/orders/by-phone', methods=['POST'])
-def orders_by_phone():
-    phone = request.json.get('phone')
-    if not phone:
-        return jsonify({'orders': []})
-    orders = get_orders(phone=phone)
-    return jsonify({'orders': orders})
-
-@app.route('/api/stats')
-def api_stats():
-    return jsonify(get_daily_stats())
 
 
 # ==========================================
