@@ -1,5 +1,5 @@
 # ==========================================
-# app.py — المحرك الرئيسي لتطبيق دكّاني
+# app.py — المحرك الرئيسي لتطبيق دكّاني (معدل للذكاء المتجاوب)
 # ==========================================
 
 import os
@@ -26,19 +26,37 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 with app.app_context():
     init_db()
 
+# --- وظيفة كشف نوع الجهاز ---
+def is_mobile():
+    user_agent = request.headers.get('User-Agent', '').lower()
+    mobile_hints = ['android', 'iphone', 'ipad', 'mobile', 'windows phone', 'opera mini', 'blackberry']
+    return any(hint in user_agent for hint in mobile_hints)
 
 # ==========================================
-# صفحات الزبون
+# صفحات الزبون (الموبايل: تطبيق / الكمبيوتر: تعريف بالشركة)
 # ==========================================
 
 @app.route('/')
 def profile():
+    if not is_mobile():
+        # إذا كان من كمبيوتر، يفتح الصفحة التعريفية
+        return render_template('landing.html', 
+                               app_name=Config.APP_NAME,
+                               app_phone=Config.APP_PHONE)
+    
+    # إذا كان موبايل، يفتح صفحة التسجيل الأصلية
     return render_template('profile.html',
                            app_name=Config.APP_NAME,
                            app_phone=Config.APP_PHONE)
 
 @app.route('/shop')
 def shop():
+    if not is_mobile():
+        # الكمبيوتر لا يدعم التسوق المباشر حسب طلبك
+        return render_template('landing.html', 
+                               app_name=Config.APP_NAME,
+                               app_phone=Config.APP_PHONE)
+
     categories = get_categories()
     return render_template('shop.html',
                            categories=categories,
@@ -47,6 +65,10 @@ def shop():
 
 @app.route('/category/<int:cat_id>')
 def category_page(cat_id):
+    # يسمح بالدخول من الموبايل فقط
+    if not is_mobile():
+        return redirect('/')
+    
     cat = execute_query('SELECT * FROM categories WHERE id=?', (cat_id,), fetchone=True)
     if not cat:
         return redirect('/shop')
@@ -60,6 +82,9 @@ def category_page(cat_id):
 
 @app.route('/subcategory/<int:sub_id>')
 def subcategory_page(sub_id):
+    if not is_mobile():
+        return redirect('/')
+        
     sub = execute_query('SELECT * FROM subcategories WHERE id=?', (sub_id,), fetchone=True)
     if not sub:
         return redirect('/shop')
@@ -73,6 +98,8 @@ def subcategory_page(sub_id):
 
 @app.route('/cart')
 def cart():
+    if not is_mobile():
+        return redirect('/')
     return render_template('cart.html',
                            app_name=Config.APP_NAME,
                            delivery_short=Config.DELIVERY_PRICE_SHORT,
@@ -88,12 +115,15 @@ def success():
 
 @app.route('/orders-history')
 def orders_history():
+    if not is_mobile():
+        return redirect('/')
     return render_template('orders_history.html',
                            app_name=Config.APP_NAME,
                            app_whatsapp=Config.APP_WHATSAPP)
 
 @app.route('/contact')
 def contact():
+    # صفحة التواصل متاحة للجميع
     return render_template('contact.html',
                            app_name=Config.APP_NAME,
                            app_phone=Config.APP_PHONE,
@@ -101,13 +131,15 @@ def contact():
 
 @app.route('/account')
 def account():
+    if not is_mobile():
+        return redirect('/')
     return render_template('account.html',
                            app_name=Config.APP_NAME,
                            app_phone=Config.APP_PHONE)
 
 
 # ==========================================
-# لوحة التحكم
+# لوحة التحكم (متاحة دائماً للمدير من الكمبيوتر)
 # ==========================================
 
 @app.route('/admin')
@@ -146,13 +178,9 @@ def admin_customers():
 @app.route('/api/order', methods=['POST'])
 def place_order():
     data = request.json
-    # 1. حساب الربح بناءً على المنتجات
     data['profit'] = get_order_profit(data.get('items', []))
-    
-    # 2. إضافة الطلب والحصول على الرقم التسلسلي (المضاف له 846)
     order_display_id = add_order(data)
     
-    # 3. إرسال التنبيه الفوري لتيليجرام 🔔
     order_data_for_notify = data.copy()
     order_data_for_notify['id'] = order_display_id
     try:
@@ -165,24 +193,23 @@ def place_order():
 @app.route('/api/order/<int:order_id>/status', methods=['POST'])
 def update_status(order_id):
     status = request.json.get('status')
-    
-    # تحويل رقم العرض (Display ID) إلى الرقم الحقيقي في قاعدة البيانات
     db_id = order_id - 846
-    
-    # 1. تحديث قاعدة البيانات
     update_order_status(db_id, status)
-    
-    # 2. إشعار بتغيير الحالة لتيليجرام 🔔
     try:
         notify_order_status(order_id, status)
     except Exception as e:
         app.logger.error(f"Telegram Status Update Error: {e}")
-        
     return jsonify({'success': True})
+
+@app.route('/api/orders/by-phone', methods=['POST'])
+def api_orders_by_phone():
+    phone = request.json.get('phone')
+    orders = get_orders(phone=phone)
+    return jsonify({'orders': orders})
 
 
 # ==========================================
-# API — الأقسام الرئيسية
+# API — الإدارة (أقسام ومنتجات)
 # ==========================================
 
 @app.route('/api/category', methods=['POST'])
@@ -211,11 +238,6 @@ def api_delete_category(cat_id):
     delete_category(cat_id)
     return jsonify({'success': True})
 
-
-# ==========================================
-# API — الأقسام الفرعية
-# ==========================================
-
 @app.route('/api/subcategory', methods=['POST'])
 def api_add_subcategory():
     name        = request.form.get('name')
@@ -243,11 +265,6 @@ def api_toggle_subcategory(sub_id):
 def api_delete_subcategory(sub_id):
     delete_subcategory(sub_id)
     return jsonify({'success': True})
-
-
-# ==========================================
-# API — المنتجات
-# ==========================================
 
 @app.route('/api/product', methods=['POST'])
 def api_add_product():
@@ -288,11 +305,6 @@ def api_subs_by_cat(cat_id):
     subs = get_subcategories(category_id=cat_id, visible_only=False)
     return jsonify(subs)
 
-
-# ==========================================
-# API — الزبائن
-# ==========================================
-
 @app.route('/api/customer/delete', methods=['POST'])
 def api_delete_customer():
     phone = request.json.get('phone')
@@ -315,7 +327,7 @@ def save_upload(file, prefix='img'):
     return f"/static/uploads/{filename}"
 
 # ==========================================
-# PWA
+# PWA & Static
 # ==========================================
 
 @app.route('/manifest.json')

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دكّاني — التجربة الأفضل للتسوق في رام الله</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --g1: #1b5e20; --g2: #2e7d32; --g4: #43a047; --acc: #00c853;
+            --w: #ffffff; --bg: #f8fafc; --text: #1f2937;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--bg); color: var(--text); overflow-x: hidden; }
+
+        /* Navbar */
+        nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 10%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        }
+        .logo { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 900; color: var(--g1); }
+        .logo-ico { width: 45px; height: 45px; background: var(--acc); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 25px; color: white; }
+        .nav-links { display: flex; gap: 30px; list-style: none; }
+        .nav-links a { text-decoration: none; color: var(--text); font-weight: 600; transition: 0.3s; }
+        .nav-links a:hover { color: var(--g4); }
+        .btn-app { background: var(--g1); color: white !important; padding: 10px 25px; border-radius: 50px; }
+
+        /* Hero Section */
+        .hero {
+            padding: 180px 10% 100px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #fff 50%, #e8f5e9 100%);
+        }
+        .hero-content { max-width: 600px; }
+        .hero-content h1 { font-size: 55px; font-weight: 900; line-height: 1.2; color: var(--g1); margin-bottom: 20px; }
+        .hero-content p { font-size: 18px; color: #64748b; margin-bottom: 35px; line-height: 1.8; }
+        .hero-btns { display: flex; gap: 15px; }
+        .btn-main { padding: 15px 40px; border-radius: 12px; font-weight: 700; font-size: 18px; cursor: pointer; border: none; transition: 0.3s; text-decoration: none; }
+        .btn-primary { background: var(--acc); color: var(--g1); box-shadow: 0 10px 20px rgba(0,200,83,0.2); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,200,83,0.3); }
+
+        .hero-image { width: 450px; position: relative; animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+        /* Services Section */
+        .services { padding: 100px 10%; text-align: center; }
+        .section-title { font-size: 32px; font-weight: 900; margin-bottom: 50px; color: var(--g1); }
+        .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+        .service-card { background: white; padding: 40px; border-radius: 20px; transition: 0.3s; border: 1px solid #f1f5f9; }
+        .service-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+        .s-ico { font-size: 40px; margin-bottom: 20px; display: block; }
+        .service-card h3 { font-size: 22px; margin-bottom: 15px; }
+        .service-card p { color: #64748b; font-size: 15px; line-height: 1.6; }
+
+        /* Ads Banner */
+        .ads-section { padding: 50px 10%; }
+        .ad-banner {
+            background: linear-gradient(135deg, var(--g1), var(--g2));
+            border-radius: 30px;
+            padding: 50px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .ad-text h2 { font-size: 35px; font-weight: 900; margin-bottom: 10px; }
+        .ad-badge { background: #ffd700; color: #000; padding: 5px 15px; border-radius: 50px; font-weight: 900; font-size: 14px; margin-bottom: 15px; display: inline-block; }
+
+        /* App Mockup Section */
+        .app-promo { padding: 100px 10%; display: flex; align-items: center; gap: 80px; }
+        .promo-text h2 { font-size: 40px; font-weight: 900; margin-bottom: 20px; color: var(--g1); }
+        .step { display: flex; gap: 20px; margin-bottom: 25px; }
+        .step-num { width: 35px; height: 35px; background: var(--gp); color: var(--g2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; flex-shrink: 0; }
+
+        footer { background: #111827; color: #9ca3af; padding: 60px 10% 30px; text-align: center; }
+        .footer-logo { color: white; font-size: 28px; font-weight: 900; margin-bottom: 20px; display: block; }
+        .copyright { border-top: 1px solid #374151; margin-top: 50px; padding-top: 30px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">
+            <div class="logo-ico">🛒</div>
+            <span>دكّاني</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#about">من نحن</a></li>
+            <li><a href="#services">خدماتنا</a></li>
+            <li><a href="#ads">العروض الأسبوعية</a></li>
+            <li><a href="https://wa.me/{{ app_phone }}" class="btn-app">تواصل معنا</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>دكّاني في بيتك..<br><span style="color: var(--acc);">بضغطة زر واحدة</span></h1>
+            <p>نحن نعيد تعريف مفهوم تسوق البقالة في مدينة رام الله. أصناف طازجة، جودة مضمونة، وتوصيل أسرع مما تتخيل. حمّل تطبيقنا الآن واستمتع بتجربة تسوق ذكية.</p>
+            <div class="hero-btns">
+                <button class="btn-main btn-primary" onclick="window.location.href='/shop'">تحميل التطبيق الآن 📲</button>
+            </div>
+        </div>
+        <div class="hero-image">
+            <!-- هنا يمكن وضع صورة موبايل فخمة أو أيقونة ضخمة -->
+            <div style="font-size: 250px; text-align: center;">📦</div>
+        </div>
+    </section>
+
+    <section class="services" id="services">
+        <h2 class="section-title">لماذا يختار أهل رام الله "دكّاني"؟</h2>
+        <div class="services-grid">
+            <div class="service-card">
+                <span class="s-ico">⚡</span>
+                <h3>توصيل فائق السرعة</h3>
+                <p>نصل إليك في غضون 45 دقيقة داخل مناطق رام الله وضواحيها، مع الحفاظ على سلامة طلبك.</p>
+            </div>
+            <div class="service-card">
+                <span class="s-ico">🥬</span>
+                <h3>خضار وفواكه طازجة</h3>
+                <p>نختار لك بضائعنا بعناية فائقة من المزارع مباشرة لتصل إلى مطبخك وكأنك قطفتها بنفسك.</p>
+            </div>
+            <div class="service-card">
+                <span class="s-ico">💳</span>
+                <h3>دفع ذكي وآمن</h3>
+                <p>نوفر لك خيارات دفع متعددة تناسبك؛ كاش عند الاستلام أو عبر محفظة Reflect بكل سهولة.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="ads-section" id="ads">
+        <div class="ad-banner">
+            <div class="ad-text">
+                <span class="ad-badge">عرض الأسبوع 🔥</span>
+                <h2>صندوق العائلة التوفيري</h2>
+                <p>تشكيلة مختارة من الأساسيات بخصم يصل إلى 20%.. متاح فقط عبر التطبيق!</p>
+                <br>
+                <button class="btn-main" style="background: white; color: var(--g1);" onclick="window.location.href='/shop'">اطلبه الآن</button>
+            </div>
+            <div style="font-size: 120px; opacity: 0.2;">🍎</div>
+        </div>
+    </section>
+
+    <section class="app-promo">
+        <div class="promo-image">
+            <div style="width: 300px; height: 500px; background: #ddd; border-radius: 40px; border: 8px solid #333; display: flex; align-items: center; justify-content: center; font-size: 80px;">📱</div>
+        </div>
+        <div class="promo-text">
+            <h2>دكّاني دائماً في جيبك</h2>
+            <div class="step">
+                <div class="step-num">1</div>
+                <div>
+                    <h4>افتح الموقع من متصفح هاتفك</h4>
+                    <p>استخدم الكروم أو سفاري للدخول إلى رابط دكّاني.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div>
+                    <h4>اضغط على "تثبيت التطبيق"</h4>
+                    <p>ستظهر لك رسالة تثبيت في أعلى الشاشة فور دخولك.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div>
+                    <h4>ابدأ التسوق فوراً</h4>
+                    <p>ستجد أيقونة دكّاني على شاشتك الرئيسية للوصول السريع.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <span class="footer-logo">🛒 دكّاني</span>
+        <p>رام الله — فلسطين 🇵🇸</p>
+        <p>خدمة العملاء: {{ app_phone }}</p>
+        <div class="copyright">
+            &copy; 2024 جميع الحقوق محفوظة لشركة دكّاني للتجارة الإلكترونية.
+        </div>
+    </footer>
+
+</body>
+</html>
