@@ -314,6 +314,20 @@ def save_upload(file, prefix='img'):
     file.save(path)
     return f"/static/uploads/{filename}"
 
+# ==========================================
+# PWA
+# ==========================================
+
+@app.route('/manifest.json')
+def manifest():
+    return app.send_static_file('manifest.json')
+
+@app.route('/service-worker.js')
+def service_worker():
+    from flask import Response
+    with open('static/service-worker.js') as f:
+        content = f.read()
+    return Response(content, mimetype='application/javascript')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
