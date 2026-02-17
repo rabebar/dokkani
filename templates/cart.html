@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكّاني — السلة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--red:#e53935;--sh:0 2px 8px rgba(0,0,0,.08);--r:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);padding-bottom:100px}
+.hdr{background:linear-gradient(135deg,#1a4a1e,var(--g2));padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.back-btn{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;border:none;color:#fff;flex-shrink:0}
+.hdr-title{color:#fff;font-size:17px;font-weight:900}
+.hdr-sub{color:rgba(255,255,255,.65);font-size:11px;margin-top:1px}
+.section{background:#fff;border-radius:var(--r);margin:12px 14px 0;box-shadow:var(--sh);overflow:hidden}
+.sec-hdr{padding:12px 16px;border-bottom:1px solid var(--g200);font-size:13px;font-weight:900;color:var(--g1);display:flex;align-items:center;gap:7px}
+.cart-item{display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--g200)}
+.cart-item:last-child{border-bottom:none}
+.ci-ico{width:40px;height:40px;background:var(--gx);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden}
+.ci-ico img{width:100%;height:100%;object-fit:cover}
+.ci-info{flex:1}
+.ci-name{font-size:13px;font-weight:700}
+.ci-unit{font-size:11px;color:var(--g400);margin-top:2px}
+.ci-qty{display:flex;align-items:center;gap:7px}
+.qb{width:26px;height:26px;border-radius:7px;background:var(--gp);border:none;font-size:14px;font-weight:700;color:var(--g2);cursor:pointer}
+.qn{font-size:13px;font-weight:700;min-width:20px;text-align:center}
+.ci-price{font-size:14px;font-weight:900;color:var(--g2);min-width:50px;text-align:left}
+.del-btn{width:26px;height:26px;background:#ffebee;border-radius:7px;border:none;cursor:pointer;font-size:13px;flex-shrink:0}
+.note-inp{width:100%;padding:11px 14px;border:none;font-family:'Cairo',sans-serif;font-size:13px;outline:none;color:var(--g800);resize:none;background:transparent}
+.note-inp::placeholder{color:var(--g400)}
+.summary{padding:14px 16px}
+.sr{display:flex;justify-content:space-between;font-size:13px;color:#555;padding:5px 0}
+.sr.total{font-size:16px;font-weight:900;color:var(--g1);border-top:1.5px dashed var(--g200);margin-top:8px;padding-top:10px}
+.sr.delivery-row{color:var(--red)}
+
+/* طريقة الدفع */
+.pay-opts{padding:14px 16px;display:flex;flex-direction:column;gap:9px}
+.pay-opt{display:flex;align-items:center;gap:11px;padding:12px 14px;border:1.5px solid var(--g200);border-radius:10px;cursor:pointer;transition:all .2s}
+.pay-opt.selected{border-color:var(--g4);background:var(--gp)}
+.pay-opt input[type=radio]{accent-color:var(--g4);width:16px;height:16px;flex-shrink:0}
+.pay-ico{font-size:22px}
+.pay-name{font-size:13px;font-weight:700}
+.pay-desc{font-size:11px;color:var(--g400);margin-top:2px}
+
+/* QR Reflect */
+.qr-box{margin:0 14px 12px;background:var(--gx);border:1.5px dashed var(--g4);border-radius:var(--r);padding:18px;text-align:center;display:none}
+.qr-box.show{display:block}
+.qr-title{font-weight:900;color:var(--g1);font-size:14px;margin-bottom:4px}
+.qr-sub{font-size:11.5px;color:var(--g400);margin-bottom:14px}
+.qr-img{width:170px;height:170px;border-radius:12px;object-fit:contain;background:#fff;padding:8px;box-shadow:var(--sh);margin:0 auto 12px;display:block}
+.qr-amount{font-size:20px;font-weight:900;color:var(--g2)}
+.qr-amount-lbl{font-size:11px;color:var(--g400)}
+
+.order-btn-wrap{position:fixed;bottom:0;left:0;right:0;padding:12px 14px 16px;background:#fff;box-shadow:0 -4px 20px rgba(0,0,0,.1);z-index:100}
+.order-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--g4),var(--g2));color:#fff;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 4px 14px rgba(46,125,50,.35);transition:all .2s}
+.order-btn:active{transform:scale(.98)}
+.empty{text-align:center;padding:40px 20px;color:var(--g400)}
+.empty-ico{font-size:50px;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <button class="back-btn" onclick="history.back()">←</button>
+  <div>
+    <div class="hdr-title">🛒 سلة المشتريات</div>
+    <div class="hdr-sub" id="cart-sub">جاري التحميل...</div>
+  </div>
+</div>
+
+<!-- المنتجات -->
+<div class="section">
+  <div class="sec-hdr">📦 المنتجات المختارة</div>
+  <div id="cart-items"></div>
+</div>
+
+<!-- ملاحظات -->
+<div class="section" style="margin-top:10px">
+  <div class="sec-hdr">📝 ملاحظات</div>
+  <textarea class="note-inp" id="notes" rows="2" placeholder="مثال: الجبنة قليلة الملح، الموز ناضج..."></textarea>
+</div>
+
+<!-- الفاتورة -->
+<div class="section" style="margin-top:10px">
+  <div class="sec-hdr">🧾 ملخص الفاتورة</div>
+  <div class="summary">
+    <div class="sr"><span>المنتجات</span><span id="sum-products">0₪</span></div>
+    <div class="sr delivery-row"><span>🚗 رسوم التوصيل</span><span id="sum-delivery">{{ delivery_short }}₪</span></div>
+    <div class="sr total"><span>الإجمالي</span><span id="sum-total">0₪</span></div>
+  </div>
+</div>
+
+<!-- الدفع -->
+<div class="section" style="margin-top:10px">
+  <div class="sec-hdr">💳 طريقة الدفع</div>
+  <div class="pay-opts">
+    <label class="pay-opt selected" onclick="selectPay('cash',this)">
+      <input type="radio" name="pay" value="cash" checked>
+      <span class="pay-ico">💵</span>
+      <div><div class="pay-name">كاش عند الاستلام</div><div class="pay-desc">ادفع لما يوصل المندوب</div></div>
+    </label>
+    <label class="pay-opt" onclick="selectPay('reflect',this)">
+      <input type="radio" name="pay" value="reflect">
+      <span class="pay-ico">📱</span>
+      <div><div class="pay-name">محفظة Reflect</div><div class="pay-desc">دفع إلكتروني سريع عبر QR</div></div>
+    </label>
+  </div>
+</div>
+
+<!-- QR Reflect -->
+<div class="qr-box" id="qr-box">
+  <div class="qr-title">📱 ادفع عبر Reflect</div>
+  <div class="qr-sub">افتح تطبيق Reflect وامسح الكود أدناه</div>
+  <img class="qr-img" src="/static/reflect_qr.jpg" alt="Reflect QR Code">
+  <div class="qr-amount-lbl">المبلغ المطلوب</div>
+  <div class="qr-amount" id="qr-amount">0₪</div>
+  <div style="font-size:11px;color:var(--g400);margin-top:8px">بعد الدفع اضغط "تأكيد الطلب"</div>
+</div>
+
+<!-- زر الطلب -->
+<div class="order-btn-wrap">
+  <button class="order-btn" onclick="placeOrder()">✅ تأكيد الطلب الآن</button>
+</div>
+
+<script>
+let cart = JSON.parse(localStorage.getItem('dokkani_cart') || '[]');
+let profile = JSON.parse(localStorage.getItem('dokkani_profile') || '{}');
+let payMethod = 'cash';
+const DELIVERY = {{ delivery_short }};
+
+function renderCart(){
+  const container = document.getElementById('cart-items');
+  if(!cart.length){
+    container.innerHTML = '<div class="empty"><div class="empty-ico">🛒</div><div>السلة فارغة</div></div>';
+    document.getElementById('cart-sub').textContent = 'السلة فارغة';
+    return;
+  }
+  container.innerHTML = cart.map((item,i) => `
+    <div class="cart-item">
+      <div class="ci-ico">${item.image ? `<img src="${item.image}">` : item.icon || '🛍️'}</div>
+      <div class="ci-info">
+        <div class="ci-name">${item.name}</div>
+        <div class="ci-unit">${item.price}₪ / ${item.unit || 'حبة'}</div>
+      </div>
+      <div class="ci-qty">
+        <button class="qb" onclick="changeQty(${i},-1)">−</button>
+        <span class="qn">${item.qty}</span>
+        <button class="qb" onclick="changeQty(${i},1)">+</button>
+      </div>
+      <div class="ci-price">${(item.price * item.qty).toFixed(1)}₪</div>
+      <button class="del-btn" onclick="removeItem(${i})">🗑️</button>
+    </div>
+  `).join('');
+  updateSummary();
+}
+
+function updateSummary(){
+  const sub = cart.reduce((s,i)=>s+i.price*i.qty, 0);
+  const total = sub + DELIVERY;
+  const count = cart.reduce((s,i)=>s+i.qty, 0);
+  document.getElementById('sum-products').textContent = sub.toFixed(1) + '₪';
+  document.getElementById('sum-total').textContent = total.toFixed(1) + '₪';
+  document.getElementById('cart-sub').textContent = count + ' منتج';
+  document.getElementById('qr-amount').textContent = total.toFixed(1) + '₪';
+}
+
+function changeQty(i, delta){
+  cart[i].qty = Math.max(1, cart[i].qty + delta);
+  localStorage.setItem('dokkani_cart', JSON.stringify(cart));
+  renderCart();
+}
+
+function removeItem(i){
+  cart.splice(i,1);
+  localStorage.setItem('dokkani_cart', JSON.stringify(cart));
+  renderCart();
+}
+
+function selectPay(method, el){
+  payMethod = method;
+  document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('qr-box').classList.toggle('show', method==='reflect');
+}
+
+function placeOrder(){
+  if(!cart.length){ alert('⚠️ السلة فارغة!'); return; }
+  if(!profile.name){ window.location.href='/'; return; }
+
+  const sub = cart.reduce((s,i)=>s+i.price*i.qty, 0);
+  const total = sub + DELIVERY;
+
+  const order = {
+    name: profile.name, phone: profile.phone,
+    whatsapp: profile.whatsapp, neighborhood: profile.neighborhood,
+    address: profile.address, lat: profile.lat, lng: profile.lng,
+    items: cart, total, delivery: DELIVERY, payment: payMethod,
+    notes: document.getElementById('notes').value
+  };
+
+  const btn = document.querySelector('.order-btn');
+  btn.textContent = '⏳ جاري الإرسال...';
+  btn.disabled = true;
+
+  fetch('/api/order', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(order)
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    if(data.success){
+      // تفريغ السلة تلقائياً ✅
+      localStorage.removeItem('dokkani_cart');
+      localStorage.setItem('dokkani_last_order', data.order_id);
+      window.location.href = '/success';
+    }
+  })
+  .catch(()=>{
+    btn.textContent = '✅ تأكيد الطلب الآن';
+    btn.disabled = false;
+    alert('❌ خطأ في الاتصال، حاول مرة أخرى');
+  });
+}
+
+renderCart();
+</script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكّاني — المحاسبة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g600:#4b5563;--g800:#1f2937;--red:#e53935;--orange:#fb8c00;--blue:#1e88e5;--sh:0 2px 8px rgba(0,0,0,.08);--r:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);display:flex;min-height:100vh}
+.sb{width:220px;background:linear-gradient(170deg,var(--g1),var(--g2));min-height:100vh;position:fixed;right:0;top:0;z-index:100;display:flex;flex-direction:column}
+.sb-logo{padding:22px 18px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px}
+.sb-ico{width:40px;height:40px;background:var(--acc);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.sb-title{color:#fff;font-size:19px;font-weight:900;font-family:'Tajawal',sans-serif}
+.sb-sub{color:rgba(255,255,255,.45);font-size:10px}
+.sb-nav{padding:16px 10px;flex:1}
+.nl{color:rgba(255,255,255,.3);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;padding:0 8px;margin:12px 0 5px}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.65);font-size:12.5px;font-weight:600;margin-bottom:2px;transition:all .2s;text-decoration:none}
+.ni:hover{background:rgba(255,255,255,.1);color:#fff}
+.ni.active{background:rgba(255,255,255,.17);color:#fff}
+.ni .ico{font-size:16px;width:18px}
+.sb-foot{padding:12px 10px 20px;border-top:1px solid rgba(255,255,255,.1)}
+.adm{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.1);padding:9px 11px;border-radius:8px}
+.adm-av{width:32px;height:32px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px}
+.adm-n{color:#fff;font-size:12px;font-weight:700}
+.adm-r{color:rgba(255,255,255,.45);font-size:10px}
+.main{margin-right:220px;flex:1}
+.topbar{background:var(--w);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--g200);position:sticky;top:0;z-index:50;box-shadow:var(--sh)}
+.tb-title{font-size:17px;font-weight:900;color:var(--g1);font-family:'Tajawal',sans-serif}
+.content{padding:20px 22px}
+.pg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.pc{background:var(--w);border-radius:var(--r);padding:20px;box-shadow:var(--sh);border:1px solid var(--g200);text-align:center}
+.pc-ico{font-size:30px;margin-bottom:10px}
+.pc-val{font-size:28px;font-weight:900;font-family:'Tajawal',sans-serif}
+.pc-val.green{color:var(--g2)}
+.pc-val.orange{color:var(--orange)}
+.pc-val.blue{color:var(--blue)}
+.pc-lbl{font-size:12px;color:var(--g400);margin-top:4px}
+.card{background:var(--w);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--g200);overflow:hidden;margin-bottom:18px}
+.chd{padding:13px 18px;border-bottom:1px solid var(--g200);font-size:14px;font-weight:900;color:var(--g1)}
+.cbody{padding:18px}
+.pr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pl{font-size:12px;color:var(--g600);width:100px;flex-shrink:0}
+.pb{flex:1;height:8px;background:var(--g200);border-radius:4px;overflow:hidden}
+.pbf{height:100%;border-radius:4px;transition:width .8s ease}
+.pv{font-size:12px;font-weight:700;width:45px;text-align:left;color:var(--g2)}
+.exp-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--g200);font-size:13px}
+.exp-row:last-child{border-bottom:none}
+.exp-name{color:var(--g600)}
+.exp-val{font-weight:700;color:var(--red)}
+.exp-inp{width:80px;padding:5px 8px;border:1.5px solid var(--g200);border-radius:7px;font-family:'Cairo',sans-serif;font-size:12px;text-align:center;outline:none;color:var(--g800)}
+.exp-inp:focus{border-color:var(--g4)}
+.net-box{background:linear-gradient(135deg,var(--gx),var(--gp));border:1.5px solid #c8e6c9;border-radius:var(--r);padding:20px;text-align:center}
+.net-lbl{font-size:13px;color:var(--g600);font-weight:700;margin-bottom:8px}
+.net-val{font-size:38px;font-weight:900;color:var(--g1);font-family:'Tajawal',sans-serif}
+.net-sub{font-size:11px;color:var(--g400);margin-top:6px}
+table{width:100%;border-collapse:collapse}
+th{background:var(--gx);padding:10px 14px;text-align:right;font-size:11px;font-weight:700;color:var(--g2)}
+td{padding:11px 14px;font-size:12.5px;border-bottom:1px solid var(--g200)}
+tr:last-child td{border-bottom:none}
+.total-row td{font-weight:900;background:var(--gx);color:var(--g1);font-size:14px}
+</style>
+</head>
+<body>
+<nav class="sb">
+  <div class="sb-logo">
+    <div class="sb-ico">🛒</div>
+    <div><div class="sb-title">دكّاني</div><div class="sb-sub">رام الله 🇵🇸</div></div>
+  </div>
+  <div class="sb-nav">
+    <div class="nl">الإدارة</div>
+    <a class="ni" href="/admin"><span class="ico">📦</span> الطلبات</a>
+    <a class="ni active" href="/admin/accounting"><span class="ico">💰</span> المحاسبة</a>
+    <a class="ni" href="/admin/customers"><span class="ico">👥</span> الزبائن</a>
+    <div class="nl">المتجر</div>
+    <a class="ni" href="/shop"><span class="ico">🏪</span> المتجر</a>
+    <a class="ni" href="/"><span class="ico">👤</span> صفحة الزبون</a>
+  </div>
+  <div class="sb-foot">
+    <div class="adm"><div class="adm-av">👨</div><div><div class="adm-n">المدير</div><div class="adm-r">دكّاني</div></div></div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-title">💰 المحاسبة والأرباح</div>
+  </div>
+  <div class="content">
+
+    <!-- الأرقام الكبيرة -->
+    <div class="pg">
+      <div class="pc">
+        <div class="pc-ico">💰</div>
+        <div class="pc-val green">{{ stats.daily_profit }}₪</div>
+        <div class="pc-lbl">ربح اليوم الإجمالي</div>
+      </div>
+      <div class="pc">
+        <div class="pc-ico">🛒</div>
+        <div class="pc-val orange">{{ stats.total_sales }}₪</div>
+        <div class="pc-lbl">إجمالي المبيعات</div>
+      </div>
+      <div class="pc">
+        <div class="pc-ico">📦</div>
+        <div class="pc-val blue">{{ stats.orders_count }}</div>
+        <div class="pc-lbl">عدد الطلبات</div>
+      </div>
+    </div>
+
+    <!-- الأرباح حسب القسم -->
+    <div class="card">
+      <div class="chd">📊 الأرباح حسب القسم</div>
+      <div class="cbody">
+        <div class="pr">
+          <div class="pl">🛒 سوبرماركت</div>
+          <div class="pb"><div class="pbf" style="width:65%;background:var(--g4)"></div></div>
+          <div class="pv">{{ stats.daily_profit }}₪</div>
+        </div>
+        <div class="pr">
+          <div class="pl">🥩 ملحمة</div>
+          <div class="pb"><div class="pbf" style="width:40%;background:var(--orange)"></div></div>
+          <div class="pv">0₪</div>
+        </div>
+        <div class="pr">
+          <div class="pl">🥦 خضار</div>
+          <div class="pb"><div class="pbf" style="width:25%;background:var(--blue)"></div></div>
+          <div class="pv">0₪</div>
+        </div>
+        <div class="pr">
+          <div class="pl">🚗 توصيل</div>
+          <div class="pb"><div class="pbf" style="width:50%;background:#9c27b0"></div></div>
+          <div class="pv">0₪</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <!-- المصاريف -->
+      <div class="card">
+        <div class="chd">💸 المصاريف اليومية</div>
+        <div class="cbody">
+          {% for exp in stats.expenses %}
+          <div class="exp-row">
+            <span class="exp-name">{{ exp.name }}</span>
+            <div style="display:flex;align-items:center;gap:7px">
+              <input class="exp-inp" type="number" value="{{ exp.val|abs }}" placeholder="0" min="0">
+              <span style="color:var(--red);font-size:12px">₪</span>
+            </div>
+          </div>
+          {% endfor %}
+          <div class="exp-row" style="margin-top:8px">
+            <span style="font-weight:700">إجمالي المصاريف</span>
+            <span class="exp-val">{{ stats.total_expenses }}₪</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- صافي الربح -->
+      <div class="card">
+        <div class="chd">✨ صافي الربح</div>
+        <div class="cbody">
+          <div class="net-box">
+            <div class="net-lbl">💰 صافي ربحك اليوم</div>
+            <div class="net-val">{{ stats.net_profit }}₪</div>
+            <div class="net-sub">بعد خصم جميع المصاريف</div>
+          </div>
+          <table style="margin-top:14px">
+            <tr><td>الربح الإجمالي</td><td><b style="color:var(--g2)">{{ stats.daily_profit }}₪</b></td></tr>
+            <tr><td>المصاريف</td><td><b style="color:var(--red)">{{ stats.total_expenses }}₪</b></td></tr>
+            <tr class="total-row"><td>الصافي</td><td><b>{{ stats.net_profit }}₪</b></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: dokkani
+    env: python
+    region: frankfurt
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: TELEGRAM_TOKEN
+        value: 8301447744:AAGWbUlyEg_vYkWt9kvZKmKizTjl9ZvTuTM
+      - key: TELEGRAM_CHAT_ID
+        value: 1921205945

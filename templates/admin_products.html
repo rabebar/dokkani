@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكّاني — إدارة المنتجات</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--g5:#66bb6a;--gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g600:#4b5563;--g800:#1f2937;--red:#e53935;--orange:#fb8c00;--sh:0 2px 8px rgba(0,0,0,.08);--r:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);display:flex;min-height:100vh}
+.sb{width:220px;background:linear-gradient(170deg,var(--g1),var(--g2));min-height:100vh;position:fixed;right:0;top:0;z-index:100;display:flex;flex-direction:column}
+.sb-logo{padding:22px 18px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px}
+.sb-ico{width:40px;height:40px;background:var(--acc);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.sb-title{color:#fff;font-size:19px;font-weight:900;font-family:'Tajawal',sans-serif}
+.sb-sub{color:rgba(255,255,255,.45);font-size:10px}
+.sb-nav{padding:16px 10px;flex:1}
+.nl{color:rgba(255,255,255,.3);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;padding:0 8px;margin:12px 0 5px}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.65);font-size:12.5px;font-weight:600;margin-bottom:2px;transition:all .2s;text-decoration:none}
+.ni:hover{background:rgba(255,255,255,.1);color:#fff}
+.ni.active{background:rgba(255,255,255,.17);color:#fff}
+.ni .ico{font-size:16px;width:18px}
+.sb-foot{padding:12px 10px 20px;border-top:1px solid rgba(255,255,255,.1)}
+.adm{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.1);padding:9px 11px;border-radius:8px}
+.adm-av{width:32px;height:32px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px}
+.adm-n{color:#fff;font-size:12px;font-weight:700}
+.adm-r{color:rgba(255,255,255,.45);font-size:10px}
+.main{margin-right:220px;flex:1}
+.topbar{background:var(--w);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--g200);position:sticky;top:0;z-index:50;box-shadow:var(--sh)}
+.tb-title{font-size:17px;font-weight:900;color:var(--g1);font-family:'Tajawal',sans-serif}
+.content{padding:20px 22px}
+.tabs{display:flex;gap:8px;margin-bottom:20px}
+.tab{padding:9px 20px;border-radius:20px;border:1.5px solid var(--g200);background:var(--w);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:var(--g600);transition:all .2s}
+.tab:hover{border-color:var(--g4);color:var(--g2)}
+.tab.active{background:var(--g2);color:#fff;border-color:var(--g2)}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:var(--w);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--g200);overflow:hidden;margin-bottom:18px}
+.chd{padding:13px 18px;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between}
+.ctl{font-size:14px;font-weight:900;color:var(--g1)}
+.add-btn{padding:8px 16px;background:var(--g4);color:#fff;border:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;display:flex;align-items:center;gap:6px}
+.add-btn:hover{background:var(--g2)}
+
+/* CATEGORIES GRID */
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px}
+.cat-card{background:var(--gx);border-radius:var(--r);padding:14px;text-align:center;border:1.5px solid var(--g200);position:relative;transition:all .2s}
+.cat-card:hover{border-color:var(--g4)}
+.cat-card.hidden{opacity:.5}
+.cat-img{width:56px;height:56px;border-radius:14px;background:var(--w);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 8px;overflow:hidden;box-shadow:var(--sh)}
+.cat-img img{width:100%;height:100%;object-fit:cover}
+.cat-name{font-size:13px;font-weight:700;margin-bottom:10px}
+.cat-actions{display:flex;gap:5px;justify-content:center}
+.ca{width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;font-size:13px;transition:all .2s}
+.ca:hover{transform:scale(1.1)}
+.ca-edit{background:#e3f2fd}
+.ca-toggle{background:var(--gp)}
+.ca-del{background:#ffebee}
+
+/* PRODUCTS TABLE */
+.prod-filters{display:flex;gap:8px;padding:14px 16px;border-bottom:1px solid var(--g200);flex-wrap:wrap}
+.pf{padding:5px 12px;border-radius:18px;border:1.5px solid var(--g200);background:var(--w);font-family:'Cairo',sans-serif;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--g600);transition:all .2s}
+.pf:hover{border-color:var(--g4);color:var(--g2)}
+.pf.active{background:var(--g2);color:#fff;border-color:var(--g2)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--gx);padding:10px 14px;text-align:right;font-size:11px;font-weight:700;color:var(--g2)}
+td{padding:10px 14px;font-size:12.5px;border-bottom:1px solid var(--g200);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafff9}
+tr.prod-hidden td{opacity:.5}
+.prod-img{width:36px;height:36px;border-radius:8px;background:var(--gx);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden}
+.prod-img img{width:100%;height:100%;object-fit:cover}
+.unit-badge{background:var(--gp);color:var(--g2);padding:2px 8px;border-radius:18px;font-size:10.5px;font-weight:700}
+.price-sell{color:var(--g2);font-weight:900}
+.price-orig{color:var(--g400);font-size:11px}
+.act-btns{display:flex;gap:5px}
+.abt{width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;font-size:13px;transition:all .2s}
+.abt:hover{transform:scale(1.1)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.show{display:flex}
+.modal{background:var(--w);border-radius:18px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.3);animation:pop .3s ease}
+@keyframes pop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-hdr{padding:18px 20px;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:900;color:var(--g1)}
+.modal-close{width:30px;height:30px;border-radius:8px;border:none;background:var(--g100);cursor:pointer;font-size:16px}
+.modal-body{padding:20px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--g2);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:10px 13px;border:1.5px solid var(--g200);border-radius:9px;font-family:'Cairo',sans-serif;font-size:13px;outline:none;transition:border-color .2s;background:#f9fafb}
+.field input:focus,.field select:focus{border-color:var(--g4);background:var(--w)}
+.img-preview{width:80px;height:80px;border-radius:12px;background:var(--gx);display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:8px;overflow:hidden;border:1.5px dashed var(--g4)}
+.img-preview img{width:100%;height:100%;object-fit:cover}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--g200);display:flex;gap:9px;justify-content:flex-end}
+.btn-save{padding:10px 24px;background:var(--g2);color:#fff;border:none;border-radius:9px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s}
+.btn-save:hover{background:var(--g1)}
+.btn-cancel{padding:10px 16px;background:var(--g100);color:var(--g600);border:none;border-radius:9px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--g1);color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:700;z-index:300;display:none;animation:slideUp .3s ease}
+@keyframes slideUp{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+</style>
+</head>
+<body>
+
+<nav class="sb">
+  <div class="sb-logo">
+    <div class="sb-ico">🛒</div>
+    <div><div class="sb-title">دكّاني</div><div class="sb-sub">رام الله 🇵🇸</div></div>
+  </div>
+  <div class="sb-nav">
+    <div class="nl">الإدارة</div>
+    <a class="ni" href="/admin"><span class="ico">📦</span> الطلبات</a>
+    <a class="ni" href="/admin/accounting"><span class="ico">💰</span> المحاسبة</a>
+    <a class="ni" href="/admin/customers"><span class="ico">👥</span> الزبائن</a>
+    <a class="ni active" href="/admin/products"><span class="ico">🏪</span> المنتجات</a>
+    <div class="nl">المتجر</div>
+    <a class="ni" href="/shop"><span class="ico">🛒</span> المتجر</a>
+    <a class="ni" href="/"><span class="ico">👤</span> الزبون</a>
+  </div>
+  <div class="sb-foot">
+    <div class="adm"><div class="adm-av">👨</div><div><div class="adm-n">المدير</div><div class="adm-r">دكّاني</div></div></div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-title">🏪 إدارة الأقسام والمنتجات</div>
+  </div>
+
+  <div class="content">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('cats',this)">📂 الأقسام ({{ categories|length }})</button>
+      <button class="tab" onclick="switchTab('prods',this)">🛍️ المنتجات ({{ products|length }})</button>
+    </div>
+
+    <!-- PANEL: CATEGORIES -->
+    <div class="panel active" id="panel-cats">
+      <div class="card">
+        <div class="chd">
+          <div class="ctl">📂 جميع الأقسام</div>
+          <button class="add-btn" onclick="openCatModal()">➕ قسم جديد</button>
+        </div>
+        <div class="cat-grid">
+          {% for cat in categories %}
+          <div class="cat-card {% if not cat.visible %}hidden{% endif %}" id="cat-{{ cat.id }}">
+            <div class="cat-img">
+              {% if cat.image %}
+                <img src="{{ cat.image }}" alt="{{ cat.name }}">
+              {% else %}
+                {{ cat.icon }}
+              {% endif %}
+            </div>
+            <div class="cat-name">{{ cat.name }}</div>
+            <div class="cat-actions">
+              <button class="ca ca-edit" title="تعديل"
+                onclick="openCatModal({{ cat.id }},'{{ cat.name }}','{{ cat.icon }}')">✏️</button>
+              <button class="ca ca-toggle" title="إخفاء/إظهار"
+                onclick="toggleCat({{ cat.id }})">👁️</button>
+              <button class="ca ca-del" title="حذف"
+                onclick="deleteCat({{ cat.id }},'{{ cat.name }}')">🗑️</button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL: PRODUCTS -->
+    <div class="panel" id="panel-prods">
+      <div class="card">
+        <div class="chd">
+          <div class="ctl">🛍️ جميع المنتجات</div>
+          <button class="add-btn" onclick="openProdModal()">➕ منتج جديد</button>
+        </div>
+        <!-- فلاتر الأقسام -->
+        <div class="prod-filters">
+          <button class="pf active" onclick="filterProds('all',this)">الكل</button>
+          {% for cat in categories %}
+          <button class="pf" onclick="filterProds('{{ cat.id }}',this)">{{ cat.icon }} {{ cat.name }}</button>
+          {% endfor %}
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>الصورة</th>
+              <th>اسم المنتج</th>
+              <th>القسم</th>
+              <th>سعر الشراء</th>
+              <th>سعر البيع</th>
+              <th>الوحدة</th>
+              <th>الحالة</th>
+              <th>إجراء</th>
+            </tr>
+          </thead>
+          <tbody id="prod-tbody">
+            {% for p in products %}
+            {% set sell = p.price + (0.5 if p.price <= 8 else (1.0 if p.price <= 19 else 1.5)) %}
+            {% set cat_name = categories | selectattr('id','eq',p.category_id) | map(attribute='name') | first | default('—') %}
+            <tr class="prod-row {% if not p.visible %}prod-hidden{% endif %}"
+                data-cat="{{ p.category_id }}">
+              <td>
+                <div class="prod-img">
+                  {% if p.image %}<img src="{{ p.image }}" alt="">
+                  {% else %}🛍️{% endif %}
+                </div>
+              </td>
+              <td><b>{{ p.name }}</b></td>
+              <td>{{ cat_name }}</td>
+              <td><span class="price-orig">{{ p.price }}₪</span></td>
+              <td><span class="price-sell">{{ "%.1f"|format(sell) }}₪</span></td>
+              <td><span class="unit-badge">{{ p.unit }}</span></td>
+              <td>
+                {% if p.visible %}
+                  <span style="color:var(--g4);font-weight:700;font-size:12px">✅ ظاهر</span>
+                {% else %}
+                  <span style="color:var(--g400);font-weight:700;font-size:12px">🙈 مخفي</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="act-btns">
+                  <button class="abt" style="background:#e3f2fd" title="تعديل"
+                    onclick="openProdModal({{ p.id }},'{{ p.name }}',{{ p.price }},'{{ p.unit }}',{{ p.category_id }})">✏️</button>
+                  <button class="abt" style="background:var(--gp)" title="إخفاء/إظهار"
+                    onclick="toggleProd({{ p.id }})">👁️</button>
+                  <button class="abt" style="background:#ffebee" title="حذف"
+                    onclick="deleteProd({{ p.id }},'{{ p.name }}')">🗑️</button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: قسم -->
+<div class="modal-bg" id="cat-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="cat-modal-title">➕ إضافة قسم جديد</div>
+      <button class="modal-close" onclick="closeCatModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cat-id">
+      <div class="field">
+        <label>🖼️ صورة القسم (اختياري)</label>
+        <div class="img-preview" id="cat-img-preview">🛒</div>
+        <input type="file" id="cat-image" accept="image/*" onchange="previewImg(this,'cat-img-preview')">
+      </div>
+      <div class="field">
+        <label>😀 إيموجي القسم</label>
+        <input type="text" id="cat-icon" placeholder="مثال: 🥛 🍞 🥩" value="🛒">
+      </div>
+      <div class="field">
+        <label>📝 اسم القسم *</label>
+        <input type="text" id="cat-name" placeholder="مثال: ألبان وأجبان">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeCatModal()">إلغاء</button>
+      <button class="btn-save" onclick="saveCat()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: منتج -->
+<div class="modal-bg" id="prod-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="prod-modal-title">➕ إضافة منتج جديد</div>
+      <button class="modal-close" onclick="closeProdModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prod-id">
+      <div class="field">
+        <label>🖼️ صورة المنتج (اختياري)</label>
+        <div class="img-preview" id="prod-img-preview">🛍️</div>
+        <input type="file" id="prod-image" accept="image/*" onchange="previewImg(this,'prod-img-preview')">
+      </div>
+      <div class="field">
+        <label>📝 اسم المنتج *</label>
+        <input type="text" id="prod-name" placeholder="مثال: حليب تنوره 1 لتر">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field">
+          <label>💰 سعر الشراء (₪) *</label>
+          <input type="number" id="prod-price" placeholder="0.00" step="0.5" min="0" oninput="calcSell()">
+        </div>
+        <div class="field">
+          <label>💚 سعر البيع (تلقائي)</label>
+          <input type="text" id="prod-sell" readonly style="background:#f0fdf4;color:var(--g2);font-weight:700">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field">
+          <label>⚖️ وحدة القياس *</label>
+          <select id="prod-unit">
+            <option>حبة</option>
+            <option>كيلو</option>
+            <option>نص كيلو</option>
+            <option>ربع كيلو</option>
+            <option>علبة</option>
+            <option>كيس</option>
+            <option>زجاجة</option>
+            <option>كرتون</option>
+            <option>ربطة</option>
+            <option>لتر</option>
+            <option>برطمان</option>
+            <option>أنبوب</option>
+            <option>قطعة</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>📂 القسم *</label>
+          <select id="prod-cat">
+            {% for cat in categories %}
+            <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeProdModal()">إلغاء</button>
+      <button class="btn-save" onclick="saveProd()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const categories = {{ categories | tojson }};
+
+// Tabs
+function switchTab(tab, btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+// Toast
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(()=>t.style.display='none', 2500);
+}
+
+// Preview Image
+function previewImg(input, previewId){
+  const preview = document.getElementById(previewId);
+  if(input.files && input.files[0]){
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.innerHTML = `<img src="${e.target.result}" alt="">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// حساب سعر البيع تلقائياً
+function calcSell(){
+  const price = parseFloat(document.getElementById('prod-price').value) || 0;
+  let profit = price <= 8 ? 0.5 : price <= 19 ? 1.0 : 1.5;
+  document.getElementById('prod-sell').value = (price + profit).toFixed(1) + '₪';
+}
+
+// ==================== CATEGORIES ====================
+
+function openCatModal(id=null, name='', icon='🛒'){
+  document.getElementById('cat-id').value = id || '';
+  document.getElementById('cat-name').value = name;
+  document.getElementById('cat-icon').value = icon;
+  document.getElementById('cat-img-preview').innerHTML = icon;
+  document.getElementById('cat-image').value = '';
+  document.getElementById('cat-modal-title').textContent = id ? '✏️ تعديل القسم' : '➕ قسم جديد';
+  document.getElementById('cat-modal').classList.add('show');
+}
+
+function closeCatModal(){
+  document.getElementById('cat-modal').classList.remove('show');
+}
+
+function saveCat(){
+  const id   = document.getElementById('cat-id').value;
+  const name = document.getElementById('cat-name').value.trim();
+  const icon = document.getElementById('cat-icon').value.trim();
+  const file = document.getElementById('cat-image').files[0];
+
+  if(!name){ alert('⚠️ أدخل اسم القسم'); return; }
+
+  const fd = new FormData();
+  fd.append('name', name);
+  fd.append('icon', icon);
+  if(file) fd.append('image', file);
+
+  const url = id ? `/api/category/${id}` : '/api/category';
+  fetch(url, {method:'POST', body:fd})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.success){
+        closeCatModal();
+        showToast('✅ تم الحفظ بنجاح!');
+        setTimeout(()=>location.reload(), 800);
+      }
+    });
+}
+
+function toggleCat(id){
+  fetch(`/api/category/${id}/toggle`, {method:'POST'})
+    .then(r=>r.json())
+    .then(()=>{
+      const card = document.getElementById('cat-'+id);
+      card.classList.toggle('hidden');
+      showToast('✅ تم التغيير');
+    });
+}
+
+function deleteCat(id, name){
+  if(!confirm(`⚠️ هل تريد حذف قسم "${name}"؟\nسيتم حذف جميع منتجاته أيضاً!`)) return;
+  fetch(`/api/category/${id}/delete`, {method:'POST'})
+    .then(r=>r.json())
+    .then(()=>{
+      showToast('🗑️ تم الحذف');
+      setTimeout(()=>location.reload(), 800);
+    });
+}
+
+// ==================== PRODUCTS ====================
+
+function openProdModal(id=null, name='', price=0, unit='حبة', catId=null){
+  document.getElementById('prod-id').value = id || '';
+  document.getElementById('prod-name').value = name;
+  document.getElementById('prod-price').value = price || '';
+  document.getElementById('prod-unit').value = unit;
+  document.getElementById('prod-img-preview').innerHTML = '🛍️';
+  document.getElementById('prod-image').value = '';
+  if(catId) document.getElementById('prod-cat').value = catId;
+  document.getElementById('prod-modal-title').textContent = id ? '✏️ تعديل المنتج' : '➕ منتج جديد';
+  calcSell();
+  document.getElementById('prod-modal').classList.add('show');
+}
+
+function closeProdModal(){
+  document.getElementById('prod-modal').classList.remove('show');
+}
+
+function saveProd(){
+  const id    = document.getElementById('prod-id').value;
+  const name  = document.getElementById('prod-name').value.trim();
+  const price = document.getElementById('prod-price').value;
+  const unit  = document.getElementById('prod-unit').value;
+  const catId = document.getElementById('prod-cat').value;
+  const file  = document.getElementById('prod-image').files[0];
+
+  if(!name || !price){ alert('⚠️ أدخل اسم المنتج والسعر'); return; }
+
+  const fd = new FormData();
+  fd.append('name', name);
+  fd.append('price', price);
+  fd.append('unit', unit);
+  fd.append('category_id', catId);
+  if(file) fd.append('image', file);
+
+  const url = id ? `/api/product/${id}` : '/api/product';
+  fetch(url, {method:'POST', body:fd})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.success){
+        closeProdModal();
+        showToast('✅ تم الحفظ بنجاح!');
+        setTimeout(()=>location.reload(), 800);
+      }
+    });
+}
+
+function toggleProd(id){
+  fetch(`/api/product/${id}/toggle`, {method:'POST'})
+    .then(r=>r.json())
+    .then(()=>{
+      showToast('✅ تم التغيير');
+      setTimeout(()=>location.reload(), 600);
+    });
+}
+
+function deleteProd(id, name){
+  if(!confirm(`⚠️ هل تريد حذف منتج "${name}"؟`)) return;
+  fetch(`/api/product/${id}/delete`, {method:'POST'})
+    .then(r=>r.json())
+    .then(()=>{
+      showToast('🗑️ تم الحذف');
+      setTimeout(()=>location.reload(), 800);
+    });
+}
+
+// فلترة المنتجات
+function filterProds(catId, btn){
+  document.querySelectorAll('.pf').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.prod-row').forEach(tr=>{
+    tr.style.display = (catId==='all' || tr.dataset.cat==catId) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

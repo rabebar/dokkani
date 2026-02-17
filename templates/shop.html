@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكّاني — تسوّق</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--sh:0 2px 8px rgba(0,0,0,.08);--r:14px;--nav:60px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);padding-bottom:calc(var(--nav) + 16px)}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#1a4a1e,var(--g2));position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.25)}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 8px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-ico{width:38px;height:38px;background:var(--acc);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.brand-name{color:#fff;font-size:20px;font-weight:900}
+.brand-sub{color:rgba(255,255,255,.55);font-size:10px;margin-top:-2px}
+.cart-btn{position:relative;width:42px;height:42px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;border:none}
+.cart-count{position:absolute;top:-4px;left:-4px;background:var(--acc);color:var(--g1);font-size:10px;font-weight:900;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #1a4a1e}
+.srch{padding:0 16px 12px}
+.srch-wrap{background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;gap:9px;padding:10px 14px}
+.srch-wrap input{border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:13px;outline:none;color:#fff;width:100%}
+.srch-wrap input::placeholder{color:rgba(255,255,255,.55)}
+
+/* BANNER */
+.banner{margin:12px 16px;background:linear-gradient(135deg,var(--g2),var(--g4));border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden}
+.banner::before{content:'🛒';position:absolute;left:-5px;bottom:-15px;font-size:80px;opacity:.08}
+.banner h3{color:#fff;font-size:15px;font-weight:900}
+.banner p{color:rgba(255,255,255,.75);font-size:11px;margin-top:3px}
+.banner-badge{background:var(--acc);color:var(--g1);padding:7px 14px;border-radius:20px;font-size:12px;font-weight:900;white-space:nowrap;z-index:1}
+
+/* CATEGORIES GRID */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px}
+.sec-title{font-size:15px;font-weight:900;color:var(--g800)}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 16px}
+.cat-card{background:var(--w);border-radius:14px;padding:14px 10px 12px;text-align:center;box-shadow:var(--sh);border:1.5px solid var(--g200);cursor:pointer;transition:all .2s;text-decoration:none;display:block}
+.cat-card:active{transform:scale(.96)}
+.cat-ico{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;overflow:hidden;background:var(--gx)}
+.cat-ico svg{width:26px;height:26px}
+.cat-ico img{width:100%;height:100%;object-fit:cover}
+.cat-lbl{font-size:10px;font-weight:700;color:var(--g800);line-height:1.3}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--w);height:var(--nav);display:flex;align-items:center;border-top:1px solid var(--g200);box-shadow:0 -4px 20px rgba(0,0,0,.08);z-index:200}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;text-decoration:none;transition:all .2s;padding:6px 0;position:relative}
+.bni-ico{font-size:22px;line-height:1}
+.bni-lbl{font-size:9.5px;font-weight:700;color:var(--g400)}
+.bni.active .bni-lbl{color:var(--g2)}
+.bni-badge{position:absolute;top:4px;right:calc(50% - 18px);background:var(--acc);color:var(--g1);font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px solid var(--w)}
+
+/* CART BAR */
+.cart-bar{position:fixed;bottom:calc(var(--nav));left:0;right:0;background:var(--w);padding:10px 16px;box-shadow:0 -2px 12px rgba(0,0,0,.08);display:none;z-index:150}
+.cart-bar.show{display:block}
+.cart-bar-btn{width:100%;padding:13px 18px;background:linear-gradient(135deg,var(--g4),var(--g2));color:#fff;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.cart-bdg{background:rgba(255,255,255,.22);padding:3px 10px;border-radius:20px;font-size:11px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="brand">
+      <div class="brand-ico">🛒</div>
+      <div>
+        <div class="brand-name">{{ app_name }}</div>
+        <div class="brand-sub">توصيل سريع • رام الله 🇵🇸</div>
+      </div>
+    </div>
+    <button class="cart-btn" onclick="goCart()">
+      🛒<div class="cart-count" id="cart-count">0</div>
+    </button>
+  </div>
+  <div class="srch">
+    <div class="srch-wrap">
+      <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search" placeholder="ابحث عن منتج أو قسم..." oninput="searchCats()">
+    </div>
+  </div>
+</div>
+
+<div class="banner">
+  <div>
+    <h3>أهلاً بك في دكّاني! 🛒</h3>
+    <p>اختر القسم الذي تريده</p>
+  </div>
+  <div class="banner-badge">🚀 45 دقيقة</div>
+</div>
+
+<div class="sec-hdr">
+  <div class="sec-title">الأقسام</div>
+  <div style="font-size:11px;color:var(--g400)">{{ categories|length }} قسم</div>
+</div>
+
+<div class="cat-grid" id="cat-grid">
+  {% for cat in categories %}
+  <a class="cat-card" href="/category/{{ cat.id }}" id="cc-{{ cat.id }}">
+    <div class="cat-ico">
+      {% if cat.image %}
+        <img src="{{ cat.image }}" alt="{{ cat.name }}">
+      {% else %}
+        {% if 'خضر' in cat.name or 'فواكه' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#43a047" stroke-width="1.8"><path d="M12 22V12"/><path d="M12 12C12 7 7 3 3 4c0 5 4 8 9 8z"/><path d="M12 12c0-5 5-9 9-8 0 5-4 8-9 8z"/></svg>
+        {% elif 'تمويني' in cat.name or 'معلب' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="1.8"><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6"/><path d="M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/></svg>
+        {% elif 'أرز' in cat.name or 'معكرون' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8e24aa" stroke-width="1.8"><path d="M4 5c0 0 2 2 2 7S4 19 4 19"/><path d="M8 5c0 0 2 2 2 7s-2 7-2 7"/><path d="M12 5c0 0 2 2 2 7s-2 7-2 7"/><path d="M16 5c0 0 2 2 2 7s-2 7-2 7"/><path d="M2 19h20"/></svg>
+        {% elif 'زيت' in cat.name or 'سمن' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ef6c00" stroke-width="1.8"><path d="M10 2h4v4l2 3v12a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9l2-3V2z"/><path d="M8 9h8"/></svg>
+        {% elif 'لحم' in cat.name or 'دواجن' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="1.8"><path d="M16.5 3.5a4.5 4.5 0 0 1 0 6.36L8 18l-4 2 2-4 8.5-8.5a4.5 4.5 0 0 1 2-4z"/><path d="m15 5 4 4"/></svg>
+        {% elif 'سلطة' in cat.name or 'جاهز' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00897b" stroke-width="1.8"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+        {% elif 'لبن' in cat.name or 'جبن' in cat.name or 'بيض' in cat.name or 'ألبان' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1e88e5" stroke-width="1.8"><path d="M8 3h8l2 5v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8l2-5z"/><path d="M6 8h12"/><path d="M12 13v3m-1.5-1.5h3"/></svg>
+        {% elif 'خبز' in cat.name or 'معجن' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fb8c00" stroke-width="1.8"><path d="M5 8c0-3 3-5 7-5s7 2 7 5c0 2-1 3-1 3v8a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-8s-1-1-1-3z"/><path d="M9 11h6m-5 3h4"/></svg>
+        {% elif 'مياه' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1e88e5" stroke-width="1.8"><path d="M12 2C6.5 8 4 12.5 4 16a8 8 0 0 0 16 0c0-3.5-2.5-8-8-14z"/><path d="M8 17c0 2 2 3 4 3"/></svg>
+        {% elif 'مجمد' in cat.name or 'مفرز' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0288d1" stroke-width="1.8"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07"/></svg>
+        {% elif 'مكسر' in cat.name or 'مجفف' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#795548" stroke-width="1.8"><path d="M12 3c-5 0-8 4-8 8 0 6 4 10 8 10s8-4 8-10c0-4-3-8-8-8z"/><path d="M12 8v8m-3-4h6"/></svg>
+        {% elif 'بقولي' in cat.name or 'بذور' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#558b2f" stroke-width="1.8"><ellipse cx="8" cy="12" rx="4" ry="5.5"/><ellipse cx="16" cy="12" rx="4" ry="5.5"/><path d="M8 6.5c2.5 0 4 1.5 4 5.5s-1.5 5.5-4 5.5"/><path d="M16 6.5c-2.5 0-4 1.5-4 5.5s1.5 5.5 4 5.5"/></svg>
+        {% elif 'بوظة' in cat.name or 'مثلج' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#e91e63" stroke-width="1.8"><path d="M12 2C9 2 7 4 7 7c0 2 1 3.5 2.5 4.5L12 22l2.5-10.5C16 10.5 17 9 17 7c0-3-2-5-5-5z"/><circle cx="12" cy="7" r="2"/></svg>
+        {% elif 'شوكولا' in cat.name or 'حلوي' in cat.name or 'سكاكر' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#e91e63" stroke-width="1.8"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M9 10v9m6-9v9"/></svg>
+        {% elif 'مشروب' in cat.name or 'عصير' in cat.name or 'غازي' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00897b" stroke-width="1.8"><path d="M5 3h14l-2 7H7L5 3z"/><path d="M7 10v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-9"/><path d="M9 7h6"/></svg>
+        {% elif 'شيبس' in cat.name or 'مسلي' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f57c00" stroke-width="1.8"><path d="M3 6c5-4 13-4 18 0"/><path d="M3 6v7c0 5 4 8 9 8s9-3 9-8V6"/><path d="M8 12c1 1.5 6 1.5 8 0"/></svg>
+        {% elif 'صوص' in cat.name or 'بهار' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ef6c00" stroke-width="1.8"><path d="M12 2c-2 3-4 6-4 9a4 4 0 0 0 8 0c0-3-2-6-4-9z"/><path d="M8 14h8"/></svg>
+        {% elif 'قهوة' in cat.name or 'شاي' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#795548" stroke-width="1.8"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><path d="M6 2v2m4-2v2m4-2v2"/></svg>
+        {% elif 'صحي' in cat.name or 'حبوب' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#558b2f" stroke-width="1.8"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+        {% elif 'منظف' in cat.name or 'عناية منزل' in cat.name or 'محارم' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0288d1" stroke-width="1.8"><path d="M9 2h6v5H9z"/><path d="M4 7h16v2l-2 12H6L4 9V7z"/><path d="M9 13h6m-5 3h4"/></svg>
+        {% elif 'أطفال' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#e91e63" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/><path d="M9 11.5c0 1.5 1.5 3 3 3s3-1.5 3-3"/></svg>
+        {% elif 'بلاستيك' in cat.name or 'أكياس' in cat.name or 'قصدير' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#607d8b" stroke-width="1.8"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        {% elif 'عناية شخصية' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ab47bc" stroke-width="1.8"><path d="M9 2h6l1.5 5H7.5L9 2z"/><path d="M7.5 7v14a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V7"/><path d="M10 12h4m-3 3h2"/></svg>
+        {% elif 'حيوان' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#6d4c41" stroke-width="1.8"><circle cx="9" cy="7" r="2"/><circle cx="15" cy="7" r="2"/><circle cx="6" cy="14" r="2"/><circle cx="18" cy="14" r="2"/><path d="M12 15c-3 0-5 1.5-5 3.5h10c0-2-2-3.5-5-3.5z"/></svg>
+        {% elif 'صيدلية' in cat.name %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8m-4-4h8"/></svg>
+        {% else %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#43a047" stroke-width="1.8"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/></svg>
+        {% endif %}
+      {% endif %}
+    </div>
+    <div class="cat-lbl">{{ cat.name }}</div>
+  </a>
+  {% endfor %}
+</div>
+
+<div style="height:16px"></div>
+
+<!-- شريط السلة -->
+<div class="cart-bar" id="cart-bar">
+  <button class="cart-bar-btn" onclick="goCart()">
+    <div style="display:flex;align-items:center;gap:9px">
+      <span>🛒 عرض السلة</span>
+      <span class="cart-bdg" id="cart-bar-count">0 منتج</span>
+    </div>
+    <span id="cart-bar-total">0₪</span>
+  </button>
+</div>
+
+<!-- البوابات السفلية -->
+<nav class="bnav">
+  <a class="bni active" href="/shop">
+    <span class="bni-ico">🏪</span>
+    <span class="bni-lbl">المتجر</span>
+  </a>
+  <a class="bni" href="/cart" id="nav-cart">
+    <span class="bni-ico">🛒</span>
+    <span class="bni-lbl">السلة</span>
+    <span class="bni-badge" id="nav-cart-count" style="display:none">0</span>
+  </a>
+  <a class="bni" href="/contact">
+    <span class="bni-ico">💬</span>
+    <span class="bni-lbl">تواصل</span>
+  </a>
+  <a class="bni" href="/orders-history">
+    <span class="bni-ico">📋</span>
+    <span class="bni-lbl">طلباتي</span>
+  </a>
+  <a class="bni" href="/account">
+    <span class="bni-ico">👤</span>
+    <span class="bni-lbl">حسابي</span>
+  </a>
+</nav>
+
+<script>
+let cart = JSON.parse(localStorage.getItem('dokkani_cart') || '[]');
+
+function updateUI(){
+  const count = cart.reduce((s,i)=>s+i.qty,0);
+  const total = cart.reduce((s,i)=>s+i.price*i.qty,0);
+  document.getElementById('cart-count').textContent = count;
+  document.getElementById('cart-bar-count').textContent = count + ' منتج';
+  document.getElementById('cart-bar-total').textContent = total.toFixed(1) + '₪';
+  document.getElementById('cart-bar').classList.toggle('show', count>0);
+  const nb = document.getElementById('nav-cart-count');
+  nb.textContent = count;
+  nb.style.display = count>0 ? 'flex' : 'none';
+}
+
+function goCart(){
+  if(!cart.length){ alert('⚠️ السلة فارغة!'); return; }
+  window.location.href='/cart';
+}
+
+function searchCats(){
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  document.querySelectorAll('.cat-card').forEach(c=>{
+    c.style.display = (!q || c.querySelector('.cat-lbl').textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+}
+
+updateUI();
+</script>
+</body>
+</html>

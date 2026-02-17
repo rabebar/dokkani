@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكّاني — بياناتك</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%,#2e7d32 60%,#1b5e20 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:24px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.3);animation:rise .4s ease}
+@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.hdr{background:linear-gradient(135deg,#1b5e20,#43a047);padding:28px 24px 22px;text-align:center;position:relative;overflow:hidden}
+.hdr::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.07)}
+.logo{width:62px;height:62px;background:#00c853;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 12px;box-shadow:0 4px 18px rgba(0,200,83,.45)}
+.hdr h1{color:#fff;font-size:24px;font-weight:900}
+.hdr p{color:rgba(255,255,255,.72);font-size:13px;margin-top:4px}
+.form{padding:22px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:#2e7d32;margin-bottom:6px}
+.field input,.field textarea{width:100%;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:10px;font-family:'Cairo',sans-serif;font-size:14px;outline:none;transition:all .2s;background:#f9fafb}
+.field input:focus,.field textarea:focus{border-color:#43a047;background:#fff;box-shadow:0 0 0 3px rgba(67,160,71,.1)}
+.field textarea{resize:none}
+.phone-wrap{display:flex;gap:8px}
+.pfx{padding:12px 13px;background:#e8f5e9;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-weight:700;color:#2e7d32;white-space:nowrap;direction:ltr;display:flex;align-items:center}
+.loc-btn{width:100%;padding:13px;background:#e8f5e9;border:1.5px dashed #43a047;border-radius:10px;font-family:'Cairo',sans-serif;font-size:13.5px;font-weight:700;color:#2e7d32;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.loc-btn.ok{background:#c8e6c9;border-style:solid;border-color:#2e7d32}
+.loc-status{font-size:11.5px;color:#43a047;margin-top:6px;text-align:center;display:none}
+.submit-btn{width:100%;padding:15px;background:linear-gradient(135deg,#43a047,#2e7d32);color:#fff;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:16px;font-weight:900;cursor:pointer;margin-top:6px;box-shadow:0 4px 16px rgba(46,125,50,.35);transition:all .2s}
+.submit-btn:hover{transform:translateY(-2px)}
+.err{color:#e53935;font-size:11px;margin-top:4px;display:none}
+.foot{text-align:center;padding:14px 24px 18px;border-top:1px solid #f0f0f0;font-size:12px;color:#aaa}
+.foot a{color:#2e7d32;font-weight:700;text-decoration:none;direction:ltr;display:inline-block}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="hdr">
+    <div class="logo">🛒</div>
+    <h1>{{ app_name }}</h1>
+    <p>سجّل بياناتك مرة واحدة فقط 🚀</p>
+  </div>
+  <div class="form">
+    <div class="field">
+      <label>👤 الاسم الكامل *</label>
+      <input type="text" id="name" placeholder="مثال: أحمد محمود الخطيب">
+      <div class="err" id="err-name">الرجاء إدخال الاسم</div>
+    </div>
+    <div class="field">
+      <label>📞 رقم الهاتف *</label>
+      <div class="phone-wrap">
+        <div class="pfx">+970</div>
+        <input type="tel" id="phone" placeholder="05X-XXX-XXXX">
+      </div>
+      <div class="err" id="err-phone">الرجاء إدخال رقم صحيح</div>
+    </div>
+    <div class="field">
+      <label>💬 واتساب (اختياري)</label>
+      <div class="phone-wrap">
+        <div class="pfx">+970</div>
+        <input type="tel" id="whatsapp" placeholder="05X-XXX-XXXX">
+      </div>
+    </div>
+    <div class="field">
+      <label>🏘️ الحي والمنطقة *</label>
+      <input type="text" id="neighborhood" placeholder="مثال: البالوع، المنارة، الطيرة...">
+      <div class="err" id="err-hood">الرجاء إدخال المنطقة</div>
+    </div>
+    <div class="field">
+      <label>🏢 العنوان الكامل *</label>
+      <textarea id="address" rows="2" placeholder="اسم العمارة، رقم الطابق، رقم الشقة..."></textarea>
+      <div class="err" id="err-addr">الرجاء إدخال العنوان</div>
+    </div>
+    <div class="field">
+      <label>📍 موقعك على الخريطة (اختياري)</label>
+      <button class="loc-btn" id="loc-btn" type="button" onclick="getLocation()">
+        <span id="loc-icon">📍</span>
+        <span id="loc-text">حدد موقعي تلقائياً</span>
+      </button>
+      <div class="loc-status" id="loc-status"></div>
+    </div>
+    <button class="submit-btn" onclick="saveProfile()">
+      ✅ احفظ وابدأ التسوق
+    </button>
+  </div>
+  <div class="foot">
+    للدعم: <a href="tel:+970{{ app_phone }}" dir="ltr">{{ app_phone }}</a>
+  </div>
+</div>
+<script>
+let uLat=null, uLng=null;
+
+// ✅ إذا البيانات موجودة مسبقاً — انتقل مباشرة للمتجر
+window.onload = () => {
+  const saved = localStorage.getItem('dokkani_profile');
+  if(saved){
+    try {
+      const p = JSON.parse(saved);
+      if(p.name && p.phone) window.location.href = '/shop';
+    } catch(e) {}
+  }
+};
+
+function getLocation(){
+  const btn = document.getElementById('loc-btn');
+  const st  = document.getElementById('loc-status');
+  document.getElementById('loc-text').textContent = 'جاري التحديد...';
+  document.getElementById('loc-icon').textContent = '⏳';
+  if(!navigator.geolocation){
+    st.textContent='❌ المتصفح لا يدعم الموقع'; st.style.display='block'; return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      uLat = pos.coords.latitude; uLng = pos.coords.longitude;
+      document.getElementById('loc-text').textContent = '✅ تم تحديد موقعك!';
+      document.getElementById('loc-icon').textContent = '';
+      btn.classList.add('ok');
+      st.textContent = '📍 سيصلك المندوب مباشرة على موقعك';
+      st.style.display = 'block';
+    },
+    () => {
+      document.getElementById('loc-text').textContent = 'حدد موقعي تلقائياً';
+      document.getElementById('loc-icon').textContent = '📍';
+      st.textContent = '⚠️ يمكنك المتابعة بدون تحديد الموقع';
+      st.style.color = '#fb8c00'; st.style.display = 'block';
+    }
+  );
+}
+
+function showErr(id, show){ document.getElementById(id).style.display = show ? 'block' : 'none'; }
+
+function saveProfile(){
+  const name         = document.getElementById('name').value.trim();
+  const phone        = document.getElementById('phone').value.trim();
+  const whatsapp     = document.getElementById('whatsapp').value.trim();
+  const neighborhood = document.getElementById('neighborhood').value.trim();
+  const address      = document.getElementById('address').value.trim();
+
+  let valid = true;
+  showErr('err-name', !name);  if(!name) valid=false;
+  showErr('err-phone',!phone); if(!phone) valid=false;
+  showErr('err-hood', !neighborhood); if(!neighborhood) valid=false;
+  showErr('err-addr', !address); if(!address) valid=false;
+  if(!valid) return;
+
+  localStorage.setItem('dokkani_profile', JSON.stringify({
+    name, phone, whatsapp, neighborhood, address, lat:uLat, lng:uLng
+  }));
+  window.location.href = '/shop';
+}
+</script>
+</body>
+</html>

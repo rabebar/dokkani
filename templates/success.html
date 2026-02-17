@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكّاني — تم الطلب!</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20,#2e7d32);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:24px;width:100%;max-width:400px;padding:36px 26px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.3);animation:pop .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.check{width:80px;height:80px;background:linear-gradient(135deg,#43a047,#1b5e20);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 18px;box-shadow:0 8px 24px rgba(46,125,50,.4);animation:bounce .6s .3s ease both}
+@keyframes bounce{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+h1{font-size:22px;font-weight:900;color:#1b5e20;margin-bottom:7px}
+.sub{font-size:13px;color:#9ca3af;margin-bottom:22px;line-height:1.6}
+.order-id-box{background:#f1f8e9;border:1.5px dashed #43a047;border-radius:12px;padding:14px;margin-bottom:18px}
+.order-id-lbl{font-size:11px;color:#9ca3af;margin-bottom:5px}
+.order-id-val{font-size:24px;font-weight:900;color:#1b5e20}
+.info-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f9fafb;border-radius:10px;margin-bottom:7px;font-size:13px;color:#4b5563;text-align:right}
+.info-row span:first-child{font-size:18px;flex-shrink:0}
+.actions{display:flex;flex-direction:column;gap:9px;margin-top:20px}
+.btn{padding:13px;border-radius:12px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .2s;text-decoration:none;display:block}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:linear-gradient(135deg,#43a047,#2e7d32);color:#fff;box-shadow:0 4px 14px rgba(46,125,50,.35)}
+.btn-wa{background:#25D366;color:#fff;box-shadow:0 4px 14px rgba(37,211,102,.35)}
+.btn-outline{background:#fff;color:#2e7d32;border:1.5px solid #43a047}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="check">✅</div>
+  <h1>تم استلام طلبك! 🎉</h1>
+  <p class="sub">شكراً لك! سنتواصل معك قريباً لتأكيد موعد التوصيل</p>
+
+  <div class="order-id-box">
+    <div class="order-id-lbl">رقم طلبك</div>
+    <div class="order-id-val" id="order-num">#---</div>
+  </div>
+
+  <div class="info-row"><span>🕐</span><span>وقت التوصيل المتوقع: <b>45–60 دقيقة</b></span></div>
+  <div class="info-row"><span>💵</span><span>الدفع <b>عند الاستلام</b></span></div>
+  <div class="info-row"><span>📞</span><span>للاستفسار: <b dir="ltr">{{ app_phone }}</b></span></div>
+
+  <div class="actions">
+    <a class="btn btn-wa" href="https://wa.me/{{ app_whatsapp }}" target="_blank">
+      💬 تواصل معنا على واتساب
+    </a>
+    <a class="btn btn-primary" href="/shop">🛒 طلب مرة أخرى</a>
+    <a class="btn btn-outline" href="/">🏠 تعديل بياناتي</a>
+  </div>
+</div>
+<script>
+// ✅ تفريغ السلة تلقائياً
+localStorage.removeItem('dokkani_cart');
+
+const orderId = localStorage.getItem('dokkani_last_order');
+if(orderId) document.getElementById('order-num').textContent = '#' + orderId;
+</script>
+</body>
+</html>

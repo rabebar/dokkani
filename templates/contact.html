@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكّاني — تواصل معنا</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--sh:0 2px 8px rgba(0,0,0,.08);--nav:60px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);padding-bottom:calc(var(--nav)+16px)}
+.hdr{background:linear-gradient(135deg,#1a4a1e,var(--g2));padding:16px;text-align:center;box-shadow:0 2px 16px rgba(0,0,0,.2)}
+.hdr h1{color:#fff;font-size:19px;font-weight:900}
+.hdr p{color:rgba(255,255,255,.65);font-size:12px;margin-top:3px}
+.content{padding:20px 16px}
+.hero{background:linear-gradient(135deg,var(--g2),var(--g4));border-radius:18px;padding:28px 22px;text-align:center;margin-bottom:18px;position:relative;overflow:hidden}
+.hero::before{content:'💬';position:absolute;left:-10px;bottom:-15px;font-size:90px;opacity:.08}
+.hero-ico{font-size:50px;margin-bottom:12px}
+.hero h2{color:#fff;font-size:18px;font-weight:900;margin-bottom:6px}
+.hero p{color:rgba(255,255,255,.75);font-size:13px;line-height:1.6}
+.card{background:var(--w);border-radius:16px;overflow:hidden;box-shadow:var(--sh);margin-bottom:14px}
+.card-title{padding:13px 18px;border-bottom:1px solid var(--g200);font-size:13px;font-weight:900;color:var(--g1)}
+.contact-item{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--g200);text-decoration:none;transition:background .2s;cursor:pointer}
+.contact-item:last-child{border-bottom:none}
+.contact-item:active{background:var(--gx)}
+.ci-ico{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.ci-ico.wa{background:#e8f5e9}
+.ci-ico.ph{background:#e3f2fd}
+.ci-ico.hr{background:#fff8e1}
+.ci-name{font-size:13.5px;font-weight:700;color:var(--g800)}
+.ci-desc{font-size:11px;color:var(--g400);margin-top:2px}
+.ci-arrow{margin-right:auto;color:var(--g400);font-size:16px}
+.hours-row{display:flex;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--g200);font-size:13px}
+.hours-row:last-child{border-bottom:none}
+.hours-day{color:var(--g600);font-weight:600}
+.hours-time{color:var(--g2);font-weight:700}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--w);height:var(--nav);display:flex;align-items:center;border-top:1px solid var(--g200);box-shadow:0 -4px 20px rgba(0,0,0,.08);z-index:200}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;text-decoration:none;padding:6px 0}
+.bni-ico{font-size:22px;line-height:1}
+.bni-lbl{font-size:9.5px;font-weight:700;color:var(--g400)}
+.bni.active .bni-lbl{color:var(--g2)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>💬 تواصل معنا</h1>
+  <p>نحن هنا لمساعدتك دائماً</p>
+</div>
+
+<div class="content">
+  <div class="hero">
+    <div class="hero-ico">🛒</div>
+    <h2>{{ app_name }}</h2>
+    <p>توصيل سريع لباب بيتك<br>رام الله وضواحيها 🇵🇸</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📞 وسائل التواصل</div>
+    <a class="contact-item" href="https://wa.me/{{ app_whatsapp }}" target="_blank">
+      <div class="ci-ico wa">💬</div>
+      <div>
+        <div class="ci-name">واتساب</div>
+        <div class="ci-desc">اضغط للتواصل الفوري</div>
+      </div>
+      <span class="ci-arrow">←</span>
+    </a>
+    <a class="contact-item" href="tel:+970{{ app_phone }}">
+      <div class="ci-ico ph">📞</div>
+      <div>
+        <div class="ci-name">اتصال مباشر</div>
+        <div class="ci-desc" dir="ltr">+970{{ app_phone }}</div>
+      </div>
+      <span class="ci-arrow">←</span>
+    </a>
+    <a class="contact-item" onclick="sendWhatsApp()">
+      <div class="ci-ico hr">📝</div>
+      <div>
+        <div class="ci-name">أرسل طلباً خاصاً</div>
+        <div class="ci-desc">منتج مش موجود؟ اطلبه منا</div>
+      </div>
+      <span class="ci-arrow">←</span>
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🕐 أوقات العمل</div>
+    <div class="hours-row"><span class="hours-day">السبت — الخميس</span><span class="hours-time">8:00 ص — 10:00 م</span></div>
+    <div class="hours-row"><span class="hours-day">الجمعة</span><span class="hours-time">2:00 م — 10:00 م</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📍 منطقة التوصيل</div>
+    <div class="hours-row"><span class="hours-day">0 — 2 كم</span><span class="hours-time" style="color:var(--g2)">5₪</span></div>
+    <div class="hours-row"><span class="hours-day">2 — 5 كم</span><span class="hours-time" style="color:var(--orange,#fb8c00)">8₪</span></div>
+    <div class="hours-row"><span class="hours-day">+5 كم</span><span class="hours-time" style="color:#e53935">12₪</span></div>
+  </div>
+</div>
+
+<nav class="bnav">
+  <a class="bni" href="/shop"><span class="bni-ico">🏪</span><span class="bni-lbl">المتجر</span></a>
+  <a class="bni" href="/cart"><span class="bni-ico">🛒</span><span class="bni-lbl">السلة</span></a>
+  <a class="bni active" href="/contact"><span class="bni-ico">💬</span><span class="bni-lbl">تواصل</span></a>
+  <a class="bni" href="/orders-history"><span class="bni-ico">📋</span><span class="bni-lbl">طلباتي</span></a>
+  <a class="bni" href="/account"><span class="bni-ico">👤</span><span class="bni-lbl">حسابي</span></a>
+</nav>
+
+<script>
+function sendWhatsApp(){
+  const msg = encodeURIComponent('مرحبا، أريد طلب منتج غير متوفر في التطبيق 🛒');
+  window.open('https://wa.me/{{ app_whatsapp }}?text='+msg, '_blank');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكّاني — {{ cat.name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--sh:0 2px 8px rgba(0,0,0,.08);--r:14px;--nav:60px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);padding-bottom:calc(var(--nav)+16px)}
+.hdr{background:linear-gradient(135deg,#1a4a1e,var(--g2));position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.25);padding:13px 16px}
+.hdr-row{display:flex;align-items:center;gap:11px}
+.back{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;border:none;color:#fff;flex-shrink:0;text-decoration:none}
+.hdr-title{color:#fff;font-size:17px;font-weight:900;flex:1}
+.hdr-sub{color:rgba(255,255,255,.6);font-size:11px;margin-top:1px}
+.cart-btn{position:relative;width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;border:none}
+.cart-count{position:absolute;top:-4px;left:-4px;background:var(--acc);color:var(--g1);font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px solid #1a4a1e}
+
+/* SUBCATEGORIES */
+.sec-hdr{padding:14px 16px 10px;font-size:14px;font-weight:900;color:var(--g800)}
+.sub-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px}
+.sub-card{background:var(--w);border-radius:14px;padding:14px 10px 12px;text-align:center;box-shadow:var(--sh);border:1.5px solid var(--g200);cursor:pointer;transition:all .2s;text-decoration:none;display:block}
+.sub-card:active{transform:scale(.96)}
+.sub-ico{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 8px;background:var(--gx);overflow:hidden}
+.sub-ico img{width:100%;height:100%;object-fit:cover}
+.sub-lbl{font-size:10.5px;font-weight:700;color:var(--g800);line-height:1.3}
+.sub-count{font-size:9.5px;color:var(--g400);margin-top:2px}
+
+/* ALL PRODUCTS in this category */
+.divider{margin:16px 16px 0;background:var(--w);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+.div-hdr{padding:12px 16px;background:var(--gx);border-bottom:1px solid var(--g200);font-size:13px;font-weight:900;color:var(--g1);display:flex;align-items:center;justify-content:space-between}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:12px}
+.pcard{background:var(--w);border-radius:12px;overflow:hidden;box-shadow:var(--sh);border:1.5px solid var(--g200);transition:all .2s}
+.pcard:active{transform:scale(.98)}
+.p-img{height:82px;background:var(--gx);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden}
+.p-img img{width:100%;height:100%;object-fit:cover}
+.p-info{padding:9px 10px 10px}
+.p-name{font-size:12px;font-weight:700;margin-bottom:6px;line-height:1.35;min-height:32px}
+.p-bot{display:flex;justify-content:space-between;align-items:center}
+.p-price{font-size:14px;font-weight:900;color:var(--g2)}
+.p-unit{font-size:10px;color:var(--g400);margin-top:1px}
+.add-btn{width:28px;height:28px;background:var(--g4);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;border:none;cursor:pointer;transition:all .2s;flex-shrink:0}
+.add-btn:active{transform:scale(.88)}
+.add-btn.added{background:var(--g1)}
+.empty{text-align:center;padding:30px;color:var(--g400);font-size:13px}
+
+/* CART BAR */
+.cart-bar{position:fixed;bottom:var(--nav);left:0;right:0;background:var(--w);padding:10px 16px;box-shadow:0 -2px 12px rgba(0,0,0,.08);display:none;z-index:150}
+.cart-bar.show{display:block}
+.cart-bar-btn{width:100%;padding:13px 18px;background:linear-gradient(135deg,var(--g4),var(--g2));color:#fff;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.cart-bdg{background:rgba(255,255,255,.22);padding:3px 10px;border-radius:20px;font-size:11px}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--w);height:var(--nav);display:flex;align-items:center;border-top:1px solid var(--g200);box-shadow:0 -4px 20px rgba(0,0,0,.08);z-index:200}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;text-decoration:none;padding:6px 0;position:relative}
+.bni-ico{font-size:22px;line-height:1}
+.bni-lbl{font-size:9.5px;font-weight:700;color:var(--g400)}
+.bni.active .bni-lbl{color:var(--g2)}
+.bni-badge{position:absolute;top:4px;right:calc(50% - 18px);background:var(--acc);color:var(--g1);font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px solid var(--w)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-row">
+    <a class="back" href="/shop">←</a>
+    <div style="flex:1">
+      <div class="hdr-title">{{ cat.icon }} {{ cat.name }}</div>
+      <div class="hdr-sub">{{ subcats|length }} قسم فرعي • {{ products|length }} منتج</div>
+    </div>
+    <button class="cart-btn" onclick="goCart()">
+      🛒<div class="cart-count" id="cart-count">0</div>
+    </button>
+  </div>
+</div>
+
+<!-- الأقسام الفرعية -->
+{% if subcats %}
+<div class="sec-hdr">📂 الأقسام الفرعية</div>
+<div class="sub-grid">
+  {% for sub in subcats %}
+  <a class="sub-card" href="/subcategory/{{ sub.id }}">
+    <div class="sub-ico">
+      {% if sub.image %}<img src="{{ sub.image }}" alt="{{ sub.name }}">
+      {% else %}{{ sub.icon }}{% endif %}
+    </div>
+    <div class="sub-lbl">{{ sub.name }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- جميع منتجات القسم -->
+{% if products %}
+<div class="divider">
+  <div class="div-hdr">
+    <span>🛍️ جميع منتجات {{ cat.name }}</span>
+    <span style="font-size:11px;color:var(--g400);font-weight:400">{{ products|length }} منتج</span>
+  </div>
+  <div class="pgrid">
+    {% for p in products %}
+    <div class="pcard">
+      <div class="p-img">
+        {% if p.image %}<img src="{{ p.image }}" alt="{{ p.name }}">
+        {% else %}🛍️{% endif %}
+      </div>
+      <div class="p-info">
+        <div class="p-name">{{ p.name }}</div>
+        <div class="p-bot">
+          <div>
+            <div class="p-price">{{ p.sell_price }}₪</div>
+            <div class="p-unit">/ {{ p.unit }}</div>
+          </div>
+          <button class="add-btn"
+            onclick="addToCart({{ p.id }},'{{ p.name }}',{{ p.sell_price }},'{{ p.unit }}',event)">+</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="empty">لا توجد منتجات في هذا القسم بعد</div>
+{% endif %}
+
+<div style="height:12px"></div>
+
+<div class="cart-bar" id="cart-bar">
+  <button class="cart-bar-btn" onclick="goCart()">
+    <div style="display:flex;align-items:center;gap:9px">
+      <span>🛒 عرض السلة</span>
+      <span class="cart-bdg" id="cart-bar-count">0 منتج</span>
+    </div>
+    <span id="cart-bar-total">0₪</span>
+  </button>
+</div>
+
+<nav class="bnav">
+  <a class="bni active" href="/shop"><span class="bni-ico">🏪</span><span class="bni-lbl">المتجر</span></a>
+  <a class="bni" href="/cart">
+    <span class="bni-ico">🛒</span><span class="bni-lbl">السلة</span>
+    <span class="bni-badge" id="nav-cart-count" style="display:none">0</span>
+  </a>
+  <a class="bni" href="/contact"><span class="bni-ico">💬</span><span class="bni-lbl">تواصل</span></a>
+  <a class="bni" href="/orders-history"><span class="bni-ico">📋</span><span class="bni-lbl">طلباتي</span></a>
+  <a class="bni" href="/account"><span class="bni-ico">👤</span><span class="bni-lbl">حسابي</span></a>
+</nav>
+
+<script>
+let cart = JSON.parse(localStorage.getItem('dokkani_cart') || '[]');
+
+function saveCart(){ localStorage.setItem('dokkani_cart', JSON.stringify(cart)); updateUI(); }
+
+function updateUI(){
+  const count = cart.reduce((s,i)=>s+i.qty,0);
+  const total = cart.reduce((s,i)=>s+i.price*i.qty,0);
+  document.getElementById('cart-count').textContent = count;
+  document.getElementById('cart-bar-count').textContent = count+' منتج';
+  document.getElementById('cart-bar-total').textContent = total.toFixed(1)+'₪';
+  document.getElementById('cart-bar').classList.toggle('show', count>0);
+  const nb = document.getElementById('nav-cart-count');
+  nb.textContent = count; nb.style.display = count>0?'flex':'none';
+}
+
+function addToCart(id, name, price, unit, e){
+  e.stopPropagation();
+  const ex = cart.find(i=>i.id===id);
+  if(ex){ ex.qty++; } else { cart.push({id,name,price,unit,icon:'🛍️',qty:1,type:'product'}); }
+  saveCart();
+  const btn = e.target;
+  btn.textContent='✓'; btn.classList.add('added');
+  setTimeout(()=>{ btn.textContent='+'; btn.classList.remove('added'); },800);
+}
+
+function goCart(){
+  if(!cart.length){ alert('⚠️ السلة فارغة!'); return; }
+  window.location.href='/cart';
+}
+
+updateUI();
+</script>
+</body>
+</html>

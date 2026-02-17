@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكّاني — الزبائن</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--g5:#66bb6a;--gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g600:#4b5563;--g800:#1f2937;--red:#e53935;--orange:#fb8c00;--sh:0 2px 8px rgba(0,0,0,.08);--r:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);display:flex;min-height:100vh}
+.sb{width:220px;background:linear-gradient(170deg,var(--g1),var(--g2));min-height:100vh;position:fixed;right:0;top:0;z-index:100;display:flex;flex-direction:column}
+.sb-logo{padding:22px 18px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px}
+.sb-ico{width:40px;height:40px;background:var(--acc);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.sb-title{color:#fff;font-size:19px;font-weight:900;font-family:'Tajawal',sans-serif}
+.sb-sub{color:rgba(255,255,255,.45);font-size:10px}
+.sb-nav{padding:16px 10px;flex:1}
+.nl{color:rgba(255,255,255,.3);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;padding:0 8px;margin:12px 0 5px}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.65);font-size:12.5px;font-weight:600;margin-bottom:2px;transition:all .2s;text-decoration:none}
+.ni:hover{background:rgba(255,255,255,.1);color:#fff}
+.ni.active{background:rgba(255,255,255,.17);color:#fff}
+.ni .ico{font-size:16px;width:18px}
+.sb-foot{padding:12px 10px 20px;border-top:1px solid rgba(255,255,255,.1)}
+.adm{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.1);padding:9px 11px;border-radius:8px}
+.adm-av{width:32px;height:32px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px}
+.adm-n{color:#fff;font-size:12px;font-weight:700}
+.adm-r{color:rgba(255,255,255,.45);font-size:10px}
+.main{margin-right:220px;flex:1}
+.topbar{background:var(--w);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--g200);position:sticky;top:0;z-index:50;box-shadow:var(--sh)}
+.tb-title{font-size:17px;font-weight:900;color:var(--g1);font-family:'Tajawal',sans-serif}
+.content{padding:20px 22px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px}
+.sc{background:var(--w);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);border:1px solid var(--g200);position:relative;overflow:hidden}
+.sc::after{content:'';position:absolute;top:0;right:0;width:3px;height:100%}
+.sc.g::after{background:var(--g4)}.sc.o::after{background:var(--orange)}.sc.b::after{background:#1e88e5}.sc.r::after{background:var(--red)}
+.sc-ico{font-size:24px;margin-bottom:7px}
+.sc-val{font-size:22px;font-weight:900;font-family:'Tajawal',sans-serif}
+.sc-lbl{font-size:11px;color:var(--g400);margin-top:3px}
+.toolbar{display:flex;gap:10px;margin-bottom:18px;align-items:center}
+.srch{flex:1;padding:10px 14px;border:1.5px solid var(--g200);border-radius:var(--r);font-family:'Cairo',sans-serif;font-size:13px;outline:none;background:var(--w)}
+.srch:focus{border-color:var(--g4)}
+.ex-btn{padding:10px 16px;background:var(--g4);color:#fff;border:none;border-radius:var(--r);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s}
+.ex-btn:hover{background:var(--g2)}
+.cg{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.cc{background:var(--w);border-radius:var(--r);padding:16px;box-shadow:var(--sh);border:1px solid var(--g200);transition:all .2s;cursor:pointer}
+.cc:hover{border-color:var(--g4);box-shadow:0 4px 16px rgba(67,160,71,.15)}
+.ct{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.cav{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;color:#fff;flex-shrink:0}
+.cn{font-size:13.5px;font-weight:700}
+.cp{font-size:11px;color:var(--g400);margin-top:2px;direction:ltr;display:inline-block}
+.cs2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.cst{background:var(--gx);border-radius:8px;padding:8px;text-align:center}
+.csv{font-size:15px;font-weight:900;color:var(--g2);font-family:'Tajawal',sans-serif}
+.csl{font-size:10px;color:var(--g400);margin-top:2px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:18px;font-size:10.5px;font-weight:700}
+.tag-vip{background:#fff8e1;color:#e65100}
+.tag-reg{background:var(--gp);color:var(--g2)}
+.tag-new{background:#e3f2fd;color:#1565c0}
+.c-btns{display:flex;gap:6px;margin-top:10px}
+.cb{flex:1;padding:7px;border-radius:8px;border:none;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.cb-wa{background:#e8f5e9;color:var(--g2)}
+.cb-wa:hover{background:#25D366;color:#fff}
+.cb-map{background:#e3f2fd;color:#1565c0}
+.cb-map:hover{background:#1e88e5;color:#fff}
+.empty-state{text-align:center;padding:50px;color:var(--g400);grid-column:1/-1}
+.empty-state .ei{font-size:50px;margin-bottom:14px}
+</style>
+</head>
+<body>
+<nav class="sb">
+  <div class="sb-logo">
+    <div class="sb-ico">🛒</div>
+    <div><div class="sb-title">دكّاني</div><div class="sb-sub">رام الله 🇵🇸</div></div>
+  </div>
+  <div class="sb-nav">
+    <div class="nl">الإدارة</div>
+    <a class="ni" href="/admin"><span class="ico">📦</span> الطلبات</a>
+    <a class="ni" href="/admin/accounting"><span class="ico">💰</span> المحاسبة</a>
+    <a class="ni active" href="/admin/customers"><span class="ico">👥</span> الزبائن</a>
+    <div class="nl">المتجر</div>
+    <a class="ni" href="/shop"><span class="ico">🏪</span> المتجر</a>
+    <a class="ni" href="/"><span class="ico">👤</span> صفحة الزبون</a>
+  </div>
+  <div class="sb-foot">
+    <div class="adm"><div class="adm-av">👨</div><div><div class="adm-n">المدير</div><div class="adm-r">دكّاني</div></div></div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-title">👥 بيانات الزبائن</div>
+  </div>
+  <div class="content">
+    <div class="stats">
+      <div class="sc g"><div class="sc-ico">👥</div><div class="sc-val">{{ customers|length }}</div><div class="sc-lbl">إجمالي الزبائن</div></div>
+      <div class="sc o"><div class="sc-ico">⭐</div><div class="sc-val">{{ customers|selectattr('vip')|list|length }}</div><div class="sc-lbl">زبائن VIP</div></div>
+      <div class="sc b"><div class="sc-ico">🔁</div><div class="sc-val">{{ customers|selectattr('orders_count','gt',1)|list|length }}</div><div class="sc-lbl">زبائن متكررون</div></div>
+      <div class="sc r"><div class="sc-ico">💰</div><div class="sc-val">{{ customers|sum(attribute='total_spent')|round(0)|int }}₪</div><div class="sc-lbl">إجمالي الإنفاق</div></div>
+    </div>
+
+    <div class="toolbar">
+      <input class="srch" type="text" id="search" placeholder="🔍 ابحث باسم أو هاتف أو منطقة..." oninput="searchCustomers()">
+      <button class="ex-btn" onclick="alert('تصدير Excel — قريباً!')">📥 تصدير</button>
+    </div>
+
+    <div class="cg" id="customers-grid">
+      {% if customers %}
+        {% for c in customers %}
+        {% set colors = ['#2e7d32','#1565c0','#6a1b9a','#e65100','#0277bd','#558b2f'] %}
+        {% set ci = loop.index0 % 6 %}
+        <div class="cc" id="cc-{{ loop.index }}">
+          <div class="ct">
+            <div class="cav" style="background:{{ colors[ci] }}">{{ c.name[0] }}</div>
+            <div>
+              <div class="cn">{{ c.name }}</div>
+              <div class="cp">{{ c.phone }}</div>
+              <div style="font-size:11px;color:var(--g400)">📍 {{ c.neighborhood or '—' }}</div>
+            </div>
+          </div>
+          <div class="cs2">
+            <div class="cst"><div class="csv">{{ c.orders_count }}</div><div class="csl">طلب</div></div>
+            <div class="cst"><div class="csv">{{ c.total_spent }}₪</div><div class="csl">إجمالي</div></div>
+          </div>
+          <div class="tags">
+            {% if c.vip %}<span class="tag tag-vip">⭐ VIP</span>{% endif %}
+            {% if c.orders_count == 1 %}<span class="tag tag-new">🆕 جديد</span>
+            {% elif c.orders_count > 1 %}<span class="tag tag-reg">✅ متكرر</span>{% endif %}
+          </div>
+          <div class="c-btns">
+            {% if c.whatsapp %}
+            <button class="cb cb-wa" onclick="openWA('{{ c.whatsapp }}')">💬 واتساب</button>
+            {% endif %}
+            {% if c.lat and c.lng %}
+            <button class="cb cb-map" onclick="openMap({{ c.lat }}, {{ c.lng }})">🗺️ موقع</button>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty-state">
+        <div class="ei">👥</div>
+        <div>لا يوجد زبائن بعد</div>
+        <div style="font-size:12px;margin-top:6px">ستظهر بيانات الزبائن هنا فور أول طلب</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function openWA(phone){
+  window.open(`https://wa.me/970${phone.replace(/\D/g,'')}`, '_blank');
+}
+function openMap(lat, lng){
+  window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+}
+function searchCustomers(){
+  const q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.cc').forEach(c=>{
+    const txt = c.textContent.toLowerCase();
+    c.style.display = (!q || txt.includes(q)) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>
