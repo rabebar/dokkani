@@ -1,5 +1,5 @@
 # ==========================================
-# database.py — قاعدة بيانات دكّاني
+# database.py — النسخة الكاملة والمصححة (دكّاني)
 # ==========================================
 
 import os
@@ -7,13 +7,14 @@ import json
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from config import Config
+import math
 
 def get_db():
-    # الاتصال بـ PostgreSQL إذا كان الرابط موجوداً (بيئة Render)
-    # أو استخدام SQLite محلياً (بيئة المطور)
+    """الاتصال بقاعدة البيانات (PostgreSQL للإنتاج و SQLite للتطوير)"""
     db_url = os.environ.get('DATABASE_URL') or getattr(Config, 'DATABASE_URL', None)
     
     if db_url:
+        # إصلاح رابط PostgreSQL ليتوافق مع مكتبة psycopg2
         if db_url.startswith("postgres://"):
             db_url = db_url.replace("postgres://", "postgresql://", 1)
         return psycopg2.connect(db_url)
@@ -24,12 +25,11 @@ def get_db():
         return conn
 
 def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False):
-    """المحرك الموحد لتشغيل الاستعلامات على النظامين"""
+    """المحرك الموحد: يعيد البيانات دائماً كقواميس (Dictionaries) قابلة للتعديل"""
     conn = get_db()
-    is_pg = (os.environ.get('DATABASE_URL') or getattr(Config, 'DATABASE_URL', None)) is not None
+    is_pg = not hasattr(conn, 'row_factory') # إذا لم يوجد row_factory فهو PostgreSQL
     
     try:
-        # تحويل علامة ? إلى %s إذا كنا نستخدم PostgreSQL
         if is_pg:
             query = query.replace('?', '%s')
             cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -40,15 +40,18 @@ def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False
         
         res = None
         if fetchone:
-            res = cur.fetchone()
-            if res and not is_pg: res = dict(res)
+            raw = cur.fetchone()
+            if raw:
+                res = dict(raw) # تحويل صريح لقاموس مرن
         elif fetchall:
-            res = cur.fetchall()
-            if res and not is_pg: res = [dict(r) for r in res]
-        
+            raw = cur.fetchall()
+            if raw:
+                res = [dict(r) for r in raw] # تحويل كل الصفوف لقواميس
+        else:
+            res = None
+
         if commit:
             conn.commit()
-            # استخراج آخر ID تم إنشاؤه في عمليات الإضافة
             if "INSERT" in query.upper():
                 if is_pg:
                     cur.execute("SELECT lastval()")
@@ -59,10 +62,9 @@ def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False
     finally:
         conn.close()
 
-
 def init_db():
-    """تأسيس الجداول بنظام متوافق مع المحركين"""
-    is_pg = (os.environ.get('DATABASE_URL') or getattr(Config, 'DATABASE_URL', None)) is not None
+    """تأسيس الجداول - تعمل لمرة واحدة عند تشغيل النظام"""
+    is_pg = os.environ.get('DATABASE_URL') is not None
     pk = "SERIAL PRIMARY KEY" if is_pg else "INTEGER PRIMARY KEY AUTOINCREMENT"
 
     # 1. الأقسام الرئيسية
@@ -137,11 +139,9 @@ def init_db():
         created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''', commit=True)
 
-    # التحقق من وجود بيانات (تعديل بسيط ليتناسب مع النظامين)
+    # التحقق من وجود بيانات (Seed)
     check = execute_query('SELECT COUNT(*) as count FROM categories', fetchone=True)
-    count = check['count'] if is_pg else check[list(check.keys())[0]]
-    
-    if count == 0:
+    if check and check['count'] == 0:
         seed_categories()
         seed_subcategories()
 
@@ -196,15 +196,12 @@ def seed_subcategories():
     for sub in subs:
         execute_query('INSERT INTO subcategories (name, icon, category_id) VALUES (?, ?, ?)', sub, commit=True)
 
-# ==========================================
-# دوال الأقسام الرئيسية
-# ==========================================
-
+# --- دوال الأقسام الرئيسية ---
 def get_categories(visible_only=True):
     q = 'SELECT * FROM categories'
     if visible_only: q += ' WHERE visible=1'
     q += ' ORDER BY sort, id'
-    return execute_query(q, fetchall=True)
+    return execute_query(q, fetchall=True) or []
 
 def add_category(name, icon, image=None):
     execute_query('INSERT INTO categories (name, icon, image) VALUES (?, ?, ?)', (name, icon, image), commit=True)
@@ -223,21 +220,18 @@ def delete_category(cat_id):
     execute_query('DELETE FROM products WHERE category_id=?', (cat_id,), commit=True)
     execute_query('DELETE FROM categories WHERE id=?', (cat_id,), commit=True)
 
-# ==========================================
-# دوال الأقسام الفرعية
-# ==========================================
-
+# --- دوال الأقسام الفرعية ---
 def get_subcategories(category_id=None, visible_only=True):
     if category_id:
         q = 'SELECT * FROM subcategories WHERE category_id=?'
         if visible_only: q += ' AND visible=1'
         q += ' ORDER BY sort, id'
-        return execute_query(q, (category_id,), fetchall=True)
+        return execute_query(q, (category_id,), fetchall=True) or []
     else:
         q = 'SELECT * FROM subcategories'
         if visible_only: q += ' WHERE visible=1'
         q += ' ORDER BY category_id, sort, id'
-        return execute_query(q, fetchall=True)
+        return execute_query(q, fetchall=True) or []
 
 def add_subcategory(name, icon, category_id, image=None):
     execute_query('INSERT INTO subcategories (name, icon, category_id, image) VALUES (?, ?, ?, ?)', (name, icon, category_id, image), commit=True)
@@ -255,10 +249,7 @@ def delete_subcategory(sub_id):
     execute_query('DELETE FROM products WHERE subcategory_id=?', (sub_id,), commit=True)
     execute_query('DELETE FROM subcategories WHERE id=?', (sub_id,), commit=True)
 
-# ==========================================
-# دوال المنتجات
-# ==========================================
-
+# --- دوال المنتجات ---
 def get_products(category_id=None, subcategory_id=None, visible_only=True):
     q = 'SELECT * FROM products WHERE 1=1'
     params = []
@@ -269,7 +260,7 @@ def get_products(category_id=None, subcategory_id=None, visible_only=True):
     if visible_only:
         q += ' AND visible=1'
     q += ' ORDER BY sort, id'
-    return execute_query(q, tuple(params), fetchall=True)
+    return execute_query(q, tuple(params), fetchall=True) or []
 
 def get_products_with_sell_price(category_id=None, subcategory_id=None, visible_only=True):
     products = get_products(category_id, subcategory_id, visible_only)
@@ -292,10 +283,7 @@ def toggle_product(prod_id):
 def delete_product(prod_id):
     execute_query('DELETE FROM products WHERE id=?', (prod_id,), commit=True)
 
-# ==========================================
-# دوال الطلبات
-# ==========================================
-
+# --- دوال الطلبات ---
 def add_order(data):
     items_json = json.dumps(data.get('items', []), ensure_ascii=False)
     order_id = execute_query('''INSERT INTO orders
@@ -307,175 +295,91 @@ def add_order(data):
          data.get('total'), data.get('delivery'), data.get('profit'),
          data.get('payment'), data.get('notes')), commit=True)
 
-    # تحديث أو إضافة بيانات الزبون تلقائياً
+    # تحديث بيانات الزبون
     existing = execute_query('SELECT id, orders_count, total_spent FROM customers WHERE phone=?', (data.get('phone'),), fetchone=True)
-    
     if existing:
-        # إذا كان الزبون موجوداً، نحدث أرقامه
         new_count = (existing.get('orders_count') or 0) + 1
         new_total = (existing.get('total_spent') or 0) + (data.get('total') or 0)
         execute_query('UPDATE customers SET orders_count=?, total_spent=?, name=? WHERE id=?', 
                      (new_count, new_total, data.get('name'), existing.get('id')), commit=True)
     else:
-        # إذا كان زبوناً جديداً، ننشئ له سجلاً
-        execute_query('''INSERT INTO customers
-            (name, phone, whatsapp, neighborhood, address, lat, lng, orders_count, total_spent)
+        execute_query('''INSERT INTO customers (name, phone, whatsapp, neighborhood, address, lat, lng, orders_count, total_spent)
             VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)''',
             (data.get('name'), data.get('phone'), data.get('whatsapp'),
              data.get('neighborhood'), data.get('address'),
              data.get('lat'), data.get('lng'), data.get('total', 0)), commit=True)
-
     return (order_id or 0) + 846
 
-
 def get_orders(phone=None):
-    """استرجاع الطلبات مع معالجة آمنة لـ items في PostgreSQL"""
     if phone:
         rows = execute_query('SELECT * FROM orders WHERE phone=? ORDER BY created_at DESC', (phone,), fetchall=True)
     else:
         rows = execute_query('SELECT * FROM orders ORDER BY created_at DESC', fetchall=True)
     
-    status_map = {
-        'new': '🆕 جديد', 'prep': '⏳ تحضير',
-        'delivering': '🚗 توصيل', 'done': '✅ تم', 'cancelled': '❌ ملغي'
-    }
+    rows = rows or []
+    status_map = {'new': '🆕 جديد', 'prep': '⏳ تحضير', 'delivering': '🚗 توصيل', 'done': '✅ تم', 'cancelled': '❌ ملغي'}
     
-    # معالجة آمنة لـ items (حل مشكلة PostgreSQL)
     for o in rows:
-        # محاولة قراءة items بأمان
         items_value = o.get('items')
-        
         if isinstance(items_value, str):
-            # إذا كان string عادي (SQLite أو PostgreSQL صحيح)
-            try:
-                o['items'] = json.loads(items_value) if items_value else []
-            except:
-                o['items'] = []
-        elif isinstance(items_value, list):
-            # إذا كان قائمة بالفعل
-            o['items'] = items_value
-        else:
-            # أي حالة أخرى (مثل function في PostgreSQL)
-            o['items'] = []
-        
+            try: o['items'] = json.loads(items_value)
+            except: o['items'] = []
+        elif not items_value: o['items'] = []
         o['status_text'] = status_map.get(o['status'], o['status'])
-    
     return rows
-
 
 def update_order_status(order_id, status):
     execute_query('UPDATE orders SET status=? WHERE id=?', (status, order_id), commit=True)
 
-
-# ==========================================
-# دوال الزبائن
-# ==========================================
-
+# --- دوال الزبائن والمحاسبة ---
 def get_customers():
-    rows = execute_query('SELECT * FROM customers ORDER BY orders_count DESC', fetchall=True)
-    for c in rows:
-        c['vip'] = (c.get('orders_count') or 0) >= 3
+    rows = execute_query('SELECT * FROM customers ORDER BY orders_count DESC', fetchall=True) or []
+    for c in rows: c['vip'] = (c.get('orders_count') or 0) >= 3
     return rows
-
 
 def delete_customer(phone):
     execute_query('DELETE FROM customers WHERE phone=?', (phone,), commit=True)
 
-
-# ==========================================
-# المحاسبة والإحصائيات
-# ==========================================
-
 def get_daily_stats():
-    orders = execute_query('SELECT * FROM orders', fetchall=True)
+    orders = execute_query('SELECT * FROM orders', fetchall=True) or []
     completed = [o for o in orders if o['status'] == 'done']
-    
-    # حساب الربح الإجمالي (ربح المنتجات + رسوم التوصيل)
     total_profit = sum(((o.get('profit') or 0) + (o.get('delivery') or 0)) for o in completed)
-    
     return {
-        'orders_count':    len(orders),
+        'orders_count': len(orders),
         'completed_count': len(completed),
-        'total_sales':     round(sum(o.get('total') or 0 for o in completed), 2),
-        'daily_profit':    round(total_profit, 2),
-        'total_expenses':  0,
-        'net_profit':      round(total_profit, 2),
-        'expenses': [
-            {'name': '⛽ بنزين', 'val': 0},
-            {'name': '📱 إنترنت', 'val': 0},
-            {'name': '🛍️ أكياس', 'val': 0},
-        ]
+        'total_sales': round(sum(o.get('total') or 0 for o in completed), 2),
+        'daily_profit': round(total_profit, 2),
+        'total_expenses': 0,
+        'net_profit': round(total_profit, 2),
+        'expenses': [{'name': '⛽ بنزين', 'val': 0}, {'name': '📱 إنترنت', 'val': 0}, {'name': '🛍️ أكياس', 'val': 0}]
     }
 
-
-# ==========================================
-# دوال مساعدة (الأوزان والتسعير)
-# ==========================================
-
+# --- دوال التسعير والمسافة ---
 def calculate_profit(price):
-    """حساب الهامش بناءً على الشريحة السعرية"""
-    if price <= 8:    return 0.5
+    if price <= 8: return 0.5
     elif price <= 19: return 1.0
-    else:             return 1.5
-
+    else: return 1.5
 
 def get_selling_price(price):
     return round(price + calculate_profit(price), 2)
 
-
 def get_order_profit(items):
-    """حساب إجمالي ربح الطلب الواحد بناءً على الأصناف"""
     total = 0
     for item in items:
-        price = float(item.get('price', 0))
-        qty   = float(item.get('qty', 1))
-        
-        if item.get('type') == 'veg':    total += 1.0 * qty # ربح ثابت للكيلو
-        elif item.get('type') == 'meat': total += 2.0 * qty # ربح ثابت للحمة
+        price = float(item.get('price', 0)); qty = float(item.get('qty', 1))
+        if item.get('type') == 'veg': total += 1.0 * qty
+        elif item.get('type') == 'meat': total += 2.0 * qty
         else: total += calculate_profit(price) * qty
     return round(total, 2)
 
-
-def is_vip(n): return n >= 3
-
-
-# ==========================================
-# حساب رسوم التوصيل بناءً على المسافة
-# ==========================================
-
 def calculate_delivery_fee(lat, lng):
-    """
-    حساب رسوم التوصيل بناءً على المسافة من المخزن
-    المخزن في رام الله - عدّل الإحداثيات حسب موقعك
-    
-    المعادلة: 8 + (مسافة × 2.25)
-    حد أدنى: 10 شيقل
-    حد أقصى: 18 شيقل
-    """
-    if not lat or not lng:
-        return 10.0  # إذا ما في موقع، الحد الأدنى
-    
-    # موقع المخزن (رام الله - عدّل هذه الإحداثيات لموقعك الفعلي)
-    store_lat = 31.9038  # خط العرض
-    store_lng = 35.2034  # خط الطول
-    
-    # حساب المسافة باستخدام معادلة Haversine (بالكيلومتر)
-    from math import radians, sin, cos, sqrt, atan2
-    
-    lat1, lon1 = radians(store_lat), radians(store_lng)
-    lat2, lon2 = radians(float(lat)), radians(float(lng))
-    
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-    
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1-a))
-    distance_km = 6371 * c  # نصف قطر الأرض بالكيلومتر
-    
-    # تطبيق المعادلة: 8 + (مسافة × 2.25)
+    if not lat or not lng: return 10.0
+    store_lat, store_lng = 31.9038, 35.2034
+    lat1, lon1 = math.radians(store_lat), math.radians(store_lng)
+    lat2, lon2 = math.radians(float(lat)), math.radians(float(lng))
+    dlat, dlon = lat2 - lat1, lon2 - lon1
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    distance_km = 6371 * c
     delivery = 8 + (distance_km * 2.25)
-    
-    # تطبيق الحد الأدنى والأقصى
-    delivery = max(10, min(18, delivery))
-    
-    return round(delivery, 1)
+    return round(max(10, min(18, delivery)), 1)
