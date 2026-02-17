@@ -14,7 +14,8 @@ from database import (
     get_products, get_products_with_sell_price, add_product, update_product, toggle_product, delete_product,
     get_orders, add_order, update_order_status,
     get_customers, delete_customer,
-    get_daily_stats, get_order_profit, get_selling_price
+    get_daily_stats, get_order_profit, get_selling_price,
+    calculate_delivery_fee
 )
 
 app = Flask(__name__)
@@ -178,7 +179,15 @@ def admin_customers():
 @app.route('/api/order', methods=['POST'])
 def place_order():
     data = request.json
+    
+    # حساب رسوم التوصيل بناءً على الموقع (معادلة ذكية)
+    lat = data.get('lat')
+    lng = data.get('lng')
+    data['delivery'] = calculate_delivery_fee(lat, lng)
+    
+    # حساب الربح
     data['profit'] = get_order_profit(data.get('items', []))
+    
     order_display_id = add_order(data)
     
     order_data_for_notify = data.copy()

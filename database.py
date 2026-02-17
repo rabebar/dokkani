@@ -329,6 +329,7 @@ def add_order(data):
 
 
 def get_orders(phone=None):
+    """استرجاع الطلبات مع معالجة آمنة لـ items في PostgreSQL"""
     if phone:
         rows = execute_query('SELECT * FROM orders WHERE phone=? ORDER BY created_at DESC', (phone,), fetchall=True)
     else:
@@ -339,10 +340,26 @@ def get_orders(phone=None):
         'delivering': '🚗 توصيل', 'done': '✅ تم', 'cancelled': '❌ ملغي'
     }
     
+    # معالجة آمنة لـ items (حل مشكلة PostgreSQL)
     for o in rows:
-        try: o['items'] = json.loads(o['items']) if o['items'] else []
-        except: o['items'] = []
+        # محاولة قراءة items بأمان
+        items_value = o.get('items')
+        
+        if isinstance(items_value, str):
+            # إذا كان string عادي (SQLite أو PostgreSQL صحيح)
+            try:
+                o['items'] = json.loads(items_value) if items_value else []
+            except:
+                o['items'] = []
+        elif isinstance(items_value, list):
+            # إذا كان قائمة بالفعل
+            o['items'] = items_value
+        else:
+            # أي حالة أخرى (مثل function في PostgreSQL)
+            o['items'] = []
+        
         o['status_text'] = status_map.get(o['status'], o['status'])
+    
     return rows
 
 
@@ -420,3 +437,45 @@ def get_order_profit(items):
 
 
 def is_vip(n): return n >= 3
+
+
+# ==========================================
+# حساب رسوم التوصيل بناءً على المسافة
+# ==========================================
+
+def calculate_delivery_fee(lat, lng):
+    """
+    حساب رسوم التوصيل بناءً على المسافة من المخزن
+    المخزن في رام الله - عدّل الإحداثيات حسب موقعك
+    
+    المعادلة: 8 + (مسافة × 2.25)
+    حد أدنى: 10 شيقل
+    حد أقصى: 18 شيقل
+    """
+    if not lat or not lng:
+        return 10.0  # إذا ما في موقع، الحد الأدنى
+    
+    # موقع المخزن (رام الله - عدّل هذه الإحداثيات لموقعك الفعلي)
+    store_lat = 31.9038  # خط العرض
+    store_lng = 35.2034  # خط الطول
+    
+    # حساب المسافة باستخدام معادلة Haversine (بالكيلومتر)
+    from math import radians, sin, cos, sqrt, atan2
+    
+    lat1, lon1 = radians(store_lat), radians(store_lng)
+    lat2, lon2 = radians(float(lat)), radians(float(lng))
+    
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1-a))
+    distance_km = 6371 * c  # نصف قطر الأرض بالكيلومتر
+    
+    # تطبيق المعادلة: 8 + (مسافة × 2.25)
+    delivery = 8 + (distance_km * 2.25)
+    
+    # تطبيق الحد الأدنى والأقصى
+    delivery = max(10, min(18, delivery))
+    
+    return round(delivery, 1)
