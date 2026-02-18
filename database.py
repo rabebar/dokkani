@@ -123,6 +123,13 @@ def init_db():
         status       TEXT DEFAULT 'new',
         created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''', commit=True)
+    # --- توحيد الهوية الرقمية: إجبار PostgreSQL على البدء من 846 ---
+    if is_pg:
+        try:
+            # يضبط العداد على 845 فقط إذا كان العداد الحالي أصغر من ذلك
+            execute_query("SELECT setval('orders_id_seq', COALESCE((SELECT MAX(id) FROM orders), 845), true)", commit=True)
+        except:
+            pass
 
     # 5. الزبائن
     execute_query(f'''CREATE TABLE IF NOT EXISTS customers (
@@ -308,7 +315,7 @@ def add_order(data):
             (data.get('name'), data.get('phone'), data.get('whatsapp'),
              data.get('neighborhood'), data.get('address'),
              data.get('lat'), data.get('lng'), data.get('total', 0)), commit=True)
-    return (order_id or 0) + 846
+    return order_id
 
 def get_orders(phone=None):
     if phone:
