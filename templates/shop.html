@@ -7,6 +7,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
 :root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--sh:0 2px 8px rgba(0,0,0,.08);--r:14px;--nav:60px}
+/* Native App Experience Patch */
+* {
+    -webkit-tap-highlight-color: transparent; /* إزالة الومض الرمادي عند اللمس */
+    -webkit-touch-callout: none;                /* منع ظهور قائمة "حفظ الصورة" */
+    -webkit-user-select: none;                  /* منع تحديد النصوص العشوائي */
+    user-select: none;
+    touch-action: manipulation;                 /* استجابة فورية للمس ومنع اهتزاز الزووم */
+}
+input, textarea {
+    -webkit-user-select: text;                  /* السماح بالكتابة داخل الحقول فقط */
+    user-select: text;
+}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);padding-bottom:calc(var(--nav) + 16px)}
 
