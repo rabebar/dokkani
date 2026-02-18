@@ -123,11 +123,10 @@ def init_db():
         status       TEXT DEFAULT 'new',
         created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''', commit=True)
-    # --- توحيد الهوية الرقمية: إجبار PostgreSQL على البدء من 846 ---
+    # --- ضبط عداد الطلبات ليبدأ من 846 (مرة واحدة فقط) ---
     if is_pg:
         try:
-            # يضبط العداد على 845 فقط إذا كان العداد الحالي أصغر من ذلك
-            execute_query("SELECT setval('orders_id_seq', COALESCE((SELECT MAX(id) FROM orders), 845), true)", commit=True)
+            execute_query("SELECT setval(pg_get_serial_sequence('orders', 'id'), COALESCE((SELECT MAX(id) FROM orders), 845), true)", commit=True)
         except:
             pass
 
@@ -327,11 +326,16 @@ def get_orders(phone=None):
     status_map = {'new': '🆕 جديد', 'prep': '⏳ تحضير', 'delivering': '🚗 توصيل', 'done': '✅ تم', 'cancelled': '❌ ملغي'}
     
     for o in rows:
+       # ضمان تحويل items من نص (JSON String) إلى قائمة (List) بشكل آمن
         items_value = o.get('items')
         if isinstance(items_value, str):
-            try: o['items'] = json.loads(items_value)
-            except: o['items'] = []
-        elif not items_value: o['items'] = []
+            try:
+                o['items'] = json.loads(items_value)
+            except:
+                o['items'] = []
+        elif items_value is None:
+            o['items'] = []
+        
         o['status_text'] = status_map.get(o['status'], o['status'])
     return rows
 

@@ -159,8 +159,7 @@ def place_order():
 @app.route('/api/order/<int:order_id>/status', methods=['POST'])
 def update_status(order_id):
     status = request.json.get('status')
-    db_id = order_id - 846
-    update_order_status(db_id, status)
+    update_order_status(order_id, status)
     try:
         notify_order_status(order_id, status)
     except Exception as e:

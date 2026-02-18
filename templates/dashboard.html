@@ -188,6 +188,13 @@ tr:hover td{background:#fafff9}
             </td>
             <td>📍 {{ o['neighborhood'] }}</td>
             <td>{{ o['items'] | length }} منتج</td>
+            <td>
+              {% for item in o['items'] %}
+              <div style="font-size: 11px; color: var(--g600); line-height: 1.2; margin-bottom: 2px;">
+                • {{ item.name }} <span style="color: var(--g400);">({{ item.qty }})</span>
+              </div>
+              {% endfor %}
+            </td>
             <td><b>{{ o['total'] }}₪</b></td>
             <td><b style="color:var(--g2)">{{ o['profit'] }}₪</b></td>
             <td>
