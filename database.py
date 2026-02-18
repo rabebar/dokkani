@@ -355,8 +355,11 @@ def get_daily_stats():
     orders = execute_query('SELECT * FROM orders', fetchall=True) or []
     completed = [o for o in orders if o['status'] == 'done']
     total_profit = sum(((o.get('profit') or 0) + (o.get('delivery') or 0)) for o in completed)
+    # نحسب فقط الطلبات التي ليست ملغية وليست مكتملة كطلبات "نشطة"
+    active_orders = [o for o in orders if o['status'] not in ['done', 'cancelled']]
+    
     return {
-        'orders_count': len(orders),
+        'orders_count': len(active_orders),
         'completed_count': len(completed),
         'total_sales': round(sum(o.get('total') or 0 for o in completed), 2),
         'daily_profit': round(total_profit, 2),
