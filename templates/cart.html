@@ -232,6 +232,9 @@ function placeOrder(){
   .then(r => r.json())
   .then(data => {
     if(data.success){
+      // ✅ حفظ رقم الطلب الموحد في ذاكرة المتصفح لتعرضه صفحة النجاح
+      localStorage.setItem('dokkani_last_order', data.order_id);
+      
       // نجاح: تفريغ السلة والتوجه لصفحة النجاح
       localStorage.removeItem('dokkani_cart');
       window.location.href = '/success';
