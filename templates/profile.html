@@ -26,8 +26,6 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
 .field input,.field textarea{width:100%;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:10px;font-family:'Cairo',sans-serif;font-size:14px;outline:none;transition:all .2s;background:#f9fafb}
 .field input:focus,.field textarea:focus{border-color:#43a047;background:#fff;box-shadow:0 0 0 3px rgba(67,160,71,.1)}
 .field textarea{resize:none}
-.phone-wrap{display:flex;gap:8px}
-.pfx{padding:12px 13px;background:#e8f5e9;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-weight:700;color:#2e7d32;white-space:nowrap;direction:ltr;display:flex;align-items:center}
 .loc-btn{width:100%;padding:13px;background:#e8f5e9;border:1.5px dashed #43a047;border-radius:10px;font-family:'Cairo',sans-serif;font-size:13.5px;font-weight:700;color:#2e7d32;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
 .loc-btn.ok{background:#c8e6c9;border-style:solid;border-color:#2e7d32}
 .loc-status{font-size:11.5px;color:#43a047;margin-top:6px;text-align:center;display:none}
@@ -44,8 +42,7 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
 .install-txt .t2{color:rgba(255,255,255,.8);font-size:11px;margin-top:2px}
 .install-btn{background:#00c853;color:#1b5e20;border:none;padding:10px 20px;border-radius:10px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:900;cursor:pointer}
 .install-close{color:rgba(255,255,255,.7);background:none;border:none;font-size:22px;cursor:pointer;padding:0 6px}
-
-/* تنسيق أزرار التبديل الجديدة */
+/* أزرار التبديل */
 .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 9px; font-family: 'Cairo'; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.3s; }
 .tab-active { background: #2e7d32; color: #fff; }
 .tab-inactive { background: transparent; color: #2e7d32; }
@@ -53,7 +50,6 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
 </head>
 <body>
 
-<!-- شريط التثبيت الفوري -->
 <div class="install-bar" id="install-bar">
   <div style="display:flex;align-items:center;gap:10px">
     <div style="font-size:28px">📲</div>
@@ -75,7 +71,6 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
     <p>سجّل بياناتك مرة واحدة فقط 🚀</p>
   </div>
 
-  <!-- نظام التبديل الذكي -->
   <div style="display: flex; background: #f1f8e9; margin: 15px 22px 0; border-radius: 12px; padding: 4px;">
     <button id="tab-new" onclick="switchMode('new')" class="tab-btn tab-active">مشترك جديد</button>
     <button id="tab-old" onclick="switchMode('old')" class="tab-btn tab-inactive">طلبت من قبل؟</button>
@@ -89,18 +84,12 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
     </div>
     <div class="field">
       <label>📞 رقم الهاتف *</label>
-      <div class="phone-wrap">
-        <div class="pfx">+970</div>
-        <input type="tel" id="phone" placeholder="05X-XXX-XXXX">
-      </div>
+      <input type="tel" id="phone" placeholder="مثال: 059XXXXXXX">
       <div class="err" id="err-phone">الرجاء إدخال رقم صحيح</div>
     </div>
     <div class="field" id="field-whatsapp">
       <label>💬 واتساب (اختياري)</label>
-      <div class="phone-wrap">
-        <div class="pfx">+970</div>
-        <input type="tel" id="whatsapp" placeholder="05X-XXX-XXXX">
-      </div>
+      <input type="tel" id="whatsapp" placeholder="مثال: 059XXXXXXX">
     </div>
     <div class="field" id="field-hood">
       <label>🏘️ الحي والمنطقة *</label>
@@ -121,12 +110,10 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
       <div class="loc-status" id="loc-status"></div>
     </div>
 
-    <!-- زر الدخول للمشتركين السابقين -->
     <button id="login-btn" class="submit-btn" onclick="checkCustomer()" style="display: none; background: linear-gradient(135deg, #1b5e20, #2e7d32);">
       🔍 دخول واستعادة بياناتي
     </button>
 
-    <!-- زر الحفظ للمشتركين الجدد -->
     <button id="save-btn" class="submit-btn" onclick="saveProfile()">
       ✅ احفظ وابدأ التسوق
     </button>
@@ -139,47 +126,31 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
 <script>
 let uLat = null, uLng = null, deferredPrompt = null;
 
-// تسجيل Service Worker
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/service-worker.js')
-    .catch(e => console.log('SW error:', e));
+  navigator.serviceWorker.register('/service-worker.js').catch(e => console.log('SW error:', e));
 }
 
-// اعتراض حدث التثبيت
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredPrompt = e;
   document.getElementById('install-bar').classList.add('show');
 });
 
-window.addEventListener('appinstalled', () => {
-  document.getElementById('install-bar').classList.remove('show');
-  deferredPrompt = null;
-});
-
 async function installApp(){
   if(!deferredPrompt) return;
   deferredPrompt.prompt();
   const result = await deferredPrompt.userChoice;
-  if(result.outcome === 'accepted'){
-    document.getElementById('install-bar').classList.remove('show');
-  }
+  if(result.outcome === 'accepted') document.getElementById('install-bar').classList.remove('show');
   deferredPrompt = null;
 }
 
-function closeInstall(){
-  document.getElementById('install-bar').classList.remove('show');
-}
+function closeInstall(){ document.getElementById('install-bar').classList.remove('show'); }
 
-// التبديل بين واجهة الجديد والقديم
 function switchMode(mode) {
   const isNew = mode === 'new';
-  
-  // تحديث شكل الأزرار
   document.getElementById('tab-new').className = isNew ? 'tab-btn tab-active' : 'tab-btn tab-inactive';
   document.getElementById('tab-old').className = isNew ? 'tab-btn tab-inactive' : 'tab-btn tab-active';
   
-  // إخفاء/إظهار الحقول
   const display = isNew ? 'block' : 'none';
   document.getElementById('field-name').style.display = display;
   document.getElementById('field-whatsapp').style.display = display;
@@ -187,12 +158,10 @@ function switchMode(mode) {
   document.getElementById('field-addr').style.display = display;
   document.getElementById('field-loc').style.display = display;
   
-  // تبديل الأزرار النهائية
   document.getElementById('save-btn').style.display = isNew ? 'block' : 'none';
   document.getElementById('login-btn').style.display = isNew ? 'none' : 'block';
 }
 
-// البحث عن زبون قديم واستعادة بياناته
 function checkCustomer() {
   const phone = document.getElementById('phone').value.trim();
   if(!phone) { alert('يرجى إدخال رقم الهاتف أولاً'); return; }
@@ -214,14 +183,13 @@ function checkCustomer() {
         switchMode('new');
       }
     })
-    .catch(e => alert('خطأ في الاتصال بالسيرفر، تأكد من الإنترنت'))
+    .catch(e => alert('خطأ في الاتصال بالسيرفر'))
     .finally(() => {
       btn.textContent = originalText;
       btn.disabled = false;
     });
 }
 
-// إذا البيانات موجودة — انتقل للمتجر
 window.onload = () => {
   const saved = localStorage.getItem('dokkani_profile');
   if(saved){
@@ -237,9 +205,6 @@ function getLocation(){
   const st  = document.getElementById('loc-status');
   document.getElementById('loc-text').textContent = 'جاري التحديد...';
   document.getElementById('loc-icon').textContent = '⏳';
-  if(!navigator.geolocation){
-    st.textContent='❌ المتصفح لا يدعم الموقع'; st.style.display='block'; return;
-  }
   navigator.geolocation.getCurrentPosition(
     pos => {
       uLat = pos.coords.latitude; uLng = pos.coords.longitude;
@@ -253,7 +218,7 @@ function getLocation(){
       document.getElementById('loc-text').textContent = 'حدد موقعي تلقائياً';
       document.getElementById('loc-icon').textContent = '📍';
       st.textContent = '⚠️ يمكنك المتابعة بدون تحديد الموقع';
-      st.style.color = '#fb8c00'; st.style.display = 'block';
+      st.style.display = 'block';
     }
   );
 }
