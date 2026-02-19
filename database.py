@@ -14,7 +14,6 @@ def get_db():
     db_url = os.environ.get('DATABASE_URL') or getattr(Config, 'DATABASE_URL', None)
     
     if db_url:
-        # إصلاح رابط PostgreSQL ليتوافق مع مكتبة psycopg2
         if db_url.startswith("postgres://"):
             db_url = db_url.replace("postgres://", "postgresql://", 1)
         return psycopg2.connect(db_url)
@@ -27,7 +26,7 @@ def get_db():
 def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False):
     """المحرك الموحد: يعيد البيانات دائماً كقواميس (Dictionaries) قابلة للتعديل"""
     conn = get_db()
-    is_pg = not hasattr(conn, 'row_factory') # إذا لم يوجد row_factory فهو PostgreSQL
+    is_pg = not hasattr(conn, 'row_factory')
     
     try:
         if is_pg:
@@ -42,11 +41,11 @@ def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False
         if fetchone:
             raw = cur.fetchone()
             if raw:
-                res = dict(raw) # تحويل صريح لقاموس مرن
+                res = dict(raw)
         elif fetchall:
             raw = cur.fetchall()
             if raw:
-                res = [dict(r) for r in raw] # تحويل كل الصفوف لقواميس
+                res = [dict(r) for r in raw]
         else:
             res = None
 
@@ -67,7 +66,6 @@ def init_db():
     is_pg = os.environ.get('DATABASE_URL') is not None
     pk = "SERIAL PRIMARY KEY" if is_pg else "INTEGER PRIMARY KEY AUTOINCREMENT"
 
-    # 1. الأقسام الرئيسية
     execute_query(f'''CREATE TABLE IF NOT EXISTS categories (
         id      {pk},
         name    TEXT NOT NULL,
@@ -77,7 +75,6 @@ def init_db():
         sort    INTEGER DEFAULT 0
     )''', commit=True)
 
-    # 2. الأقسام الفرعية
     execute_query(f'''CREATE TABLE IF NOT EXISTS subcategories (
         id          {pk},
         name        TEXT NOT NULL,
@@ -89,7 +86,6 @@ def init_db():
         FOREIGN KEY (category_id) REFERENCES categories(id)
     )''', commit=True)
 
-    # 3. المنتجات
     execute_query(f'''CREATE TABLE IF NOT EXISTS products (
         id             {pk},
         name           TEXT NOT NULL,
@@ -104,7 +100,6 @@ def init_db():
         FOREIGN KEY (subcategory_id) REFERENCES subcategories(id)
     )''', commit=True)
 
-    # 4. الطلبات
     execute_query(f'''CREATE TABLE IF NOT EXISTS orders (
         id           {pk},
         name         TEXT,
@@ -123,14 +118,13 @@ def init_db():
         status       TEXT DEFAULT 'new',
         created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''', commit=True)
-    # --- ضبط عداد الطلبات ليبدأ من 846 (مرة واحدة فقط) ---
+
     if is_pg:
         try:
             execute_query("SELECT setval(pg_get_serial_sequence('orders', 'id'), COALESCE((SELECT MAX(id) FROM orders), 845), true)", commit=True)
         except:
             pass
 
-    # 5. الزبائن
     execute_query(f'''CREATE TABLE IF NOT EXISTS customers (
         id           {pk},
         name         TEXT,
@@ -145,7 +139,6 @@ def init_db():
         created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''', commit=True)
 
-    # التحقق من وجود بيانات (Seed)
     check = execute_query('SELECT COUNT(*) as count FROM categories', fetchone=True)
     if check and check['count'] == 0:
         seed_categories()
@@ -301,12 +294,11 @@ def add_order(data):
          data.get('total'), data.get('delivery'), data.get('profit'),
          data.get('payment'), data.get('notes')), commit=True)
 
-    # تحديث بيانات الزبون
     existing = execute_query('SELECT id, orders_count, total_spent FROM customers WHERE phone=?', (data.get('phone'),), fetchone=True)
     if existing:
         new_count = (existing.get('orders_count') or 0) + 1
         new_total = (existing.get('total_spent') or 0) + (data.get('total') or 0)
-        execute_query('UPDATE customers SET orders_count=?, total_spent=?, name=? WHERE id=?', 
+        execute_query('UPDATE customers SET orders_count=?, total_spent=?, name=? WHERE id=?',
                      (new_count, new_total, data.get('name'), existing.get('id')), commit=True)
     else:
         execute_query('''INSERT INTO customers (name, phone, whatsapp, neighborhood, address, lat, lng, orders_count, total_spent)
@@ -321,12 +313,11 @@ def get_orders(phone=None):
         rows = execute_query('SELECT * FROM orders WHERE phone=? ORDER BY created_at DESC', (phone,), fetchall=True)
     else:
         rows = execute_query('SELECT * FROM orders ORDER BY created_at DESC', fetchall=True)
-    
+
     rows = rows or []
     status_map = {'new': '🆕 جديد', 'prep': '⏳ تحضير', 'delivering': '🚗 توصيل', 'done': '✅ تم', 'cancelled': '❌ ملغي'}
-    
+
     for o in rows:
-       # ضمان تحويل items من نص (JSON String) إلى قائمة (List) بشكل آمن
         items_value = o.get('items')
         if isinstance(items_value, str):
             try:
@@ -335,7 +326,6 @@ def get_orders(phone=None):
                 o['items'] = []
         elif items_value is None:
             o['items'] = []
-        
         o['status_text'] = status_map.get(o['status'], o['status'])
     return rows
 
@@ -355,16 +345,15 @@ def get_daily_stats():
     orders = execute_query('SELECT * FROM orders', fetchall=True) or []
     completed = [o for o in orders if o['status'] == 'done']
     total_profit = sum(((o.get('profit') or 0) + (o.get('delivery') or 0)) for o in completed)
-    # نحسب فقط الطلبات التي ليست ملغية وليست مكتملة كطلبات "نشطة"
     active_orders = [o for o in orders if o['status'] not in ['done', 'cancelled']]
-    
+
     return {
-        'orders_count': len(active_orders),
+        'orders_count':   len(active_orders),
         'completed_count': len(completed),
-        'total_sales': round(sum(o.get('total') or 0 for o in completed), 2),
-        'daily_profit': round(total_profit, 2),
+        'total_sales':    round(sum(o.get('total') or 0 for o in completed), 2),
+        'daily_profit':   round(total_profit, 2),
         'total_expenses': 0,
-        'net_profit': round(total_profit, 2),
+        'net_profit':     round(total_profit, 2),
         'expenses': [{'name': '⛽ بنزين', 'val': 0}, {'name': '📱 إنترنت', 'val': 0}, {'name': '🛍️ أكياس', 'val': 0}]
     }
 
@@ -397,22 +386,96 @@ def calculate_delivery_fee(lat, lng):
     distance_km = 6371 * c
     delivery = 8 + (distance_km * 2.25)
     return round(max(10, min(18, delivery)), 1)
+
+
 # ==========================================
-# محرك استيراد Excel الذكي
+# محرك جلب الصور من Open Food Facts
+# ==========================================
+
+def fetch_product_image(product_name):
+    """
+    يبحث عن صورة المنتج في Open Food Facts بالاسم
+    يحفظها في /static/uploads/ ويرجع المسار أو None
+    لا يرمي أي استثناء — الفشل الصامت مقصود
+    """
+    import requests
+
+    UPLOAD_FOLDER = os.path.join('static', 'uploads')
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+    try:
+        # البحث في Open Food Facts
+        resp = requests.get(
+            'https://world.openfoodfacts.org/cgi/search.pl',
+            params={
+                'search_terms': product_name,
+                'search_simple': 1,
+                'action': 'process',
+                'json': 1,
+                'page_size': 5,
+                'fields': 'product_name,image_front_small_url,image_url'
+            },
+            timeout=8
+        )
+        if resp.status_code != 200:
+            return None
+
+        products = resp.json().get('products', [])
+        if not products:
+            return None
+
+        # أول منتج يحتوي على صورة
+        image_url = None
+        for p in products:
+            img = p.get('image_front_small_url') or p.get('image_url')
+            if img and img.startswith('http'):
+                image_url = img
+                break
+
+        if not image_url:
+            return None
+
+        # تحميل الصورة
+        img_resp = requests.get(image_url, timeout=8)
+        if img_resp.status_code != 200:
+            return None
+
+        # تحديد الامتداد من Content-Type
+        content_type = img_resp.headers.get('Content-Type', '')
+        if 'png' in content_type:
+            ext = 'png'
+        elif 'webp' in content_type:
+            ext = 'webp'
+        else:
+            ext = 'jpg'
+
+        filename = f"auto_{os.urandom(6).hex()}.{ext}"
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+
+        with open(filepath, 'wb') as f:
+            f.write(img_resp.content)
+
+        return f"/static/uploads/{filename}"
+
+    except Exception:
+        # فشل صامت — لا نوقف عملية الاستيراد بسبب صورة
+        return None
+
+
+# ==========================================
+# محرك استيراد Excel الذكي + جلب الصور
 # ==========================================
 
 def import_excel_to_db(file_path):
     """
     يقرأ ملف Excel ويستورد المنتجات ذكياً مع:
-    - مواءمة الأعمدة تلقائياً (بغض النظر عن أسمائها)
+    - مواءمة الأعمدة تلقائياً بالعربي والإنجليزي
     - إنشاء الأقسام غير الموجودة تلقائياً (Auto-Provisioning)
     - Upsert: تحديث إن وُجد، إنشاء إن كان جديداً
+    - جلب صور المنتجات تلقائياً من Open Food Facts
     """
     import pandas as pd
 
-    # =====================
-    # خريطة الأعمدة الذكية
-    # =====================
     COLUMN_MAP = {
         'name': [
             'اسم المنتج', 'المنتج', 'اسم', 'الاسم',
@@ -437,94 +500,70 @@ def import_excel_to_db(file_path):
     }
 
     def find_column(df_columns, candidates):
-        """البحث عن العمود بمقارنة غير حساسة للحروف"""
         df_cols_lower = {c.strip().lower(): c for c in df_columns}
         for candidate in candidates:
             if candidate.strip().lower() in df_cols_lower:
                 return df_cols_lower[candidate.strip().lower()]
         return None
 
-    # =====================
     # قراءة الملف
-    # =====================
     try:
         df = pd.read_excel(file_path, dtype=str)
         df.columns = df.columns.str.strip()
-        df = df.dropna(how='all')  # حذف الصفوف الفارغة كلياً
+        df = df.dropna(how='all')
     except Exception as e:
-        return {'success': False, 'error': f'فشل قراءة الملف: {str(e)}', 'created': 0, 'updated': 0, 'errors': 0}
+        return {'success': False, 'error': f'فشل قراءة الملف: {str(e)}',
+                'created': 0, 'updated': 0, 'errors': 0, 'images': 0}
 
-    # =====================
     # تحديد الأعمدة
-    # =====================
     col_name     = find_column(df.columns, COLUMN_MAP['name'])
     col_price    = find_column(df.columns, COLUMN_MAP['price'])
     col_unit     = find_column(df.columns, COLUMN_MAP['unit'])
     col_category = find_column(df.columns, COLUMN_MAP['category'])
     col_subcat   = find_column(df.columns, COLUMN_MAP['subcategory'])
 
-    # عمود الاسم والسعر إلزاميان
     if not col_name or not col_price:
         missing = []
-        if not col_name: missing.append('اسم المنتج')
+        if not col_name:  missing.append('اسم المنتج')
         if not col_price: missing.append('السعر')
         return {
             'success': False,
-            'error': f'الأعمدة التالية غير موجودة أو غير معروفة: {", ".join(missing)}. الأعمدة الموجودة: {", ".join(df.columns.tolist())}',
-            'created': 0, 'updated': 0, 'errors': 0
+            'error': f'الأعمدة التالية غير موجودة: {", ".join(missing)}. الأعمدة الموجودة: {", ".join(df.columns.tolist())}',
+            'created': 0, 'updated': 0, 'errors': 0, 'images': 0
         }
 
-    # =====================
-    # كاش الأقسام (لتجنب الاستعلام المتكرر)
-    # =====================
     def get_or_create_category(name):
         name = name.strip()
         existing = execute_query('SELECT id FROM categories WHERE name=?', (name,), fetchone=True)
         if existing:
             return existing['id']
-        # إنشاء قسم جديد تلقائياً
-        new_id = execute_query(
-            'INSERT INTO categories (name, icon, visible) VALUES (?, ?, 1)',
-            (name, '📦'), commit=True
-        )
-        return new_id
+        return execute_query('INSERT INTO categories (name, icon, visible) VALUES (?, ?, 1)', (name, '📦'), commit=True)
 
     def get_or_create_subcategory(name, category_id):
         name = name.strip()
-        existing = execute_query(
-            'SELECT id FROM subcategories WHERE name=? AND category_id=?',
-            (name, category_id), fetchone=True
-        )
+        existing = execute_query('SELECT id FROM subcategories WHERE name=? AND category_id=?', (name, category_id), fetchone=True)
         if existing:
             return existing['id']
-        new_id = execute_query(
-            'INSERT INTO subcategories (name, icon, category_id, visible) VALUES (?, ?, ?, 1)',
-            (name, '📦', category_id), commit=True
-        )
-        return new_id
+        return execute_query('INSERT INTO subcategories (name, icon, category_id, visible) VALUES (?, ?, ?, 1)', (name, '📦', category_id), commit=True)
 
-    # =====================
-    # المعالجة الرئيسية
-    # =====================
-    created = 0
-    updated = 0
-    errors  = 0
+    created    = 0
+    updated    = 0
+    errors     = 0
+    images     = 0
     error_rows = []
 
     for idx, row in df.iterrows():
-        row_num = idx + 2  # رقم الصف في الإكسل (يبدأ من 2)
+        row_num = idx + 2
         try:
-            # استخراج القيم
-            name  = str(row[col_name]).strip() if pd.notna(row[col_name]) else ''
+            name      = str(row[col_name]).strip()  if pd.notna(row[col_name])  else ''
             price_raw = str(row[col_price]).strip() if pd.notna(row[col_price]) else ''
 
-            if not name or not price_raw:
+            if not name or not price_raw or name == 'nan':
                 errors += 1
                 error_rows.append(f'صف {row_num}: اسم أو سعر فارغ')
                 continue
 
-            # تنظيف السعر من أي رموز (₪ $ , إلخ)
-            price_clean = price_raw.replace('₪', '').replace('$', '').replace(',', '').strip()
+            price_clean = price_raw.replace('₪','').replace('$','').replace(',','').strip()
             try:
                 price = float(price_clean)
             except:
@@ -533,48 +572,51 @@ def import_excel_to_db(file_path):
                 continue
 
             unit = str(row[col_unit]).strip() if col_unit and pd.notna(row[col_unit]) else 'حبة'
-            if unit == 'nan' or not unit:
-                unit = 'حبة'
+            if unit in ('nan', ''): unit = 'حبة'
 
-            # معالجة القسم
             category_id = None
             if col_category and pd.notna(row[col_category]):
                 cat_name = str(row[col_category]).strip()
                 if cat_name and cat_name != 'nan':
                     category_id = get_or_create_category(cat_name)
-
             if not category_id:
-                # القسم الافتراضي: أخرى (آخر قسم)
                 default_cat = execute_query('SELECT id FROM categories ORDER BY id DESC', fetchone=True)
                 category_id = default_cat['id'] if default_cat else 1
 
-            # معالجة القسم الفرعي
             subcategory_id = None
             if col_subcat and pd.notna(row[col_subcat]):
                 sub_name = str(row[col_subcat]).strip()
                 if sub_name and sub_name != 'nan':
                     subcategory_id = get_or_create_subcategory(sub_name, category_id)
 
-            # =====================
-            # Upsert المنتج
-            # =====================
             existing_prod = execute_query(
-                'SELECT id FROM products WHERE name=? AND category_id=?',
+                'SELECT id, image FROM products WHERE name=? AND category_id=?',
                 (name, category_id), fetchone=True
             )
 
             if existing_prod:
-                # تحديث السعر والوحدة
-                execute_query(
-                    'UPDATE products SET price=?, unit=?, subcategory_id=? WHERE id=?',
-                    (price, unit, subcategory_id, existing_prod['id']), commit=True
-                )
+                existing_image = existing_prod.get('image')
+                if not existing_image:
+                    # جلب صورة فقط إن لم تكن موجودة
+                    auto_image = fetch_product_image(name)
+                    if auto_image: images += 1
+                    execute_query(
+                        'UPDATE products SET price=?, unit=?, subcategory_id=?, image=? WHERE id=?',
+                        (price, unit, subcategory_id, auto_image, existing_prod['id']), commit=True
+                    )
+                else:
+                    execute_query(
+                        'UPDATE products SET price=?, unit=?, subcategory_id=? WHERE id=?',
+                        (price, unit, subcategory_id, existing_prod['id']), commit=True
+                    )
                 updated += 1
             else:
-                # إنشاء منتج جديد
+                # منتج جديد — جلب صورة تلقائياً
+                auto_image = fetch_product_image(name)
+                if auto_image: images += 1
                 execute_query(
-                    'INSERT INTO products (name, price, unit, category_id, subcategory_id, visible) VALUES (?, ?, ?, ?, ?, 1)',
-                    (name, price, unit, category_id, subcategory_id), commit=True
+                    'INSERT INTO products (name, price, unit, category_id, subcategory_id, image, visible) VALUES (?, ?, ?, ?, ?, ?, 1)',
+                    (name, price, unit, category_id, subcategory_id, auto_image), commit=True
                 )
                 created += 1
 
@@ -584,9 +626,10 @@ def import_excel_to_db(file_path):
             continue
 
     return {
-        'success': True,
-        'created': created,
-        'updated': updated,
-        'errors': errors,
-        'error_rows': error_rows[:10]  # نعرض أول 10 أخطاء فقط
+        'success':    True,
+        'created':    created,
+        'updated':    updated,
+        'errors':     errors,
+        'images':     images,
+        'error_rows': error_rows[:10]
     }

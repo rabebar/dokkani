@@ -45,8 +45,7 @@ body {
   background: linear-gradient(170deg, var(--g1), var(--g2));
   min-height: 100vh;
   position: fixed;
-  right: 0;
-  top: 0;
+  right: 0; top: 0;
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -55,9 +54,7 @@ body {
 .sb-logo {
   padding: 22px 18px 16px;
   border-bottom: 1px solid rgba(255,255,255,.1);
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: flex; align-items: center; gap: 10px;
 }
 
 .sb-ico {
@@ -69,54 +66,44 @@ body {
 }
 
 .sb-title { color: #fff; font-size: 19px; font-weight: 900; font-family: 'Tajawal', sans-serif; }
-.sb-sub { color: rgba(255,255,255,.45); font-size: 10px; }
+.sb-sub   { color: rgba(255,255,255,.45); font-size: 10px; }
 
 .sb-nav { padding: 16px 10px; flex: 1; }
 
 .nl {
   color: rgba(255,255,255,.3);
-  font-size: 9.5px;
-  letter-spacing: 1.5px;
+  font-size: 9.5px; letter-spacing: 1.5px;
   text-transform: uppercase;
-  padding: 0 8px;
-  margin: 12px 0 5px;
+  padding: 0 8px; margin: 12px 0 5px;
 }
 
 .ni {
   display: flex; align-items: center; gap: 10px;
-  padding: 9px 11px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: rgba(255,255,255,.65);
+  padding: 9px 11px; border-radius: 8px;
+  cursor: pointer; color: rgba(255,255,255,.65);
   font-size: 12.5px; font-weight: 600;
-  margin-bottom: 2px;
-  transition: all .2s;
+  margin-bottom: 2px; transition: all .2s;
   text-decoration: none;
 }
-
-.ni:hover { background: rgba(255,255,255,.1); color: #fff; }
+.ni:hover  { background: rgba(255,255,255,.1); color: #fff; }
 .ni.active { background: rgba(255,255,255,.17); color: #fff; }
-.ni .ico { font-size: 16px; width: 18px; }
+.ni .ico   { font-size: 16px; width: 18px; }
 
 .sb-foot {
   padding: 12px 10px 20px;
   border-top: 1px solid rgba(255,255,255,.1);
 }
-
 .adm {
   display: flex; align-items: center; gap: 9px;
   background: rgba(255,255,255,.1);
   padding: 9px 11px; border-radius: 8px;
 }
-
 .adm-av {
   width: 32px; height: 32px;
-  background: var(--acc);
-  border-radius: 50%;
+  background: var(--acc); border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 15px;
 }
-
 .adm-n { color: #fff; font-size: 12px; font-weight: 700; }
 .adm-r { color: rgba(255,255,255,.45); font-size: 10px; }
 
@@ -131,7 +118,6 @@ body {
   position: sticky; top: 0; z-index: 50;
   box-shadow: var(--sh);
 }
-
 .tb-title { font-size: 17px; font-weight: 900; color: var(--g1); font-family: 'Tajawal', sans-serif; }
 
 .content { padding: 20px 22px; }
@@ -140,8 +126,7 @@ body {
 .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
 
 .tab {
-  padding: 9px 20px;
-  border-radius: 20px;
+  padding: 9px 20px; border-radius: 20px;
   border: 1.5px solid var(--g200);
   background: var(--w);
   font-family: 'Cairo', sans-serif;
@@ -149,11 +134,10 @@ body {
   cursor: pointer; color: var(--g600);
   transition: all .2s;
 }
-
-.tab:hover { border-color: var(--g4); color: var(--g2); }
+.tab:hover  { border-color: var(--g4); color: var(--g2); }
 .tab.active { background: var(--g2); color: #fff; border-color: var(--g2); }
 
-.panel { display: none; }
+.panel        { display: none; }
 .panel.active { display: block; }
 
 /* ===== CARD ===== */
@@ -162,123 +146,95 @@ body {
   border-radius: var(--r);
   box-shadow: var(--sh);
   border: 1px solid var(--g200);
-  overflow: hidden;
-  margin-bottom: 18px;
+  overflow: hidden; margin-bottom: 18px;
 }
-
 .chd {
   padding: 13px 18px;
   border-bottom: 1px solid var(--g200);
   display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: 8px;
 }
-
 .ctl { font-size: 14px; font-weight: 900; color: var(--g1); }
 
 .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .add-btn {
   padding: 8px 16px;
-  background: var(--g4);
-  color: #fff;
+  background: var(--g4); color: #fff;
   border: none; border-radius: 8px;
   font-family: 'Cairo', sans-serif;
   font-size: 13px; font-weight: 700;
-  cursor: pointer;
-  transition: all .2s;
+  cursor: pointer; transition: all .2s;
   display: flex; align-items: center; gap: 6px;
 }
-
-.add-btn:hover { opacity: .9; transform: translateY(-1px); }
-.add-btn.blue { background: var(--blue); }
+.add-btn:hover      { opacity: .9; transform: translateY(-1px); }
+.add-btn.blue       { background: var(--blue); }
 .add-btn.blue:hover { background: #0d47a1; }
 
 /* ===== CATEGORIES GRID ===== */
 .cat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
-  padding: 16px;
+  gap: 12px; padding: 16px;
 }
-
 .cat-card {
-  background: var(--gx);
-  border-radius: var(--r);
-  padding: 14px;
-  text-align: center;
+  background: var(--gx); border-radius: var(--r);
+  padding: 14px; text-align: center;
   border: 1.5px solid var(--g200);
-  position: relative;
-  transition: all .2s;
+  position: relative; transition: all .2s;
 }
-
-.cat-card:hover { border-color: var(--g4); box-shadow: var(--sh); }
+.cat-card:hover  { border-color: var(--g4); box-shadow: var(--sh); }
 .cat-card.hidden { opacity: .45; }
 
 .cat-img {
-  width: 56px; height: 56px;
-  border-radius: 14px;
+  width: 56px; height: 56px; border-radius: 14px;
   background: var(--w);
   display: flex; align-items: center; justify-content: center;
-  font-size: 28px;
-  margin: 0 auto 8px;
-  overflow: hidden;
-  box-shadow: var(--sh);
+  font-size: 28px; margin: 0 auto 8px;
+  overflow: hidden; box-shadow: var(--sh);
 }
-
-.cat-img img { width: 100%; height: 100%; object-fit: cover; }
-.cat-name { font-size: 12.5px; font-weight: 700; margin-bottom: 10px; color: var(--g800); }
-
-.cat-actions { display: flex; gap: 5px; justify-content: center; }
+.cat-img img  { width: 100%; height: 100%; object-fit: cover; }
+.cat-name     { font-size: 12.5px; font-weight: 700; margin-bottom: 10px; color: var(--g800); }
+.cat-actions  { display: flex; gap: 5px; justify-content: center; }
 
 .ca {
   width: 28px; height: 28px;
   border-radius: 7px; border: none;
-  cursor: pointer; font-size: 13px;
-  transition: all .2s;
+  cursor: pointer; font-size: 13px; transition: all .2s;
 }
-
-.ca:hover { transform: scale(1.12); }
-.ca-edit { background: #e3f2fd; }
-.ca-toggle { background: var(--gp); }
-.ca-del { background: #ffebee; }
+.ca:hover   { transform: scale(1.12); }
+.ca-edit    { background: #e3f2fd; }
+.ca-toggle  { background: var(--gp); }
+.ca-del     { background: #ffebee; }
 
 /* ===== SUBCATEGORIES ===== */
 .sub-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 10px;
-  padding: 16px;
+  gap: 10px; padding: 16px;
 }
-
 .sub-card {
-  background: #fafff9;
-  border-radius: 10px;
-  padding: 12px;
+  background: #fafff9; border-radius: 10px; padding: 12px;
   border: 1.5px solid var(--g200);
   display: flex; align-items: center; gap: 10px;
   transition: all .2s;
 }
-
-.sub-card:hover { border-color: var(--g4); }
+.sub-card:hover  { border-color: var(--g4); }
 .sub-card.hidden { opacity: .45; }
 
 .sub-ico {
-  width: 38px; height: 38px;
-  background: var(--gp);
+  width: 38px; height: 38px; background: var(--gp);
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 20px; flex-shrink: 0;
-  overflow: hidden;
+  font-size: 20px; flex-shrink: 0; overflow: hidden;
 }
-
-.sub-ico img { width: 100%; height: 100%; object-fit: cover; }
-.sub-name { font-size: 12px; font-weight: 700; flex: 1; }
-.sub-cat-badge {
+.sub-ico img    { width: 100%; height: 100%; object-fit: cover; }
+.sub-name       { font-size: 12px; font-weight: 700; flex: 1; }
+.sub-cat-badge  {
   font-size: 9.5px; color: var(--g4);
   background: var(--gp); padding: 2px 6px;
   border-radius: 10px; font-weight: 700;
 }
-
 .sub-actions { display: flex; gap: 4px; margin-top: 6px; }
 
 /* ===== PRODUCTS TABLE ===== */
@@ -288,69 +244,44 @@ body {
   border-bottom: 1px solid var(--g200);
   flex-wrap: wrap;
 }
-
 .pf {
-  padding: 5px 12px;
-  border-radius: 18px;
-  border: 1.5px solid var(--g200);
-  background: var(--w);
+  padding: 5px 12px; border-radius: 18px;
+  border: 1.5px solid var(--g200); background: var(--w);
   font-family: 'Cairo', sans-serif;
   font-size: 11.5px; font-weight: 700;
-  cursor: pointer; color: var(--g600);
-  transition: all .2s;
+  cursor: pointer; color: var(--g600); transition: all .2s;
 }
-
-.pf:hover { border-color: var(--g4); color: var(--g2); }
+.pf:hover  { border-color: var(--g4); color: var(--g2); }
 .pf.active { background: var(--g2); color: #fff; border-color: var(--g2); }
 
-/* بحث المنتجات */
-.search-bar {
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--g200);
-}
-
+.search-bar { padding: 10px 16px; border-bottom: 1px solid var(--g200); }
 .search-bar input {
-  width: 100%;
-  padding: 8px 14px;
-  border: 1.5px solid var(--g200);
-  border-radius: 20px;
-  font-family: 'Cairo', sans-serif;
-  font-size: 13px;
-  outline: none;
-  transition: border-color .2s;
-  background: var(--g100);
+  width: 100%; padding: 8px 14px;
+  border: 1.5px solid var(--g200); border-radius: 20px;
+  font-family: 'Cairo', sans-serif; font-size: 13px;
+  outline: none; transition: border-color .2s; background: var(--g100);
 }
-
 .search-bar input:focus { border-color: var(--g4); background: var(--w); }
 
 table { width: 100%; border-collapse: collapse; }
-
 th {
-  background: var(--gx);
-  padding: 10px 14px;
-  text-align: right;
-  font-size: 11px; font-weight: 700; color: var(--g2);
+  background: var(--gx); padding: 10px 14px;
+  text-align: right; font-size: 11px; font-weight: 700; color: var(--g2);
 }
-
 td {
-  padding: 9px 14px;
-  font-size: 12.5px;
-  border-bottom: 1px solid var(--g200);
-  vertical-align: middle;
+  padding: 9px 14px; font-size: 12.5px;
+  border-bottom: 1px solid var(--g200); vertical-align: middle;
 }
-
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: #fafff9; }
-tr.prod-hidden td { opacity: .5; }
+tr:last-child td   { border-bottom: none; }
+tr:hover td        { background: #fafff9; }
+tr.prod-hidden td  { opacity: .5; }
 
 .prod-img {
-  width: 38px; height: 38px;
-  border-radius: 9px;
+  width: 38px; height: 38px; border-radius: 9px;
   background: var(--gx);
   display: flex; align-items: center; justify-content: center;
   font-size: 20px; overflow: hidden;
 }
-
 .prod-img img { width: 100%; height: 100%; object-fit: cover; }
 
 .unit-badge {
@@ -358,19 +289,14 @@ tr.prod-hidden td { opacity: .5; }
   padding: 2px 9px; border-radius: 18px;
   font-size: 10.5px; font-weight: 700;
 }
-
 .price-sell { color: var(--g2); font-weight: 900; }
 .price-orig { color: var(--g400); font-size: 11px; }
 
 .act-btns { display: flex; gap: 5px; }
-
 .abt {
-  width: 28px; height: 28px;
-  border-radius: 7px; border: none;
-  cursor: pointer; font-size: 13px;
-  transition: all .2s;
+  width: 28px; height: 28px; border-radius: 7px;
+  border: none; cursor: pointer; font-size: 13px; transition: all .2s;
 }
-
 .abt:hover { transform: scale(1.1); }
 
 /* ===== MODAL ===== */
@@ -379,237 +305,171 @@ tr.prod-hidden td { opacity: .5; }
   background: rgba(0,0,0,.55);
   z-index: 200;
   display: none; align-items: center; justify-content: center;
-  padding: 20px;
-  backdrop-filter: blur(3px);
+  padding: 20px; backdrop-filter: blur(3px);
 }
-
 .modal-bg.show { display: flex; }
 
 .modal {
-  background: var(--w);
-  border-radius: 18px;
-  width: 100%; max-width: 500px;
-  max-height: 90vh;
+  background: var(--w); border-radius: 18px;
+  width: 100%; max-width: 500px; max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 24px 60px rgba(0,0,0,.25);
   animation: pop .25s ease;
 }
-
 @keyframes pop {
   from { opacity: 0; transform: scale(.94) translateY(10px); }
-  to   { opacity: 1; transform: scale(1)  translateY(0); }
+  to   { opacity: 1; transform: scale(1)   translateY(0); }
 }
 
 .modal-hdr {
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--g200);
+  padding: 18px 20px; border-bottom: 1px solid var(--g200);
   display: flex; align-items: center; justify-content: space-between;
   position: sticky; top: 0; background: var(--w); z-index: 2;
 }
-
 .modal-title { font-size: 15px; font-weight: 900; color: var(--g1); }
-
 .modal-close {
-  width: 30px; height: 30px;
-  border-radius: 8px; border: none;
-  background: var(--g100);
-  cursor: pointer; font-size: 15px;
-  transition: background .2s;
+  width: 30px; height: 30px; border-radius: 8px;
+  border: none; background: var(--g100); cursor: pointer;
+  font-size: 15px; transition: background .2s;
 }
-
 .modal-close:hover { background: var(--g200); }
 
 .modal-body { padding: 20px; }
 
 .field { margin-bottom: 14px; }
-
 .field label {
-  display: block;
-  font-size: 11.5px; font-weight: 700; color: var(--g2);
-  margin-bottom: 5px;
+  display: block; font-size: 11.5px; font-weight: 700;
+  color: var(--g2); margin-bottom: 5px;
 }
-
 .field input,
 .field select,
 .field textarea {
-  width: 100%;
-  padding: 10px 13px;
-  border: 1.5px solid var(--g200);
-  border-radius: 9px;
-  font-family: 'Cairo', sans-serif;
-  font-size: 13px;
-  outline: none;
-  transition: border-color .2s;
-  background: #f9fafb;
+  width: 100%; padding: 10px 13px;
+  border: 1.5px solid var(--g200); border-radius: 9px;
+  font-family: 'Cairo', sans-serif; font-size: 13px;
+  outline: none; transition: border-color .2s; background: #f9fafb;
 }
-
 .field input:focus,
 .field select:focus { border-color: var(--g4); background: var(--w); }
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
 .img-preview {
-  width: 80px; height: 80px;
-  border-radius: 12px;
+  width: 80px; height: 80px; border-radius: 12px;
   background: var(--gx);
   display: flex; align-items: center; justify-content: center;
-  font-size: 36px;
-  margin-bottom: 8px;
-  overflow: hidden;
+  font-size: 36px; margin-bottom: 8px; overflow: hidden;
   border: 1.5px dashed var(--g4);
 }
-
 .img-preview img { width: 100%; height: 100%; object-fit: cover; }
 
 .modal-footer {
-  padding: 14px 20px;
-  border-top: 1px solid var(--g200);
+  padding: 14px 20px; border-top: 1px solid var(--g200);
   display: flex; gap: 9px; justify-content: flex-end;
-  position: sticky; bottom: 0;
-  background: var(--w);
+  position: sticky; bottom: 0; background: var(--w);
 }
 
 .btn-save {
-  padding: 10px 24px;
-  background: var(--g2); color: #fff;
+  padding: 10px 24px; background: var(--g2); color: #fff;
   border: none; border-radius: 9px;
-  font-family: 'Cairo', sans-serif;
-  font-size: 14px; font-weight: 700;
+  font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700;
   cursor: pointer; transition: all .2s;
 }
-
-.btn-save:hover { background: var(--g1); transform: translateY(-1px); }
-.btn-save.blue-btn { background: var(--blue); }
+.btn-save:hover          { background: var(--g1); transform: translateY(-1px); }
+.btn-save.blue-btn       { background: var(--blue); }
 .btn-save.blue-btn:hover { background: #0d47a1; }
 
 .btn-cancel {
-  padding: 10px 16px;
-  background: var(--g100); color: var(--g600);
+  padding: 10px 16px; background: var(--g100); color: var(--g600);
   border: none; border-radius: 9px;
-  font-family: 'Cairo', sans-serif;
-  font-size: 14px; font-weight: 700;
+  font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700;
   cursor: pointer; transition: background .2s;
 }
-
 .btn-cancel:hover { background: var(--g200); }
 
 /* ===== EXCEL MODAL ===== */
 .excel-info {
-  background: var(--blue-light);
-  border-radius: 10px;
-  padding: 13px 15px;
-  margin-bottom: 16px;
-  font-size: 12px;
-  line-height: 2;
-  color: var(--blue);
+  background: var(--blue-light); border-radius: 10px;
+  padding: 13px 15px; margin-bottom: 16px;
+  font-size: 12px; line-height: 2; color: var(--blue);
   border: 1px solid #90caf9;
 }
-
 .excel-info b { font-weight: 900; }
 
 .file-drop {
-  border: 2px dashed #90caf9;
-  border-radius: 12px;
-  padding: 24px;
-  text-align: center;
-  background: #f8fbff;
-  cursor: pointer;
-  transition: all .2s;
-  position: relative;
+  border: 2px dashed #90caf9; border-radius: 12px;
+  padding: 24px; text-align: center;
+  background: #f8fbff; cursor: pointer;
+  transition: all .2s; position: relative;
 }
+.file-drop:hover    { border-color: var(--blue); background: #e8f4ff; }
+.file-drop input    { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.file-drop-ico      { font-size: 32px; margin-bottom: 8px; }
+.file-drop-txt      { font-size: 13px; font-weight: 700; color: var(--blue); }
+.file-drop-sub      { font-size: 11px; color: var(--g400); margin-top: 4px; }
+.file-chosen        { font-size: 12px; color: var(--g2); margin-top: 8px; font-weight: 700; display: none; }
 
-.file-drop:hover { border-color: var(--blue); background: #e8f4ff; }
-.file-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
-.file-drop-ico { font-size: 32px; margin-bottom: 8px; }
-.file-drop-txt { font-size: 13px; font-weight: 700; color: var(--blue); }
-.file-drop-sub { font-size: 11px; color: var(--g400); margin-top: 4px; }
-.file-chosen { font-size: 12px; color: var(--g2); margin-top: 8px; font-weight: 700; display: none; }
-
-/* شريط تقدم */
-.progress-wrap { margin-top: 14px; display: none; }
+.progress-wrap  { margin-top: 14px; display: none; }
 .progress-label { font-size: 12px; color: var(--blue); font-weight: 700; margin-bottom: 6px; }
-.progress-track {
-  background: #e3f2fd;
-  border-radius: 20px; height: 8px; overflow: hidden;
-}
-.progress-bar {
+.progress-track { background: #e3f2fd; border-radius: 20px; height: 8px; overflow: hidden; }
+.progress-bar   {
   height: 100%; width: 0%;
   background: linear-gradient(90deg, #1565c0, #42a5f5);
-  border-radius: 20px;
-  transition: width .4s ease;
+  border-radius: 20px; transition: width .4s ease;
 }
 
-/* نتائج الرفع */
 .result-box {
   margin-top: 16px; display: none;
   border-radius: 12px; padding: 16px;
-  background: var(--gx);
-  border: 1.5px solid #a5d6a7;
+  background: var(--gx); border: 1.5px solid #a5d6a7;
   animation: pop .3s ease;
 }
-
 .result-title { font-size: 14px; font-weight: 900; color: var(--g1); margin-bottom: 12px; }
 
 .result-stats {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 8px;
 }
-
 .stat-box {
-  background: var(--w);
-  border-radius: 10px;
-  padding: 12px 8px;
-  text-align: center;
+  background: var(--w); border-radius: 10px;
+  padding: 12px 8px; text-align: center;
   border: 1.5px solid var(--g200);
 }
-
-.stat-num { font-size: 26px; font-weight: 900; line-height: 1; }
-.stat-lbl { font-size: 10px; color: var(--g600); margin-top: 4px; font-weight: 600; }
+.stat-num     { font-size: 26px; font-weight: 900; line-height: 1; }
+.stat-lbl     { font-size: 10px; color: var(--g600); margin-top: 4px; font-weight: 600; }
 .stat-created { color: var(--g2); }
 .stat-updated { color: var(--blue); }
+.stat-images  { color: #f57c00; }
 .stat-errors  { color: var(--red); }
 
 .error-details {
-  margin-top: 12px;
-  font-size: 11px; color: var(--red);
-  background: #fff5f5;
-  border-radius: 8px; padding: 10px;
-  border: 1px solid #ffcdd2;
-  display: none;
-  line-height: 1.9;
+  margin-top: 12px; font-size: 11px; color: var(--red);
+  background: #fff5f5; border-radius: 8px; padding: 10px;
+  border: 1px solid #ffcdd2; display: none; line-height: 1.9;
 }
 
-.result-box.fail {
-  background: #fff5f5;
-  border-color: #ef9a9a;
-}
-
-.result-box.fail .result-title { color: var(--red); }
+.result-box.fail                { background: #fff5f5; border-color: #ef9a9a; }
+.result-box.fail .result-title  { color: var(--red); }
 
 /* ===== TOAST ===== */
 .toast {
   position: fixed; bottom: 24px; left: 50%;
   transform: translateX(-50%);
   background: var(--g1); color: #fff;
-  padding: 12px 28px;
-  border-radius: 12px;
+  padding: 12px 28px; border-radius: 12px;
   font-size: 13px; font-weight: 700;
   z-index: 500; display: none;
   box-shadow: 0 8px 24px rgba(0,0,0,.2);
-  animation: slideUp .3s ease;
-  white-space: nowrap;
+  animation: slideUp .3s ease; white-space: nowrap;
 }
-
 @keyframes slideUp {
   from { opacity: 0; transform: translate(-50%, 20px); }
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
 
 /* ===== EMPTY STATE ===== */
-.empty-state {
-  text-align: center; padding: 40px 20px; color: var(--g400);
-}
+.empty-state { text-align: center; padding: 40px 20px; color: var(--g400); }
 .empty-state .es-ico { font-size: 48px; margin-bottom: 10px; }
 .empty-state p { font-size: 13px; }
 
@@ -619,6 +479,7 @@ tr.prod-hidden td { opacity: .5; }
   .main { margin-right: 0; }
   .cat-grid { grid-template-columns: repeat(2, 1fr); }
   .grid-2 { grid-template-columns: 1fr; }
+  .result-stats { grid-template-columns: 1fr 1fr; }
   th:nth-child(3), td:nth-child(3),
   th:nth-child(4), td:nth-child(4) { display: none; }
 }
@@ -722,7 +583,6 @@ tr.prod-hidden td { opacity: .5; }
           <div class="ctl">📁 جميع الأقسام الفرعية</div>
           <button class="add-btn" onclick="openSubModal()">➕ قسم فرعي جديد</button>
         </div>
-        <!-- فلتر حسب القسم الرئيسي -->
         <div class="prod-filters">
           <button class="pf active" onclick="filterSubs('all', this)">الكل</button>
           {% for cat in categories %}
@@ -775,20 +635,15 @@ tr.prod-hidden td { opacity: .5; }
             <button class="add-btn" onclick="openProdModal()">➕ منتج جديد</button>
           </div>
         </div>
-
-        <!-- فلاتر الأقسام -->
         <div class="prod-filters">
           <button class="pf active" onclick="filterProds('all', this)">الكل</button>
           {% for cat in categories %}
           <button class="pf" onclick="filterProds('{{ cat.id }}', this)">{{ cat.icon }} {{ cat.name }}</button>
           {% endfor %}
         </div>
-
-        <!-- بحث -->
         <div class="search-bar">
           <input type="text" id="prod-search" placeholder="🔍 ابحث عن منتج..." oninput="searchProds(this.value)">
         </div>
-
         <table>
           <thead>
             <tr>
@@ -840,7 +695,6 @@ tr.prod-hidden td { opacity: .5; }
             {% endfor %}
           </tbody>
         </table>
-
         {% if not products %}
         <div class="empty-state">
           <div class="es-ico">🛍️</div>
@@ -998,33 +852,28 @@ tr.prod-hidden td { opacity: .5; }
       <button class="modal-close" onclick="closeExcelModal()">✕</button>
     </div>
     <div class="modal-body">
-
       <div class="excel-info">
         <b>📋 الأعمدة المدعومة في ملف Excel:</b><br>
         اسم المنتج &nbsp;·&nbsp; السعر &nbsp;·&nbsp; الوحدة &nbsp;·&nbsp; القسم الرئيسي &nbsp;·&nbsp; القسم الفرعي
         <br>
-        <b>💡 ملاحظة:</b> النظام يتعرف على أسماء الأعمدة تلقائياً بالعربي والإنجليزي — الأقسام الجديدة تُنشأ تلقائياً
+        <b>💡 ملاحظة:</b> النظام يتعرف على أسماء الأعمدة تلقائياً بالعربي والإنجليزي — الأقسام الجديدة تُنشأ تلقائياً — الصور تُجلب تلقائياً
       </div>
 
-      <!-- منطقة رفع الملف -->
       <div class="file-drop" id="file-drop-zone">
-        <input type="file" id="excel-file" accept=".xlsx,.xls"
-          onchange="onFileChosen(this)">
+        <input type="file" id="excel-file" accept=".xlsx,.xls" onchange="onFileChosen(this)">
         <div class="file-drop-ico">📂</div>
         <div class="file-drop-txt">اسحب الملف هنا أو انقر للاختيار</div>
         <div class="file-drop-sub">يدعم ملفات .xlsx و .xls فقط</div>
         <div class="file-chosen" id="file-chosen-name"></div>
       </div>
 
-      <!-- شريط تقدم -->
       <div class="progress-wrap" id="excel-progress">
-        <div class="progress-label">⏳ جاري معالجة الملف...</div>
+        <div class="progress-label">⏳ جاري معالجة الملف وجلب الصور...</div>
         <div class="progress-track">
           <div class="progress-bar" id="excel-bar"></div>
         </div>
       </div>
 
-      <!-- نتائج الرفع -->
       <div class="result-box" id="excel-result">
         <div class="result-title" id="result-title">✅ اكتملت عملية الرفع!</div>
         <div class="result-stats">
@@ -1037,14 +886,18 @@ tr.prod-hidden td { opacity: .5; }
             <div class="stat-lbl">🔄 تم تحديثه</div>
           </div>
           <div class="stat-box">
+            <div class="stat-num stat-images" id="res-images">0</div>
+            <div class="stat-lbl">🖼️ صورة تلقائية</div>
+          </div>
+          <div class="stat-box">
             <div class="stat-num stat-errors" id="res-errors">0</div>
             <div class="stat-lbl">⚠️ أخطاء</div>
           </div>
         </div>
         <div class="error-details" id="res-error-rows"></div>
       </div>
-
     </div>
+
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeExcelModal()">إغلاق</button>
       <button class="btn-save blue-btn" id="excel-upload-btn" onclick="uploadExcel()">📤 رفع الملف</button>
@@ -1056,7 +909,7 @@ tr.prod-hidden td { opacity: .5; }
 <div class="toast" id="toast"></div>
 
 <script>
-const categories   = {{ categories | tojson }};
+const categories    = {{ categories | tojson }};
 const subcategories = {{ subcategories | tojson }};
 
 // ===== TABS =====
@@ -1088,7 +941,7 @@ function previewImg(input, previewId) {
 
 // ===== SELL PRICE CALC =====
 function calcSell() {
-  const price = parseFloat(document.getElementById('prod-price').value) || 0;
+  const price  = parseFloat(document.getElementById('prod-price').value) || 0;
   const profit = price <= 8 ? 0.5 : price <= 19 ? 1.0 : 1.5;
   document.getElementById('prod-sell').value = (price + profit).toFixed(1) + '₪';
 }
@@ -1158,8 +1011,7 @@ function saveCat() {
   fd.append('name', name);
   fd.append('icon', icon);
   if (file) fd.append('image', file);
-  const url = id ? `/api/category/${id}` : '/api/category';
-  fetch(url, { method: 'POST', body: fd })
+  fetch(id ? `/api/category/${id}` : '/api/category', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(d => {
       if (d.success) { closeCatModal(); showToast('✅ تم حفظ القسم'); setTimeout(() => location.reload(), 800); }
@@ -1169,10 +1021,7 @@ function saveCat() {
 function toggleCat(id) {
   fetch(`/api/category/${id}/toggle`, { method: 'POST' })
     .then(r => r.json())
-    .then(() => {
-      document.getElementById('cat-' + id).classList.toggle('hidden');
-      showToast('✅ تم التغيير');
-    });
+    .then(() => { document.getElementById('cat-' + id).classList.toggle('hidden'); showToast('✅ تم التغيير'); });
 }
 
 function deleteCat(id, name) {
@@ -1196,19 +1045,18 @@ function openSubModal(id=null, name='', icon='📦', catId=null) {
 function closeSubModal() { document.getElementById('sub-modal').classList.remove('show'); }
 
 function saveSub() {
-  const id     = document.getElementById('sub-id').value;
-  const name   = document.getElementById('sub-name').value.trim();
-  const icon   = document.getElementById('sub-icon').value.trim();
-  const catId  = document.getElementById('sub-cat').value;
-  const file   = document.getElementById('sub-image').files[0];
+  const id    = document.getElementById('sub-id').value;
+  const name  = document.getElementById('sub-name').value.trim();
+  const icon  = document.getElementById('sub-icon').value.trim();
+  const catId = document.getElementById('sub-cat').value;
+  const file  = document.getElementById('sub-image').files[0];
   if (!name) { alert('⚠️ أدخل اسم القسم الفرعي'); return; }
   const fd = new FormData();
   fd.append('name', name);
   fd.append('icon', icon);
   fd.append('category_id', catId);
   if (file) fd.append('image', file);
-  const url = id ? `/api/subcategory/${id}` : '/api/subcategory';
-  fetch(url, { method: 'POST', body: fd })
+  fetch(id ? `/api/subcategory/${id}` : '/api/subcategory', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(d => {
       if (d.success) { closeSubModal(); showToast('✅ تم حفظ القسم الفرعي'); setTimeout(() => location.reload(), 800); }
@@ -1218,10 +1066,7 @@ function saveSub() {
 function toggleSub(id) {
   fetch(`/api/subcategory/${id}/toggle`, { method: 'POST' })
     .then(r => r.json())
-    .then(() => {
-      document.getElementById('sub-' + id).classList.toggle('hidden');
-      showToast('✅ تم التغيير');
-    });
+    .then(() => { document.getElementById('sub-' + id).classList.toggle('hidden'); showToast('✅ تم التغيير'); });
 }
 
 function deleteSub(id, name) {
@@ -1251,13 +1096,13 @@ function openProdModal(id=null, name='', price=0, unit='حبة', catId=null, sub
 function closeProdModal() { document.getElementById('prod-modal').classList.remove('show'); }
 
 function saveProd() {
-  const id     = document.getElementById('prod-id').value;
-  const name   = document.getElementById('prod-name').value.trim();
-  const price  = document.getElementById('prod-price').value;
-  const unit   = document.getElementById('prod-unit').value;
-  const catId  = document.getElementById('prod-cat').value;
-  const subId  = document.getElementById('prod-subcat').value;
-  const file   = document.getElementById('prod-image').files[0];
+  const id    = document.getElementById('prod-id').value;
+  const name  = document.getElementById('prod-name').value.trim();
+  const price = document.getElementById('prod-price').value;
+  const unit  = document.getElementById('prod-unit').value;
+  const catId = document.getElementById('prod-cat').value;
+  const subId = document.getElementById('prod-subcat').value;
+  const file  = document.getElementById('prod-image').files[0];
   if (!name || !price) { alert('⚠️ أدخل اسم المنتج والسعر'); return; }
   const fd = new FormData();
   fd.append('name', name);
@@ -1265,9 +1110,8 @@ function saveProd() {
   fd.append('unit', unit);
   fd.append('category_id', catId);
   if (subId) fd.append('subcategory_id', subId);
-  if (file) fd.append('image', file);
-  const url = id ? `/api/product/${id}` : '/api/product';
-  fetch(url, { method: 'POST', body: fd })
+  if (file)  fd.append('image', file);
+  fetch(id ? `/api/product/${id}` : '/api/product', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(d => {
       if (d.success) { closeProdModal(); showToast('✅ تم الحفظ بنجاح!'); setTimeout(() => location.reload(), 800); }
@@ -1291,20 +1135,20 @@ function deleteProd(id, name) {
 function onFileChosen(input) {
   const label = document.getElementById('file-chosen-name');
   if (input.files && input.files[0]) {
-    label.textContent = '📄 ' + input.files[0].name;
+    label.textContent  = '📄 ' + input.files[0].name;
     label.style.display = 'block';
   }
 }
 
 function openExcelModal() {
-  document.getElementById('excel-file').value = '';
+  document.getElementById('excel-file').value           = '';
   document.getElementById('file-chosen-name').style.display = 'none';
-  document.getElementById('file-chosen-name').textContent = '';
-  document.getElementById('excel-progress').style.display = 'none';
-  document.getElementById('excel-result').style.display = 'none';
-  document.getElementById('excel-result').className = 'result-box';
+  document.getElementById('file-chosen-name').textContent   = '';
+  document.getElementById('excel-progress').style.display   = 'none';
+  document.getElementById('excel-result').style.display     = 'none';
+  document.getElementById('excel-result').className         = 'result-box';
   document.getElementById('excel-upload-btn').style.display = '';
-  document.getElementById('excel-bar').style.width = '0%';
+  document.getElementById('excel-bar').style.width          = '0%';
   document.getElementById('excel-modal').classList.add('show');
 }
 
@@ -1321,16 +1165,15 @@ function uploadExcel() {
   const fd = new FormData();
   fd.append('file', file);
 
-  // إظهار التقدم
-  document.getElementById('excel-progress').style.display = 'block';
-  document.getElementById('excel-result').style.display = 'none';
+  document.getElementById('excel-progress').style.display   = 'block';
+  document.getElementById('excel-result').style.display     = 'none';
   document.getElementById('excel-upload-btn').style.display = 'none';
 
   let width = 0;
   const bar = document.getElementById('excel-bar');
   const interval = setInterval(() => {
-    if (width < 85) { width += 4; bar.style.width = width + '%'; }
-  }, 180);
+    if (width < 85) { width += 3; bar.style.width = width + '%'; }
+  }, 200);
 
   fetch('/api/admin/import-excel', { method: 'POST', body: fd })
     .then(r => r.json())
@@ -1340,27 +1183,32 @@ function uploadExcel() {
 
       setTimeout(() => {
         document.getElementById('excel-progress').style.display = 'none';
-        const box = document.getElementById('excel-result');
+        const box    = document.getElementById('excel-result');
+        const errBox = document.getElementById('res-error-rows');
+
+        // إعادة تهيئة
+        errBox.style.display = 'none';
+        errBox.innerHTML     = '';
 
         if (!data.success) {
           box.className = 'result-box fail';
-          document.getElementById('result-title').textContent = '❌ فشل الرفع';
-          document.getElementById('res-created').textContent = '—';
-          document.getElementById('res-updated').textContent = '—';
-          document.getElementById('res-errors').textContent = '—';
-          const errBox = document.getElementById('res-error-rows');
+          document.getElementById('result-title').textContent  = '❌ فشل الرفع';
+          document.getElementById('res-created').textContent   = '—';
+          document.getElementById('res-updated').textContent   = '—';
+          document.getElementById('res-images').textContent    = '—';
+          document.getElementById('res-errors').textContent    = '—';
           errBox.style.display = 'block';
-          errBox.textContent = data.error || 'خطأ غير معروف';
+          errBox.textContent   = data.error || 'خطأ غير معروف';
         } else {
           box.className = 'result-box';
-          document.getElementById('result-title').textContent = '✅ اكتملت عملية الرفع!';
-          document.getElementById('res-created').textContent = data.created || 0;
-          document.getElementById('res-updated').textContent = data.updated || 0;
-          document.getElementById('res-errors').textContent  = data.errors  || 0;
+          document.getElementById('result-title').textContent  = '✅ اكتملت عملية الرفع!';
+          document.getElementById('res-created').textContent   = data.created || 0;
+          document.getElementById('res-updated').textContent   = data.updated || 0;
+          document.getElementById('res-images').textContent    = data.images  || 0;
+          document.getElementById('res-errors').textContent    = data.errors  || 0;
           if (data.error_rows && data.error_rows.length > 0) {
-            const errBox = document.getElementById('res-error-rows');
             errBox.style.display = 'block';
-            errBox.innerHTML = '<b>تفاصيل الأخطاء:</b><br>' + data.error_rows.join('<br>');
+            errBox.innerHTML     = '<b>تفاصيل الأخطاء:</b><br>' + data.error_rows.join('<br>');
           }
         }
 
@@ -1371,7 +1219,7 @@ function uploadExcel() {
     .catch(() => {
       clearInterval(interval);
       alert('❌ خطأ في الاتصال بالسيرفر');
-      document.getElementById('excel-progress').style.display = 'none';
+      document.getElementById('excel-progress').style.display   = 'none';
       document.getElementById('excel-upload-btn').style.display = '';
     });
 }
