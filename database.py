@@ -404,7 +404,6 @@ def fetch_product_image(product_name):
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
     try:
-        # البحث في Open Food Facts
         resp = requests.get(
             'https://world.openfoodfacts.org/cgi/search.pl',
             params={
@@ -412,10 +411,10 @@ def fetch_product_image(product_name):
                 'search_simple': 1,
                 'action': 'process',
                 'json': 1,
-                'page_size': 5,
+                'page_size': 3,  # خفضنا من 5 إلى 3 للسرعة
                 'fields': 'product_name,image_front_small_url,image_url'
             },
-            timeout=8
+            timeout=3  # خفضنا من 8 إلى 3 ثواني
         )
         if resp.status_code != 200:
             return None
@@ -424,7 +423,6 @@ def fetch_product_image(product_name):
         if not products:
             return None
 
-        # أول منتج يحتوي على صورة
         image_url = None
         for p in products:
             img = p.get('image_front_small_url') or p.get('image_url')
@@ -435,12 +433,10 @@ def fetch_product_image(product_name):
         if not image_url:
             return None
 
-        # تحميل الصورة
-        img_resp = requests.get(image_url, timeout=8)
+        img_resp = requests.get(image_url, timeout=3)  # خفضنا من 8 إلى 3 ثواني
         if img_resp.status_code != 200:
             return None
 
-        # تحديد الامتداد من Content-Type
         content_type = img_resp.headers.get('Content-Type', '')
         if 'png' in content_type:
             ext = 'png'
@@ -458,8 +454,36 @@ def fetch_product_image(product_name):
         return f"/static/uploads/{filename}"
 
     except Exception:
-        # فشل صامت — لا نوقف عملية الاستيراد بسبب صورة
         return None
+
+
+def fetch_images_background(product_ids_names):
+    """
+    يجلب الصور في الخلفية بعد انتهاء الاستيراد
+    product_ids_names: قائمة من [(product_id, product_name), ...]
+    """
+    import threading
+
+    def _worker():
+        for prod_id, prod_name in product_ids_names:
+            try:
+                # تحقق أن المنتج ما زال بدون صورة قبل الجلب
+                existing = execute_query(
+                    'SELECT image FROM products WHERE id=?',
+                    (prod_id,), fetchone=True
+                )
+                if existing and not existing.get('image'):
+                    auto_image = fetch_product_image(prod_name)
+                    if auto_image:
+                        execute_query(
+                            'UPDATE products SET image=? WHERE id=?',
+                            (auto_image, prod_id), commit=True
+                        )
+            except Exception:
+                continue  # فشل صامت لكل منتج
+
+    thread = threading.Thread(target=_worker, daemon=True)
+    thread.start()
 
 
 # ==========================================
@@ -472,7 +496,7 @@ def import_excel_to_db(file_path):
     - مواءمة الأعمدة تلقائياً بالعربي والإنجليزي
     - إنشاء الأقسام غير الموجودة تلقائياً (Auto-Provisioning)
     - Upsert: تحديث إن وُجد، إنشاء إن كان جديداً
-    - جلب صور المنتجات تلقائياً من Open Food Facts
+    - جلب الصور في الخلفية بعد الاستيراد (لتجنب Timeout)
     """
     import pandas as pd
 
@@ -549,8 +573,9 @@ def import_excel_to_db(file_path):
     created    = 0
     updated    = 0
     errors     = 0
-    images     = 0
     error_rows = []
+    # قائمة المنتجات التي تحتاج صور — للجلب في الخلفية
+    needs_image = []
 
     for idx, row in df.iterrows():
         row_num = idx + 2
@@ -595,29 +620,21 @@ def import_excel_to_db(file_path):
             )
 
             if existing_prod:
-                existing_image = existing_prod.get('image')
-                if not existing_image:
-                    # جلب صورة فقط إن لم تكن موجودة
-                    auto_image = fetch_product_image(name)
-                    if auto_image: images += 1
-                    execute_query(
-                        'UPDATE products SET price=?, unit=?, subcategory_id=?, image=? WHERE id=?',
-                        (price, unit, subcategory_id, auto_image, existing_prod['id']), commit=True
-                    )
-                else:
-                    execute_query(
-                        'UPDATE products SET price=?, unit=?, subcategory_id=? WHERE id=?',
-                        (price, unit, subcategory_id, existing_prod['id']), commit=True
-                    )
+                execute_query(
+                    'UPDATE products SET price=?, unit=?, subcategory_id=? WHERE id=?',
+                    (price, unit, subcategory_id, existing_prod['id']), commit=True
+                )
+                # أضف للخلفية فقط إن لم تكن له صورة
+                if not existing_prod.get('image'):
+                    needs_image.append((existing_prod['id'], name))
                 updated += 1
             else:
-                # منتج جديد — جلب صورة تلقائياً
-                auto_image = fetch_product_image(name)
-                if auto_image: images += 1
-                execute_query(
-                    'INSERT INTO products (name, price, unit, category_id, subcategory_id, image, visible) VALUES (?, ?, ?, ?, ?, ?, 1)',
-                    (name, price, unit, category_id, subcategory_id, auto_image), commit=True
+                new_id = execute_query(
+                    'INSERT INTO products (name, price, unit, category_id, subcategory_id, visible) VALUES (?, ?, ?, ?, ?, 1)',
+                    (name, price, unit, category_id, subcategory_id), commit=True
                 )
+                # كل منتج جديد يحتاج صورة
+                needs_image.append((new_id, name))
                 created += 1
 
         except Exception as e:
@@ -625,11 +642,15 @@ def import_excel_to_db(file_path):
             error_rows.append(f'صف {row_num}: خطأ غير متوقع — {str(e)}')
             continue
 
+    # ابدأ جلب الصور في الخلفية بعد انتهاء الاستيراد
+    if needs_image:
+        fetch_images_background(needs_image)
+
     return {
         'success':    True,
         'created':    created,
         'updated':    updated,
         'errors':     errors,
-        'images':     images,
+        'images':     len(needs_image),  # عدد المنتجات التي سيُجلب لها صور
         'error_rows': error_rows[:10]
     }
