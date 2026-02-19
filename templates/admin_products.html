@@ -688,6 +688,9 @@ tr.prod-hidden td  { opacity: .5; }
                 <div class="act-btns">
                   <button class="abt" style="background:#e3f2fd" title="تعديل"
                     onclick="openProdModal({{ p.id }}, '{{ p.name }}', {{ p.price }}, '{{ p.unit }}', {{ p.category_id }}, {{ p.subcategory_id or 'null' }})">✏️</button>
+                  <button class="abt" style="background:#fff8e1" title="جلب صورة من Unsplash"
+                    id="img-btn-{{ p.id }}"
+                    onclick="fetchImage({{ p.id }}, '{{ p.name }}', this)">🖼️</button>
                   <button class="abt" style="background:var(--gp)" title="إخفاء/إظهار"
                     onclick="toggleProd({{ p.id }})">👁️</button>
                   <button class="abt" style="background:#ffebee" title="حذف"
@@ -1132,6 +1135,52 @@ function deleteProd(id, name) {
   fetch(`/api/product/${id}/delete`, { method: 'POST' })
     .then(r => r.json())
     .then(() => { showToast('🗑️ تم الحذف'); setTimeout(() => location.reload(), 800); });
+}
+
+
+// ===== FETCH IMAGE FROM UNSPLASH =====
+function fetchImage(id, name, btn) {
+  btn.textContent = '⏳';
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+
+  fetch(`/api/admin/fetch-image/${id}`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const row = btn.closest('tr');
+        const imgDiv = row.querySelector('.prod-img');
+        imgDiv.innerHTML = `<img src="${data.image}" alt="${name}">`;
+        btn.textContent = '✅';
+        btn.style.background = '#e8f5e9';
+        showToast(`✅ تم جلب صورة "${name}" بنجاح!`);
+        setTimeout(() => {
+          btn.textContent = '🖼️';
+          btn.style.background = '#fff8e1';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        }, 2000);
+      } else {
+        btn.textContent = '❌';
+        btn.style.background = '#ffebee';
+        showToast(`❌ ${data.error}`, '#e53935');
+        setTimeout(() => {
+          btn.textContent = '🖼️';
+          btn.style.background = '#fff8e1';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        }, 2000);
+      }
+    })
+    .catch(() => {
+      btn.textContent = '❌';
+      showToast('❌ خطأ في الاتصال', '#e53935');
+      setTimeout(() => {
+        btn.textContent = '🖼️';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }, 2000);
+    });
 }
 
 // ==================== EXCEL IMPORT ====================

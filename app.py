@@ -358,6 +358,64 @@ def api_import_excel():
             os.remove(temp_path)
     
     return jsonify(result)
+# ==========================================
+# API — جلب صورة منتج من Unsplash
+# ==========================================
 
+@app.route('/api/admin/fetch-image/<int:prod_id>', methods=['POST'])
+def api_fetch_product_image(prod_id):
+    import requests
+
+    UNSPLASH_KEY = os.environ.get('UNSPLASH_KEY', 'kLICSvKlQxFD4UcP2NvnnKpEUHNGtWmASctOjYPWoy8')
+
+    # جلب اسم المنتج من قاعدة البيانات
+    product = execute_query('SELECT id, name, image FROM products WHERE id=?', (prod_id,), fetchone=True)
+    if not product:
+        return jsonify({'success': False, 'error': 'المنتج غير موجود'})
+
+    product_name = product['name']
+
+    try:
+        # البحث في Unsplash
+        resp = requests.get(
+            'https://api.unsplash.com/search/photos',
+            params={
+                'query': product_name,
+                'per_page': 1,
+                'orientation': 'squarish'
+            },
+            headers={'Authorization': f'Client-ID {UNSPLASH_KEY}'},
+            timeout=8
+        )
+
+        if resp.status_code != 200:
+            return jsonify({'success': False, 'error': f'خطأ من Unsplash: {resp.status_code}'})
+
+        results = resp.json().get('results', [])
+        if not results:
+            return jsonify({'success': False, 'error': 'لم يتم العثور على صورة مناسبة'})
+
+        image_url = results[0]['urls']['small']
+
+        # تحميل الصورة وحفظها
+        img_resp = requests.get(image_url, timeout=8)
+        if img_resp.status_code != 200:
+            return jsonify({'success': False, 'error': 'فشل تحميل الصورة'})
+
+        filename = f"auto_{os.urandom(6).hex()}.jpg"
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        with open(filepath, 'wb') as f:
+            f.write(img_resp.content)
+
+        image_path = f"/static/uploads/{filename}"
+
+        # حفظ المسار في قاعدة البيانات
+        execute_query('UPDATE products SET image=? WHERE id=?', (image_path, prod_id), commit=True)
+
+        return jsonify({'success': True, 'image': image_path})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+    
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
