@@ -70,7 +70,21 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     <div class="hdr-sub" id="cart-sub">جاري التحميل...</div>
   </div>
 </div>
+<!-- شريط التنبيه الذكي للمواعيد -->
+<div id="delivery-alert-bar" style="margin: 12px 14px 0; padding: 10px 14px; border-radius: 12px; display: none; align-items: center; gap: 10px; border: 1.5px solid transparent; animation: slideUp 0.4s ease;">
+  <span id="alert-icon" style="font-size: 18px;"></span>
+  <div style="flex: 1;">
+    <div id="alert-title" style="font-size: 12px; font-weight: 900;"></div>
+    <div id="alert-desc" style="font-size: 10px; opacity: 0.8; margin-top: 1px;"></div>
+  </div>
+</div>
 
+<style>
+@keyframes slideUp { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.alert-green { background: #e8f5e9; border-color: #43a047 !important; color: #1b5e20; }
+.alert-orange { background: #fff8e1; border-color: #ffb300 !important; color: #e65100; }
+.alert-blue { background: #e3f2fd; border-color: #2196f3 !important; color: #0d47a1; }
+</style>
 <!-- المنتجات -->
 <div class="section">
   <div class="sec-hdr">📦 المنتجات المختارة</div>
@@ -130,6 +144,36 @@ let cart = JSON.parse(localStorage.getItem('dokkani_cart') || '[]');
 let profile = JSON.parse(localStorage.getItem('dokkani_profile') || '{}');
 let payMethod = 'cash';
 const DELIVERY = {{ delivery_short }};
+
+// دالة تحديث موعد التوصيل في السلة
+function updateCartDeliveryNotice() {
+  const hour = new Date().getHours();
+  const bar = document.getElementById('delivery-alert-bar');
+  const icon = document.getElementById('alert-icon');
+  const title = document.getElementById('alert-title');
+  const desc = document.getElementById('alert-desc');
+
+  bar.style.display = 'flex';
+  bar.className = ''; 
+
+  if (hour >= 10 && hour < 16) {
+    bar.classList.add('alert-green');
+    icon.textContent = '🚀';
+    title.textContent = 'سيصلك الطلب اليوم';
+    desc.textContent = 'جولة التوصيل نشطة حالياً (خلال 45-60 دقيقة).';
+  } else if (hour >= 16) {
+    bar.classList.add('alert-orange');
+    icon.textContent = '🚚';
+    title.textContent = 'موعد التوصيل: غداً صباحاً';
+    desc.textContent = 'تجاوزنا الرابعة عصراً، سيتم إيصال طلبك غداً الساعة 10:00 صباحاً.';
+  } else {
+    bar.classList.add('alert-blue');
+    icon.textContent = '☀️';
+    title.textContent = 'موعد التوصيل: 10:00 صباحاً';
+    desc.textContent = 'سيصلك طلبك مع أول جولة اليوم عند الساعة العاشرة.';
+  }
+}
+updateCartDeliveryNotice();
 
 function renderCart(){
   const container = document.getElementById('cart-items');
