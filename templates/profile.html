@@ -44,6 +44,11 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
 .install-txt .t2{color:rgba(255,255,255,.8);font-size:11px;margin-top:2px}
 .install-btn{background:#00c853;color:#1b5e20;border:none;padding:10px 20px;border-radius:10px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:900;cursor:pointer}
 .install-close{color:rgba(255,255,255,.7);background:none;border:none;font-size:22px;cursor:pointer;padding:0 6px}
+
+/* تنسيق أزرار التبديل الجديدة */
+.tab-btn { flex: 1; padding: 10px; border: none; border-radius: 9px; font-family: 'Cairo'; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+.tab-active { background: #2e7d32; color: #fff; }
+.tab-inactive { background: transparent; color: #2e7d32; }
 </style>
 </head>
 <body>
@@ -69,8 +74,15 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
     <h1>{{ app_name }}</h1>
     <p>سجّل بياناتك مرة واحدة فقط 🚀</p>
   </div>
+
+  <!-- نظام التبديل الذكي -->
+  <div style="display: flex; background: #f1f8e9; margin: 15px 22px 0; border-radius: 12px; padding: 4px;">
+    <button id="tab-new" onclick="switchMode('new')" class="tab-btn tab-active">مشترك جديد</button>
+    <button id="tab-old" onclick="switchMode('old')" class="tab-btn tab-inactive">طلبت من قبل؟</button>
+  </div>
+
   <div class="form">
-    <div class="field">
+    <div class="field" id="field-name">
       <label>👤 الاسم الكامل *</label>
       <input type="text" id="name" placeholder="مثال: أحمد محمود الخطيب">
       <div class="err" id="err-name">الرجاء إدخال الاسم</div>
@@ -83,24 +95,24 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
       </div>
       <div class="err" id="err-phone">الرجاء إدخال رقم صحيح</div>
     </div>
-    <div class="field">
+    <div class="field" id="field-whatsapp">
       <label>💬 واتساب (اختياري)</label>
       <div class="phone-wrap">
         <div class="pfx">+970</div>
         <input type="tel" id="whatsapp" placeholder="05X-XXX-XXXX">
       </div>
     </div>
-    <div class="field">
+    <div class="field" id="field-hood">
       <label>🏘️ الحي والمنطقة *</label>
       <input type="text" id="neighborhood" placeholder="مثال: البالوع، المنارة، الطيرة...">
       <div class="err" id="err-hood">الرجاء إدخال المنطقة</div>
     </div>
-    <div class="field">
+    <div class="field" id="field-addr">
       <label>🏢 العنوان الكامل *</label>
       <textarea id="address" rows="2" placeholder="اسم العمارة، رقم الطابق، رقم الشقة..."></textarea>
       <div class="err" id="err-addr">الرجاء إدخال العنوان</div>
     </div>
-    <div class="field">
+    <div class="field" id="field-loc">
       <label>📍 موقعك على الخريطة (اختياري)</label>
       <button class="loc-btn" id="loc-btn" type="button" onclick="getLocation()">
         <span id="loc-icon">📍</span>
@@ -108,7 +120,14 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
       </button>
       <div class="loc-status" id="loc-status"></div>
     </div>
-    <button class="submit-btn" onclick="saveProfile()">
+
+    <!-- زر الدخول للمشتركين السابقين -->
+    <button id="login-btn" class="submit-btn" onclick="checkCustomer()" style="display: none; background: linear-gradient(135deg, #1b5e20, #2e7d32);">
+      🔍 دخول واستعادة بياناتي
+    </button>
+
+    <!-- زر الحفظ للمشتركين الجدد -->
+    <button id="save-btn" class="submit-btn" onclick="saveProfile()">
       ✅ احفظ وابدأ التسوق
     </button>
   </div>
@@ -150,6 +169,56 @@ async function installApp(){
 
 function closeInstall(){
   document.getElementById('install-bar').classList.remove('show');
+}
+
+// التبديل بين واجهة الجديد والقديم
+function switchMode(mode) {
+  const isNew = mode === 'new';
+  
+  // تحديث شكل الأزرار
+  document.getElementById('tab-new').className = isNew ? 'tab-btn tab-active' : 'tab-btn tab-inactive';
+  document.getElementById('tab-old').className = isNew ? 'tab-btn tab-inactive' : 'tab-btn tab-active';
+  
+  // إخفاء/إظهار الحقول
+  const display = isNew ? 'block' : 'none';
+  document.getElementById('field-name').style.display = display;
+  document.getElementById('field-whatsapp').style.display = display;
+  document.getElementById('field-hood').style.display = display;
+  document.getElementById('field-addr').style.display = display;
+  document.getElementById('field-loc').style.display = display;
+  
+  // تبديل الأزرار النهائية
+  document.getElementById('save-btn').style.display = isNew ? 'block' : 'none';
+  document.getElementById('login-btn').style.display = isNew ? 'none' : 'block';
+}
+
+// البحث عن زبون قديم واستعادة بياناته
+function checkCustomer() {
+  const phone = document.getElementById('phone').value.trim();
+  if(!phone) { alert('يرجى إدخال رقم الهاتف أولاً'); return; }
+  
+  const btn = document.getElementById('login-btn');
+  const originalText = btn.textContent;
+  btn.textContent = '⏳ جاري التحقق...';
+  btn.disabled = true;
+
+  fetch(`/api/get-customer/${phone}`)
+    .then(r => r.json())
+    .then(data => {
+      if(data.success) {
+        localStorage.setItem('dokkani_profile', JSON.stringify(data.customer));
+        alert(`أهلاً بك مجدداً يا ${data.customer.name} ✨`);
+        window.location.href = '/shop';
+      } else {
+        alert('عذراً، هذا الرقم غير مسجل عندنا. يرجى التسجيل كـ "مشترك جديد"');
+        switchMode('new');
+      }
+    })
+    .catch(e => alert('خطأ في الاتصال بالسيرفر، تأكد من الإنترنت'))
+    .finally(() => {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    });
 }
 
 // إذا البيانات موجودة — انتقل للمتجر

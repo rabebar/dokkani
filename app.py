@@ -288,6 +288,19 @@ def api_delete_customer():
 def api_get_stats():
     return jsonify(get_daily_stats())
 
+@app.route('/api/get-customer/<phone>')
+def api_get_customer(phone):
+    """البحث عن بيانات زبون قديم بواسطة رقم الهاتف"""
+    from database import execute_query
+    # نقوم بتنظيف الرقم من أي مسافات
+    clean_phone = phone.strip()
+    customer = execute_query('SELECT name, phone, whatsapp, neighborhood, address, lat, lng FROM customers WHERE phone=?', (clean_phone,), fetchone=True)
+    
+    if customer:
+        return jsonify({'success': True, 'customer': customer})
+    else:
+        return jsonify({'success': False, 'message': 'الرقم غير مسجل مسبقاً'})
+
 
 # ==========================================
 # معالجة الصور و PWA
