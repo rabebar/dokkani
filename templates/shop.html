@@ -130,6 +130,21 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
   </div>
   <div class="banner-badge">🚀 45 دقيقة</div>
 </div>
+<!-- شريط التنبيه الذكي للمواعيد -->
+<div id="delivery-alert-bar" style="margin: 0 16px 10px; padding: 10px 14px; border-radius: 12px; display: none; align-items: center; gap: 10px; border: 1.5px solid transparent; animation: slideUp 0.4s ease;">
+  <span id="alert-icon" style="font-size: 18px;"></span>
+  <div style="flex: 1;">
+    <div id="alert-title" style="font-size: 12px; font-weight: 900;"></div>
+    <div id="alert-desc" style="font-size: 10px; opacity: 0.8; margin-top: 1px;"></div>
+  </div>
+</div>
+
+<style>
+@keyframes slideUp { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.alert-green { background: var(--gx); border-color: var(--acc) !important; color: var(--g1); }
+.alert-orange { background: #fff8e1; border-color: #ffb300 !important; color: #e65100; }
+.alert-blue { background: #e3f2fd; border-color: #2196f3 !important; color: #0d47a1; }
+</style>
 
 <div class="sec-hdr">
   <div class="sec-title">الأقسام</div>
@@ -253,6 +268,43 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 <script>
 let cart = JSON.parse(localStorage.getItem('dokkani_cart') || '[]');
+// دالة فحص وقت التوصيل وتحديث شريط التنبيه
+function updateDeliveryStatus() {
+  const now = new Date();
+  const hour = now.getHours(); // الساعة الحالية (0-23)
+  const bar = document.getElementById('delivery-alert-bar');
+  const icon = document.getElementById('alert-icon');
+  const title = document.getElementById('alert-title');
+  const desc = document.getElementById('alert-desc');
+
+  bar.style.display = 'flex';
+  bar.className = ''; // تصفير الألوان السابقة
+
+  if (hour >= 10 && hour < 16) {
+    // الحالة 1: توصيل نشط (10:00 ص - 4:00 م)
+    bar.classList.add('alert-green');
+    icon.textContent = '🚀';
+    title.textContent = 'توصيل مباشر ونشط الآن';
+    desc.textContent = 'سيصلك الطلب خلال 45-60 دقيقة في كافة أحياء رام الله.';
+  } 
+  else if (hour >= 16) {
+    // الحالة 2: الجدولة للغد (من 4:00 م حتى منتصف الليل)
+    bar.classList.add('alert-orange');
+    icon.textContent = '🚚';
+    title.textContent = 'طلب مجدول للتوصيل غداً';
+    desc.textContent = 'تجاوزنا موعد توصيل اليوم. سيتم إيصال طلبك غداً الساعة 10:00 صباحاً.';
+  } 
+  else {
+    // الحالة 3: الصباح الباكر (من منتصف الليل حتى 10:00 ص)
+    bar.classList.add('alert-blue');
+    icon.textContent = '☀️';
+    title.textContent = 'نستعد للانطلاق اليوم!';
+    desc.textContent = 'اطلب الآن ليكون طلبك ضمن أول جولة توصيل اليوم (الساعة 10:00 صباحاً).';
+  }
+}
+
+// تشغيل الفحص فور فتح الصفحة
+updateDeliveryStatus();
 
 // PWA Install Logic
 let deferredPrompt;
