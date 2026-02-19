@@ -237,6 +237,7 @@ tr:hover td{background:#fafff9}
                   <tr style="background: #f1f5f9;">
                     <th>رقم الطلب</th>
                     <th>التاريخ والوقت</th>
+                    <th>ملاحظات الزبون</th>
                     <th>المنتجات المطلوبة</th>
                     <th>الإجمالي</th>
                     <th>الموقع</th>
@@ -250,6 +251,7 @@ tr:hover td{background:#fafff9}
                   <tr class="order-row-item" data-full-date="{{ o['created_at'] }}">
                     <td><span class="oid">#{{ o['id'] }}</span></td>
                     <td style="font-size: 11px; color: var(--g600);">{{ o['created_at'] }}</td>
+                    <td style="font-size: 11px; color: var(--red); max-width: 150px; white-space: normal;">{{ o['notes'] or '—' }}</td>
                     <td>
                       {% for item in o['items'] %}
                       <div style="font-size: 11px; color: var(--g800);">• {{ item.name }} ({{ item.qty }})</div>
