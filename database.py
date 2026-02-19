@@ -222,7 +222,12 @@ def delete_category(cat_id):
 # --- دوال الأقسام الفرعية ---
 def get_subcategories(category_id=None, visible_only=True):
     if category_id:
-        q = 'SELECT * FROM subcategories WHERE category_id=?'
+        q = '''
+            SELECT s.*, 
+            (SELECT COUNT(*) FROM products p WHERE p.subcategory_id = s.id) as product_count
+            FROM subcategories s 
+            WHERE s.category_id=?
+        '''
         if visible_only: q += ' AND visible=1'
         q += ' ORDER BY sort, id'
         return execute_query(q, (category_id,), fetchall=True) or []

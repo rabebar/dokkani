@@ -604,6 +604,9 @@ tr.prod-hidden td  { opacity: .5; }
             <div style="flex:1;min-width:0">
               <div class="sub-name">{{ sub.name }}</div>
               <div class="sub-cat-badge">{{ cat_name }}</div>
+              <span style="font-size: 10px; font-weight: 900; color: var(--g2); background: #fff; padding: 2px 7px; border-radius: 8px; border: 1px solid var(--g200); margin-top: 5px; display: inline-block;">
+                📦 {{ sub.product_count or 0 }} صنف
+              </span>
               <div class="sub-actions">
                 <button class="ca ca-edit" style="width:24px;height:24px;font-size:11px" title="تعديل"
                   onclick="openSubModal({{ sub.id }}, '{{ sub.name }}', '{{ sub.icon }}', {{ sub.category_id }})">✏️</button>
