@@ -232,7 +232,11 @@ def get_subcategories(category_id=None, visible_only=True):
         q += ' ORDER BY sort, id'
         return execute_query(q, (category_id,), fetchall=True) or []
     else:
-        q = 'SELECT * FROM subcategories'
+        q = '''
+            SELECT s.*, 
+            (SELECT COUNT(*) FROM products p WHERE p.subcategory_id = s.id) as product_count
+            FROM subcategories s
+        '''
         if visible_only: q += ' WHERE visible=1'
         q += ' ORDER BY category_id, sort, id'
         return execute_query(q, fetchall=True) or []
