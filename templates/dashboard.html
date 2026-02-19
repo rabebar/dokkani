@@ -369,12 +369,58 @@ function filterByExactDate(targetDate) {
 function showAllCustomers() {
   document.querySelectorAll('.customer-header-row, .order-row-item').forEach(el => el.style.display = '');
 }
-// فلترة الجدول
+// فلترة الجدول (محدّثة لتدعم نظام تجميع الزبائن - Accordion)
 function filterTable(status, btn){
   document.querySelectorAll('.fbar .fb').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  document.querySelectorAll('#orders-table tbody tr').forEach(tr=>{
-    tr.style.display = (status==='all' || tr.dataset.status===status) ? '' : 'none';
+
+  const customerHeaders = document.querySelectorAll('.customer-header-row');
+
+  customerHeaders.forEach(header => {
+    const phone = header.dataset.customerPhone;
+    const detailsRow = document.getElementById('details-' + phone);
+    const orderItems = detailsRow.querySelectorAll('.order-row-item');
+    const icon = document.getElementById('icon-' + phone);
+
+    if (status === 'all') {
+      // إظهار جميع الزبائن وجميع طلباتهم
+      header.style.display = '';
+      orderItems.forEach(item => item.style.display = '');
+      // إغلاق المجلدات التي كانت مفتوحة بسبب فلتر سابق
+      detailsRow.classList.remove('show');
+      icon.classList.remove('open');
+      icon.textContent = '▶';
+      return;
+    }
+
+    let hasMatchingOrder = false;
+
+    orderItems.forEach(item => {
+      // نقرأ قيمة الـ select الحالية لمعرفة حالة الطلب
+      const sel = item.querySelector('.sel-status');
+      const orderStatus = sel ? sel.value : '';
+
+      if (orderStatus === status) {
+        item.style.display = '';
+        hasMatchingOrder = true;
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    if (hasMatchingOrder) {
+      // إظهار رأس الزبون وفتح مجلده تلقائياً
+      header.style.display = '';
+      detailsRow.classList.add('show');
+      icon.classList.add('open');
+      icon.textContent = '▼';
+    } else {
+      // إخفاء الزبون تماماً لأنه لا يملك طلبات بالحالة المطلوبة
+      header.style.display = 'none';
+      detailsRow.classList.remove('show');
+      icon.classList.remove('open');
+      icon.textContent = '▶';
+    }
   });
 }
 
