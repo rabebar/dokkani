@@ -34,7 +34,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .logout-btn:hover{background:var(--g200)}
 .edit-field{margin-bottom:12px}
 .edit-field label{display:block;font-size:12px;font-weight:700;color:var(--g2);margin-bottom:5px}
-.edit-field input,.edit-field textarea{width:100%;padding:10px 13px;border:1.5px solid var(--g200);border-radius:9px;font-family:'Cairo',sans-serif;font-size:13px;outline:none;background:#f9fafb}
+.edit-field input,.edit-field textarea{width:100%;padding:10px 13px;border:1.5px solid var(--g200);border-radius:9px;font-family:'Cairo',sans-serif;font-size:16px;outline:none;background:#f9fafb}
 .edit-field input:focus,.edit-field textarea:focus{border-color:var(--g4);background:#fff}
 .edit-field textarea{resize:none}
 .save-btn{width:100%;padding:13px;background:var(--g2);color:#fff;border:none;border-radius:10px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
@@ -183,6 +183,14 @@ function deleteAccount(){
 }
 
 loadProfile();
+
+// منع التكبير اليدوي لضمان استقرار التطبيق
+document.addEventListener('touchstart', function(event) {
+  if (event.touches.length > 1) { event.preventDefault(); }
+}, { passive: false });
+document.addEventListener('gesturestart', function(event) {
+  event.preventDefault();
+});
 </script>
 </body>
 </html>

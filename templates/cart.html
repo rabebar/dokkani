@@ -27,7 +27,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .qn{font-size:13px;font-weight:700;min-width:20px;text-align:center}
 .ci-price{font-size:14px;font-weight:900;color:var(--g2);min-width:50px;text-align:left}
 .del-btn{width:26px;height:26px;background:#ffebee;border-radius:7px;border:none;cursor:pointer;font-size:13px;flex-shrink:0}
-.note-inp{width:100%;padding:11px 14px;border:none;font-family:'Cairo',sans-serif;font-size:13px;outline:none;color:var(--g800);resize:none;background:transparent}
+.note-inp{width:100%;padding:11px 14px;border:none;font-family:'Cairo',sans-serif;font-size:16px;outline:none;color:var(--g800);resize:none;background:transparent}
 .note-inp::placeholder{color:var(--g400)}
 .summary{padding:14px 16px}
 .sr{display:flex;justify-content:space-between;font-size:13px;color:#555;padding:5px 0}
@@ -298,6 +298,14 @@ function placeOrder(){
 }
 
 renderCart();
+
+// منع التكبير اليدوي لضمان استقرار التطبيق
+document.addEventListener('touchstart', function(event) {
+  if (event.touches.length > 1) { event.preventDefault(); }
+}, { passive: false });
+document.addEventListener('gesturestart', function(event) {
+  event.preventDefault();
+});
 </script>
 </body>
 </html>

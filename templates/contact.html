@@ -110,6 +110,14 @@ function sendWhatsApp(){
   const msg = encodeURIComponent('مرحبا، أريد طلب منتج غير متوفر في التطبيق 🛒');
   window.open('https://wa.me/{{ app_whatsapp }}?text='+msg, '_blank');
 }
+
+// منع التكبير اليدوي لضمان استقرار التطبيق
+document.addEventListener('touchstart', function(event) {
+  if (event.touches.length > 1) { event.preventDefault(); }
+}, { passive: false });
+document.addEventListener('gesturestart', function(event) {
+  event.preventDefault();
+});
 </script>
 </body>
 </html>

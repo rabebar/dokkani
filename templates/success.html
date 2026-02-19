@@ -56,6 +56,14 @@ localStorage.removeItem('dokkani_cart');
 
 const orderId = localStorage.getItem('dokkani_last_order');
 if(orderId) document.getElementById('order-num').textContent = '#' + orderId;
+
+// منع التكبير اليدوي لضمان استقرار التطبيق
+document.addEventListener('touchstart', function(event) {
+  if (event.touches.length > 1) { event.preventDefault(); }
+}, { passive: false });
+document.addEventListener('gesturestart', function(event) {
+  event.preventDefault();
+});
 </script>
 </body>
 </html>

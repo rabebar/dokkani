@@ -38,7 +38,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .cart-count{position:absolute;top:-4px;left:-4px;background:var(--acc);color:var(--g1);font-size:10px;font-weight:900;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #1a4a1e}
 .srch{padding:0 16px 12px}
 .srch-wrap{background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;gap:9px;padding:10px 14px}
-.srch-wrap input{border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:13px;outline:none;color:#fff;width:100%}
+.srch-wrap input{border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:16px;outline:none;color:#fff;width:100%}
 .srch-wrap input::placeholder{color:rgba(255,255,255,.55)}
 
 /* BANNER */
@@ -351,6 +351,13 @@ function searchCats(){
 }
 
 updateUI();
+// منع التكبير اليدوي لضمان استقرار التطبيق
+document.addEventListener('touchstart', function(event) {
+  if (event.touches.length > 1) { event.preventDefault(); }
+}, { passive: false });
+document.addEventListener('gesturestart', function(event) {
+  event.preventDefault();
+});
 </script>
 </body>
 </html>
