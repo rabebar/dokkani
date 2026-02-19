@@ -55,14 +55,15 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 /* زر الطلب المرفوع (فوق الملاحة) */
 .order-btn-wrap {
     position: fixed;
-    bottom: var(--nav); /* يرفعه بمقدار 65 بكسل */
+    bottom: 65px; /* الارتفاع الدقيق لشريط التنقل السفلي */
     left: 0;
     right: 0;
     padding: 12px 14px 16px;
     background: #fff;
     box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-    z-index: 1000;
+    z-index: 2500; /* ضمان الظهور فوق المحتوى */
     border-top: 1px solid var(--g200);
+    display: block !important;
 }
 .order-btn {
     width: 100%;
@@ -77,6 +78,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(46, 125, 50, 0.35);
     transition: all 0.2s;
+    display: block !important;
 }
 
 /* --- الملاحة السفلية الاحترافية الموحدة --- */
@@ -87,11 +89,11 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     right: 0;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    height: var(--nav);
+    height: 65px;
     display: flex;
     align-items: center;
     border-top: 1px solid rgba(0,0,0,0.05);
-    z-index: 2000;
+    z-index: 3000; /* ضمان الظهور كأعلى طبقة */
 }
 .bni {
     flex: 1;
@@ -101,11 +103,11 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     justify-content: center;
     gap: 4px;
     text-decoration: none;
-    color: #8e8e93; /* إجبار اللون الرمادي الاحترافي */
+    color: #8e8e93;
     position: relative;
     transition: 0.3s;
 }
-.bni.active { color: var(--g1); } /* اللون الأخضر عند الوقوف في السلة */
+.bni.active { color: var(--g1); }
 .bni-ico { font-size: 22px; display: flex; align-items: center; justify-content: center; }
 .bni-lbl { font-size: 10px; font-weight: 700; }
 .bni-badge {
@@ -119,6 +121,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 .empty{text-align:center;padding:40px 20px;color:var(--g400)}
 .empty-ico{font-size:50px;margin-bottom:12px}
+
 </style>
 </head>
 <body>
