@@ -397,3 +397,196 @@ def calculate_delivery_fee(lat, lng):
     distance_km = 6371 * c
     delivery = 8 + (distance_km * 2.25)
     return round(max(10, min(18, delivery)), 1)
+# ==========================================
+# محرك استيراد Excel الذكي
+# ==========================================
+
+def import_excel_to_db(file_path):
+    """
+    يقرأ ملف Excel ويستورد المنتجات ذكياً مع:
+    - مواءمة الأعمدة تلقائياً (بغض النظر عن أسمائها)
+    - إنشاء الأقسام غير الموجودة تلقائياً (Auto-Provisioning)
+    - Upsert: تحديث إن وُجد، إنشاء إن كان جديداً
+    """
+    import pandas as pd
+
+    # =====================
+    # خريطة الأعمدة الذكية
+    # =====================
+    COLUMN_MAP = {
+        'name': [
+            'اسم المنتج', 'المنتج', 'اسم', 'الاسم',
+            'name', 'product', 'product_name', 'item', 'title'
+        ],
+        'price': [
+            'السعر', 'سعر الشراء', 'سعر', 'التكلفة',
+            'price', 'cost', 'buy_price', 'purchase_price'
+        ],
+        'unit': [
+            'الوحدة', 'وحدة القياس', 'وحدة',
+            'unit', 'measure', 'uom'
+        ],
+        'category': [
+            'القسم الرئيسي', 'القسم', 'قسم', 'التصنيف',
+            'category', 'cat', 'section', 'department'
+        ],
+        'subcategory': [
+            'القسم الفرعي', 'الفئة الفرعية', 'فرعي',
+            'subcategory', 'sub', 'sub_category', 'subcategory_name'
+        ]
+    }
+
+    def find_column(df_columns, candidates):
+        """البحث عن العمود بمقارنة غير حساسة للحروف"""
+        df_cols_lower = {c.strip().lower(): c for c in df_columns}
+        for candidate in candidates:
+            if candidate.strip().lower() in df_cols_lower:
+                return df_cols_lower[candidate.strip().lower()]
+        return None
+
+    # =====================
+    # قراءة الملف
+    # =====================
+    try:
+        df = pd.read_excel(file_path, dtype=str)
+        df.columns = df.columns.str.strip()
+        df = df.dropna(how='all')  # حذف الصفوف الفارغة كلياً
+    except Exception as e:
+        return {'success': False, 'error': f'فشل قراءة الملف: {str(e)}', 'created': 0, 'updated': 0, 'errors': 0}
+
+    # =====================
+    # تحديد الأعمدة
+    # =====================
+    col_name     = find_column(df.columns, COLUMN_MAP['name'])
+    col_price    = find_column(df.columns, COLUMN_MAP['price'])
+    col_unit     = find_column(df.columns, COLUMN_MAP['unit'])
+    col_category = find_column(df.columns, COLUMN_MAP['category'])
+    col_subcat   = find_column(df.columns, COLUMN_MAP['subcategory'])
+
+    # عمود الاسم والسعر إلزاميان
+    if not col_name or not col_price:
+        missing = []
+        if not col_name: missing.append('اسم المنتج')
+        if not col_price: missing.append('السعر')
+        return {
+            'success': False,
+            'error': f'الأعمدة التالية غير موجودة أو غير معروفة: {", ".join(missing)}. الأعمدة الموجودة: {", ".join(df.columns.tolist())}',
+            'created': 0, 'updated': 0, 'errors': 0
+        }
+
+    # =====================
+    # كاش الأقسام (لتجنب الاستعلام المتكرر)
+    # =====================
+    def get_or_create_category(name):
+        name = name.strip()
+        existing = execute_query('SELECT id FROM categories WHERE name=?', (name,), fetchone=True)
+        if existing:
+            return existing['id']
+        # إنشاء قسم جديد تلقائياً
+        new_id = execute_query(
+            'INSERT INTO categories (name, icon, visible) VALUES (?, ?, 1)',
+            (name, '📦'), commit=True
+        )
+        return new_id
+
+    def get_or_create_subcategory(name, category_id):
+        name = name.strip()
+        existing = execute_query(
+            'SELECT id FROM subcategories WHERE name=? AND category_id=?',
+            (name, category_id), fetchone=True
+        )
+        if existing:
+            return existing['id']
+        new_id = execute_query(
+            'INSERT INTO subcategories (name, icon, category_id, visible) VALUES (?, ?, ?, 1)',
+            (name, '📦', category_id), commit=True
+        )
+        return new_id
+
+    # =====================
+    # المعالجة الرئيسية
+    # =====================
+    created = 0
+    updated = 0
+    errors  = 0
+    error_rows = []
+
+    for idx, row in df.iterrows():
+        row_num = idx + 2  # رقم الصف في الإكسل (يبدأ من 2)
+        try:
+            # استخراج القيم
+            name  = str(row[col_name]).strip() if pd.notna(row[col_name]) else ''
+            price_raw = str(row[col_price]).strip() if pd.notna(row[col_price]) else ''
+
+            if not name or not price_raw:
+                errors += 1
+                error_rows.append(f'صف {row_num}: اسم أو سعر فارغ')
+                continue
+
+            # تنظيف السعر من أي رموز (₪ $ , إلخ)
+            price_clean = price_raw.replace('₪', '').replace('$', '').replace(',', '').strip()
+            try:
+                price = float(price_clean)
+            except:
+                errors += 1
+                error_rows.append(f'صف {row_num}: سعر غير صالح "{price_raw}"')
+                continue
+
+            unit = str(row[col_unit]).strip() if col_unit and pd.notna(row[col_unit]) else 'حبة'
+            if unit == 'nan' or not unit:
+                unit = 'حبة'
+
+            # معالجة القسم
+            category_id = None
+            if col_category and pd.notna(row[col_category]):
+                cat_name = str(row[col_category]).strip()
+                if cat_name and cat_name != 'nan':
+                    category_id = get_or_create_category(cat_name)
+
+            if not category_id:
+                # القسم الافتراضي: أخرى (آخر قسم)
+                default_cat = execute_query('SELECT id FROM categories ORDER BY id DESC', fetchone=True)
+                category_id = default_cat['id'] if default_cat else 1
+
+            # معالجة القسم الفرعي
+            subcategory_id = None
+            if col_subcat and pd.notna(row[col_subcat]):
+                sub_name = str(row[col_subcat]).strip()
+                if sub_name and sub_name != 'nan':
+                    subcategory_id = get_or_create_subcategory(sub_name, category_id)
+
+            # =====================
+            # Upsert المنتج
+            # =====================
+            existing_prod = execute_query(
+                'SELECT id FROM products WHERE name=? AND category_id=?',
+                (name, category_id), fetchone=True
+            )
+
+            if existing_prod:
+                # تحديث السعر والوحدة
+                execute_query(
+                    'UPDATE products SET price=?, unit=?, subcategory_id=? WHERE id=?',
+                    (price, unit, subcategory_id, existing_prod['id']), commit=True
+                )
+                updated += 1
+            else:
+                # إنشاء منتج جديد
+                execute_query(
+                    'INSERT INTO products (name, price, unit, category_id, subcategory_id, visible) VALUES (?, ?, ?, ?, ?, 1)',
+                    (name, price, unit, category_id, subcategory_id), commit=True
+                )
+                created += 1
+
+        except Exception as e:
+            errors += 1
+            error_rows.append(f'صف {row_num}: خطأ غير متوقع — {str(e)}')
+            continue
+
+    return {
+        'success': True,
+        'created': created,
+        'updated': updated,
+        'errors': errors,
+        'error_rows': error_rows[:10]  # نعرض أول 10 أخطاء فقط
+    }

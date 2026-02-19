@@ -16,7 +16,8 @@ from database import (
     get_orders, add_order, update_order_status,
     get_customers, delete_customer,
     get_daily_stats, get_order_profit, get_selling_price,
-    calculate_delivery_fee
+    calculate_delivery_fee,
+    import_excel_to_db
 )
 
 app = Flask(__name__)
@@ -324,6 +325,39 @@ def service_worker():
     with open('static/service-worker.js') as f:
         content = f.read()
     return Response(content, mimetype='application/javascript')
+# ==========================================
+# API — استيراد Excel
+# ==========================================
+
+@app.route('/api/admin/import-excel', methods=['POST'])
+def api_import_excel():
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'لم يتم إرسال أي ملف'})
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'لم يتم اختيار ملف'})
+    
+    # فحص الامتداد
+    allowed = {'xlsx', 'xls'}
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in allowed:
+        return jsonify({'success': False, 'error': 'صيغة الملف غير مدعومة. يُرجى رفع ملف Excel بصيغة .xlsx أو .xls'})
+    
+    # حفظ مؤقت
+    temp_path = os.path.join('static', 'uploads', f'excel_import_{os.urandom(4).hex()}.{ext}')
+    try:
+        file.save(temp_path)
+        result = import_excel_to_db(temp_path)
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'خطأ في المعالجة: {str(e)}'})
+    finally:
+        # حذف الملف المؤقت دائماً
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+    
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

@@ -6,105 +6,634 @@
 <title>دكّاني — إدارة المنتجات</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
 <style>
-:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--g5:#66bb6a;--gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g600:#4b5563;--g800:#1f2937;--red:#e53935;--orange:#fb8c00;--sh:0 2px 8px rgba(0,0,0,.08);--r:12px}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);display:flex;min-height:100vh}
-.sb{width:220px;background:linear-gradient(170deg,var(--g1),var(--g2));min-height:100vh;position:fixed;right:0;top:0;z-index:100;display:flex;flex-direction:column}
-.sb-logo{padding:22px 18px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px}
-.sb-ico{width:40px;height:40px;background:var(--acc);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px}
-.sb-title{color:#fff;font-size:19px;font-weight:900;font-family:'Tajawal',sans-serif}
-.sb-sub{color:rgba(255,255,255,.45);font-size:10px}
-.sb-nav{padding:16px 10px;flex:1}
-.nl{color:rgba(255,255,255,.3);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;padding:0 8px;margin:12px 0 5px}
-.ni{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.65);font-size:12.5px;font-weight:600;margin-bottom:2px;transition:all .2s;text-decoration:none}
-.ni:hover{background:rgba(255,255,255,.1);color:#fff}
-.ni.active{background:rgba(255,255,255,.17);color:#fff}
-.ni .ico{font-size:16px;width:18px}
-.sb-foot{padding:12px 10px 20px;border-top:1px solid rgba(255,255,255,.1)}
-.adm{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.1);padding:9px 11px;border-radius:8px}
-.adm-av{width:32px;height:32px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px}
-.adm-n{color:#fff;font-size:12px;font-weight:700}
-.adm-r{color:rgba(255,255,255,.45);font-size:10px}
-.main{margin-right:220px;flex:1}
-.topbar{background:var(--w);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--g200);position:sticky;top:0;z-index:50;box-shadow:var(--sh)}
-.tb-title{font-size:17px;font-weight:900;color:var(--g1);font-family:'Tajawal',sans-serif}
-.content{padding:20px 22px}
-.tabs{display:flex;gap:8px;margin-bottom:20px}
-.tab{padding:9px 20px;border-radius:20px;border:1.5px solid var(--g200);background:var(--w);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:var(--g600);transition:all .2s}
-.tab:hover{border-color:var(--g4);color:var(--g2)}
-.tab.active{background:var(--g2);color:#fff;border-color:var(--g2)}
-.panel{display:none}
-.panel.active{display:block}
-.card{background:var(--w);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--g200);overflow:hidden;margin-bottom:18px}
-.chd{padding:13px 18px;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between}
-.ctl{font-size:14px;font-weight:900;color:var(--g1)}
-.add-btn{padding:8px 16px;background:var(--g4);color:#fff;border:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;display:flex;align-items:center;gap:6px}
-.add-btn:hover{background:var(--g2)}
+:root {
+  --g1: #1b5e20;
+  --g2: #2e7d32;
+  --g4: #43a047;
+  --g5: #66bb6a;
+  --gp: #e8f5e9;
+  --gx: #f1f8e9;
+  --acc: #00c853;
+  --w: #fff;
+  --g100: #f3f4f6;
+  --g200: #e5e7eb;
+  --g400: #9ca3af;
+  --g600: #4b5563;
+  --g800: #1f2937;
+  --red: #e53935;
+  --blue: #1565c0;
+  --blue-light: #e3f2fd;
+  --orange: #fb8c00;
+  --sh: 0 2px 8px rgba(0,0,0,.08);
+  --sh2: 0 8px 24px rgba(0,0,0,.12);
+  --r: 12px;
+}
 
-/* CATEGORIES GRID */
-.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px}
-.cat-card{background:var(--gx);border-radius:var(--r);padding:14px;text-align:center;border:1.5px solid var(--g200);position:relative;transition:all .2s}
-.cat-card:hover{border-color:var(--g4)}
-.cat-card.hidden{opacity:.5}
-.cat-img{width:56px;height:56px;border-radius:14px;background:var(--w);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 8px;overflow:hidden;box-shadow:var(--sh)}
-.cat-img img{width:100%;height:100%;object-fit:cover}
-.cat-name{font-size:13px;font-weight:700;margin-bottom:10px}
-.cat-actions{display:flex;gap:5px;justify-content:center}
-.ca{width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;font-size:13px;transition:all .2s}
-.ca:hover{transform:scale(1.1)}
-.ca-edit{background:#e3f2fd}
-.ca-toggle{background:var(--gp)}
-.ca-del{background:#ffebee}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* PRODUCTS TABLE */
-.prod-filters{display:flex;gap:8px;padding:14px 16px;border-bottom:1px solid var(--g200);flex-wrap:wrap}
-.pf{padding:5px 12px;border-radius:18px;border:1.5px solid var(--g200);background:var(--w);font-family:'Cairo',sans-serif;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--g600);transition:all .2s}
-.pf:hover{border-color:var(--g4);color:var(--g2)}
-.pf.active{background:var(--g2);color:#fff;border-color:var(--g2)}
-table{width:100%;border-collapse:collapse}
-th{background:var(--gx);padding:10px 14px;text-align:right;font-size:11px;font-weight:700;color:var(--g2)}
-td{padding:10px 14px;font-size:12.5px;border-bottom:1px solid var(--g200);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:#fafff9}
-tr.prod-hidden td{opacity:.5}
-.prod-img{width:36px;height:36px;border-radius:8px;background:var(--gx);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden}
-.prod-img img{width:100%;height:100%;object-fit:cover}
-.unit-badge{background:var(--gp);color:var(--g2);padding:2px 8px;border-radius:18px;font-size:10.5px;font-weight:700}
-.price-sell{color:var(--g2);font-weight:900}
-.price-orig{color:var(--g400);font-size:11px}
-.act-btns{display:flex;gap:5px}
-.abt{width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;font-size:13px;transition:all .2s}
-.abt:hover{transform:scale(1.1)}
+body {
+  font-family: 'Cairo', sans-serif;
+  background: var(--g100);
+  color: var(--g800);
+  display: flex;
+  min-height: 100vh;
+}
 
-/* MODAL */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
-.modal-bg.show{display:flex}
-.modal{background:var(--w);border-radius:18px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.3);animation:pop .3s ease}
-@keyframes pop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-.modal-hdr{padding:18px 20px;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between}
-.modal-title{font-size:16px;font-weight:900;color:var(--g1)}
-.modal-close{width:30px;height:30px;border-radius:8px;border:none;background:var(--g100);cursor:pointer;font-size:16px}
-.modal-body{padding:20px}
-.field{margin-bottom:14px}
-.field label{display:block;font-size:12px;font-weight:700;color:var(--g2);margin-bottom:5px}
-.field input,.field select,.field textarea{width:100%;padding:10px 13px;border:1.5px solid var(--g200);border-radius:9px;font-family:'Cairo',sans-serif;font-size:13px;outline:none;transition:border-color .2s;background:#f9fafb}
-.field input:focus,.field select:focus{border-color:var(--g4);background:var(--w)}
-.img-preview{width:80px;height:80px;border-radius:12px;background:var(--gx);display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:8px;overflow:hidden;border:1.5px dashed var(--g4)}
-.img-preview img{width:100%;height:100%;object-fit:cover}
-.modal-footer{padding:14px 20px;border-top:1px solid var(--g200);display:flex;gap:9px;justify-content:flex-end}
-.btn-save{padding:10px 24px;background:var(--g2);color:#fff;border:none;border-radius:9px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s}
-.btn-save:hover{background:var(--g1)}
-.btn-cancel{padding:10px 16px;background:var(--g100);color:var(--g600);border:none;border-radius:9px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--g1);color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:700;z-index:300;display:none;animation:slideUp .3s ease}
-@keyframes slideUp{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+/* ===== SIDEBAR ===== */
+.sb {
+  width: 220px;
+  background: linear-gradient(170deg, var(--g1), var(--g2));
+  min-height: 100vh;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-logo {
+  padding: 22px 18px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sb-ico {
+  width: 40px; height: 40px;
+  background: var(--acc);
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+
+.sb-title { color: #fff; font-size: 19px; font-weight: 900; font-family: 'Tajawal', sans-serif; }
+.sb-sub { color: rgba(255,255,255,.45); font-size: 10px; }
+
+.sb-nav { padding: 16px 10px; flex: 1; }
+
+.nl {
+  color: rgba(255,255,255,.3);
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 0 8px;
+  margin: 12px 0 5px;
+}
+
+.ni {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgba(255,255,255,.65);
+  font-size: 12.5px; font-weight: 600;
+  margin-bottom: 2px;
+  transition: all .2s;
+  text-decoration: none;
+}
+
+.ni:hover { background: rgba(255,255,255,.1); color: #fff; }
+.ni.active { background: rgba(255,255,255,.17); color: #fff; }
+.ni .ico { font-size: 16px; width: 18px; }
+
+.sb-foot {
+  padding: 12px 10px 20px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+
+.adm {
+  display: flex; align-items: center; gap: 9px;
+  background: rgba(255,255,255,.1);
+  padding: 9px 11px; border-radius: 8px;
+}
+
+.adm-av {
+  width: 32px; height: 32px;
+  background: var(--acc);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+}
+
+.adm-n { color: #fff; font-size: 12px; font-weight: 700; }
+.adm-r { color: rgba(255,255,255,.45); font-size: 10px; }
+
+/* ===== MAIN ===== */
+.main { margin-right: 220px; flex: 1; }
+
+.topbar {
+  background: var(--w);
+  padding: 13px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--g200);
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: var(--sh);
+}
+
+.tb-title { font-size: 17px; font-weight: 900; color: var(--g1); font-family: 'Tajawal', sans-serif; }
+
+.content { padding: 20px 22px; }
+
+/* ===== TABS ===== */
+.tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+
+.tab {
+  padding: 9px 20px;
+  border-radius: 20px;
+  border: 1.5px solid var(--g200);
+  background: var(--w);
+  font-family: 'Cairo', sans-serif;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; color: var(--g600);
+  transition: all .2s;
+}
+
+.tab:hover { border-color: var(--g4); color: var(--g2); }
+.tab.active { background: var(--g2); color: #fff; border-color: var(--g2); }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ===== CARD ===== */
+.card {
+  background: var(--w);
+  border-radius: var(--r);
+  box-shadow: var(--sh);
+  border: 1px solid var(--g200);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.chd {
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--g200);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+}
+
+.ctl { font-size: 14px; font-weight: 900; color: var(--g1); }
+
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.add-btn {
+  padding: 8px 16px;
+  background: var(--g4);
+  color: #fff;
+  border: none; border-radius: 8px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.add-btn:hover { opacity: .9; transform: translateY(-1px); }
+.add-btn.blue { background: var(--blue); }
+.add-btn.blue:hover { background: #0d47a1; }
+
+/* ===== CATEGORIES GRID ===== */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.cat-card {
+  background: var(--gx);
+  border-radius: var(--r);
+  padding: 14px;
+  text-align: center;
+  border: 1.5px solid var(--g200);
+  position: relative;
+  transition: all .2s;
+}
+
+.cat-card:hover { border-color: var(--g4); box-shadow: var(--sh); }
+.cat-card.hidden { opacity: .45; }
+
+.cat-img {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  background: var(--w);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 8px;
+  overflow: hidden;
+  box-shadow: var(--sh);
+}
+
+.cat-img img { width: 100%; height: 100%; object-fit: cover; }
+.cat-name { font-size: 12.5px; font-weight: 700; margin-bottom: 10px; color: var(--g800); }
+
+.cat-actions { display: flex; gap: 5px; justify-content: center; }
+
+.ca {
+  width: 28px; height: 28px;
+  border-radius: 7px; border: none;
+  cursor: pointer; font-size: 13px;
+  transition: all .2s;
+}
+
+.ca:hover { transform: scale(1.12); }
+.ca-edit { background: #e3f2fd; }
+.ca-toggle { background: var(--gp); }
+.ca-del { background: #ffebee; }
+
+/* ===== SUBCATEGORIES ===== */
+.sub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  padding: 16px;
+}
+
+.sub-card {
+  background: #fafff9;
+  border-radius: 10px;
+  padding: 12px;
+  border: 1.5px solid var(--g200);
+  display: flex; align-items: center; gap: 10px;
+  transition: all .2s;
+}
+
+.sub-card:hover { border-color: var(--g4); }
+.sub-card.hidden { opacity: .45; }
+
+.sub-ico {
+  width: 38px; height: 38px;
+  background: var(--gp);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sub-ico img { width: 100%; height: 100%; object-fit: cover; }
+.sub-name { font-size: 12px; font-weight: 700; flex: 1; }
+.sub-cat-badge {
+  font-size: 9.5px; color: var(--g4);
+  background: var(--gp); padding: 2px 6px;
+  border-radius: 10px; font-weight: 700;
+}
+
+.sub-actions { display: flex; gap: 4px; margin-top: 6px; }
+
+/* ===== PRODUCTS TABLE ===== */
+.prod-filters {
+  display: flex; gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--g200);
+  flex-wrap: wrap;
+}
+
+.pf {
+  padding: 5px 12px;
+  border-radius: 18px;
+  border: 1.5px solid var(--g200);
+  background: var(--w);
+  font-family: 'Cairo', sans-serif;
+  font-size: 11.5px; font-weight: 700;
+  cursor: pointer; color: var(--g600);
+  transition: all .2s;
+}
+
+.pf:hover { border-color: var(--g4); color: var(--g2); }
+.pf.active { background: var(--g2); color: #fff; border-color: var(--g2); }
+
+/* بحث المنتجات */
+.search-bar {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--g200);
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 8px 14px;
+  border: 1.5px solid var(--g200);
+  border-radius: 20px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .2s;
+  background: var(--g100);
+}
+
+.search-bar input:focus { border-color: var(--g4); background: var(--w); }
+
+table { width: 100%; border-collapse: collapse; }
+
+th {
+  background: var(--gx);
+  padding: 10px 14px;
+  text-align: right;
+  font-size: 11px; font-weight: 700; color: var(--g2);
+}
+
+td {
+  padding: 9px 14px;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--g200);
+  vertical-align: middle;
+}
+
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafff9; }
+tr.prod-hidden td { opacity: .5; }
+
+.prod-img {
+  width: 38px; height: 38px;
+  border-radius: 9px;
+  background: var(--gx);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; overflow: hidden;
+}
+
+.prod-img img { width: 100%; height: 100%; object-fit: cover; }
+
+.unit-badge {
+  background: var(--gp); color: var(--g2);
+  padding: 2px 9px; border-radius: 18px;
+  font-size: 10.5px; font-weight: 700;
+}
+
+.price-sell { color: var(--g2); font-weight: 900; }
+.price-orig { color: var(--g400); font-size: 11px; }
+
+.act-btns { display: flex; gap: 5px; }
+
+.abt {
+  width: 28px; height: 28px;
+  border-radius: 7px; border: none;
+  cursor: pointer; font-size: 13px;
+  transition: all .2s;
+}
+
+.abt:hover { transform: scale(1.1); }
+
+/* ===== MODAL ===== */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 200;
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(3px);
+}
+
+.modal-bg.show { display: flex; }
+
+.modal {
+  background: var(--w);
+  border-radius: 18px;
+  width: 100%; max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0,0,0,.25);
+  animation: pop .25s ease;
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: scale(.94) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)  translateY(0); }
+}
+
+.modal-hdr {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--g200);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; background: var(--w); z-index: 2;
+}
+
+.modal-title { font-size: 15px; font-weight: 900; color: var(--g1); }
+
+.modal-close {
+  width: 30px; height: 30px;
+  border-radius: 8px; border: none;
+  background: var(--g100);
+  cursor: pointer; font-size: 15px;
+  transition: background .2s;
+}
+
+.modal-close:hover { background: var(--g200); }
+
+.modal-body { padding: 20px; }
+
+.field { margin-bottom: 14px; }
+
+.field label {
+  display: block;
+  font-size: 11.5px; font-weight: 700; color: var(--g2);
+  margin-bottom: 5px;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1.5px solid var(--g200);
+  border-radius: 9px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .2s;
+  background: #f9fafb;
+}
+
+.field input:focus,
+.field select:focus { border-color: var(--g4); background: var(--w); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.img-preview {
+  width: 80px; height: 80px;
+  border-radius: 12px;
+  background: var(--gx);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  border: 1.5px dashed var(--g4);
+}
+
+.img-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--g200);
+  display: flex; gap: 9px; justify-content: flex-end;
+  position: sticky; bottom: 0;
+  background: var(--w);
+}
+
+.btn-save {
+  padding: 10px 24px;
+  background: var(--g2); color: #fff;
+  border: none; border-radius: 9px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all .2s;
+}
+
+.btn-save:hover { background: var(--g1); transform: translateY(-1px); }
+.btn-save.blue-btn { background: var(--blue); }
+.btn-save.blue-btn:hover { background: #0d47a1; }
+
+.btn-cancel {
+  padding: 10px 16px;
+  background: var(--g100); color: var(--g600);
+  border: none; border-radius: 9px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: background .2s;
+}
+
+.btn-cancel:hover { background: var(--g200); }
+
+/* ===== EXCEL MODAL ===== */
+.excel-info {
+  background: var(--blue-light);
+  border-radius: 10px;
+  padding: 13px 15px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  line-height: 2;
+  color: var(--blue);
+  border: 1px solid #90caf9;
+}
+
+.excel-info b { font-weight: 900; }
+
+.file-drop {
+  border: 2px dashed #90caf9;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  background: #f8fbff;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+}
+
+.file-drop:hover { border-color: var(--blue); background: #e8f4ff; }
+.file-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.file-drop-ico { font-size: 32px; margin-bottom: 8px; }
+.file-drop-txt { font-size: 13px; font-weight: 700; color: var(--blue); }
+.file-drop-sub { font-size: 11px; color: var(--g400); margin-top: 4px; }
+.file-chosen { font-size: 12px; color: var(--g2); margin-top: 8px; font-weight: 700; display: none; }
+
+/* شريط تقدم */
+.progress-wrap { margin-top: 14px; display: none; }
+.progress-label { font-size: 12px; color: var(--blue); font-weight: 700; margin-bottom: 6px; }
+.progress-track {
+  background: #e3f2fd;
+  border-radius: 20px; height: 8px; overflow: hidden;
+}
+.progress-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #1565c0, #42a5f5);
+  border-radius: 20px;
+  transition: width .4s ease;
+}
+
+/* نتائج الرفع */
+.result-box {
+  margin-top: 16px; display: none;
+  border-radius: 12px; padding: 16px;
+  background: var(--gx);
+  border: 1.5px solid #a5d6a7;
+  animation: pop .3s ease;
+}
+
+.result-title { font-size: 14px; font-weight: 900; color: var(--g1); margin-bottom: 12px; }
+
+.result-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.stat-box {
+  background: var(--w);
+  border-radius: 10px;
+  padding: 12px 8px;
+  text-align: center;
+  border: 1.5px solid var(--g200);
+}
+
+.stat-num { font-size: 26px; font-weight: 900; line-height: 1; }
+.stat-lbl { font-size: 10px; color: var(--g600); margin-top: 4px; font-weight: 600; }
+.stat-created { color: var(--g2); }
+.stat-updated { color: var(--blue); }
+.stat-errors  { color: var(--red); }
+
+.error-details {
+  margin-top: 12px;
+  font-size: 11px; color: var(--red);
+  background: #fff5f5;
+  border-radius: 8px; padding: 10px;
+  border: 1px solid #ffcdd2;
+  display: none;
+  line-height: 1.9;
+}
+
+.result-box.fail {
+  background: #fff5f5;
+  border-color: #ef9a9a;
+}
+
+.result-box.fail .result-title { color: var(--red); }
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--g1); color: #fff;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-size: 13px; font-weight: 700;
+  z-index: 500; display: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2);
+  animation: slideUp .3s ease;
+  white-space: nowrap;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  text-align: center; padding: 40px 20px; color: var(--g400);
+}
+.empty-state .es-ico { font-size: 48px; margin-bottom: 10px; }
+.empty-state p { font-size: 13px; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .sb { display: none; }
+  .main { margin-right: 0; }
+  .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+  th:nth-child(3), td:nth-child(3),
+  th:nth-child(4), td:nth-child(4) { display: none; }
+}
 </style>
 </head>
 <body>
 
+<!-- ===== SIDEBAR ===== -->
 <nav class="sb">
   <div class="sb-logo">
     <div class="sb-ico">🛒</div>
-    <div><div class="sb-title">دكّاني</div><div class="sb-sub">رام الله 🇵🇸</div></div>
+    <div>
+      <div class="sb-title">دكّاني</div>
+      <div class="sb-sub">رام الله 🇵🇸</div>
+    </div>
   </div>
   <div class="sb-nav">
     <div class="nl">الإدارة</div>
@@ -117,27 +646,42 @@ tr.prod-hidden td{opacity:.5}
     <a class="ni" href="/"><span class="ico">👤</span> الزبون</a>
   </div>
   <div class="sb-foot">
-    <div class="adm"><div class="adm-av">👨</div><div><div class="adm-n">المدير</div><div class="adm-r">دكّاني</div></div></div>
+    <div class="adm">
+      <div class="adm-av">👨</div>
+      <div>
+        <div class="adm-n">المدير</div>
+        <div class="adm-r">دكّاني</div>
+      </div>
+    </div>
   </div>
 </nav>
 
+<!-- ===== MAIN ===== -->
 <div class="main">
   <div class="topbar">
     <div class="tb-title">🏪 إدارة الأقسام والمنتجات</div>
   </div>
 
   <div class="content">
+
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('cats',this)">📂 الأقسام ({{ categories|length }})</button>
-      <button class="tab" onclick="switchTab('prods',this)">🛍️ المنتجات ({{ products|length }})</button>
+      <button class="tab active" onclick="switchTab('cats', this)">
+        📂 الأقسام الرئيسية ({{ categories|length }})
+      </button>
+      <button class="tab" onclick="switchTab('subs', this)">
+        📁 الأقسام الفرعية ({{ subcategories|length }})
+      </button>
+      <button class="tab" onclick="switchTab('prods', this)">
+        🛍️ المنتجات ({{ products|length }})
+      </button>
     </div>
 
-    <!-- PANEL: CATEGORIES -->
+    <!-- ===== PANEL: CATEGORIES ===== -->
     <div class="panel active" id="panel-cats">
       <div class="card">
         <div class="chd">
-          <div class="ctl">📂 جميع الأقسام</div>
+          <div class="ctl">📂 جميع الأقسام الرئيسية</div>
           <button class="add-btn" onclick="openCatModal()">➕ قسم جديد</button>
         </div>
         <div class="cat-grid">
@@ -153,32 +697,98 @@ tr.prod-hidden td{opacity:.5}
             <div class="cat-name">{{ cat.name }}</div>
             <div class="cat-actions">
               <button class="ca ca-edit" title="تعديل"
-                onclick="openCatModal({{ cat.id }},'{{ cat.name }}','{{ cat.icon }}')">✏️</button>
+                onclick="openCatModal({{ cat.id }}, '{{ cat.name }}', '{{ cat.icon }}')">✏️</button>
               <button class="ca ca-toggle" title="إخفاء/إظهار"
                 onclick="toggleCat({{ cat.id }})">👁️</button>
               <button class="ca ca-del" title="حذف"
-                onclick="deleteCat({{ cat.id }},'{{ cat.name }}')">🗑️</button>
+                onclick="deleteCat({{ cat.id }}, '{{ cat.name }}')">🗑️</button>
             </div>
           </div>
           {% endfor %}
+          {% if not categories %}
+          <div class="empty-state" style="grid-column:1/-1">
+            <div class="es-ico">📂</div>
+            <p>لا توجد أقسام بعد — أضف قسماً جديداً</p>
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>
 
-    <!-- PANEL: PRODUCTS -->
+    <!-- ===== PANEL: SUBCATEGORIES ===== -->
+    <div class="panel" id="panel-subs">
+      <div class="card">
+        <div class="chd">
+          <div class="ctl">📁 جميع الأقسام الفرعية</div>
+          <button class="add-btn" onclick="openSubModal()">➕ قسم فرعي جديد</button>
+        </div>
+        <!-- فلتر حسب القسم الرئيسي -->
+        <div class="prod-filters">
+          <button class="pf active" onclick="filterSubs('all', this)">الكل</button>
+          {% for cat in categories %}
+          <button class="pf" onclick="filterSubs('{{ cat.id }}', this)">{{ cat.icon }} {{ cat.name }}</button>
+          {% endfor %}
+        </div>
+        <div class="sub-grid" id="sub-grid">
+          {% for sub in subcategories %}
+          {% set cat_name = categories | selectattr('id','eq',sub.category_id) | map(attribute='name') | first | default('—') %}
+          <div class="sub-card {% if not sub.visible %}hidden{% endif %}"
+               id="sub-{{ sub.id }}" data-cat="{{ sub.category_id }}">
+            <div class="sub-ico">
+              {% if sub.image %}
+                <img src="{{ sub.image }}" alt="{{ sub.name }}">
+              {% else %}
+                {{ sub.icon }}
+              {% endif %}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div class="sub-name">{{ sub.name }}</div>
+              <div class="sub-cat-badge">{{ cat_name }}</div>
+              <div class="sub-actions">
+                <button class="ca ca-edit" style="width:24px;height:24px;font-size:11px" title="تعديل"
+                  onclick="openSubModal({{ sub.id }}, '{{ sub.name }}', '{{ sub.icon }}', {{ sub.category_id }})">✏️</button>
+                <button class="ca ca-toggle" style="width:24px;height:24px;font-size:11px" title="إخفاء/إظهار"
+                  onclick="toggleSub({{ sub.id }})">👁️</button>
+                <button class="ca ca-del" style="width:24px;height:24px;font-size:11px" title="حذف"
+                  onclick="deleteSub({{ sub.id }}, '{{ sub.name }}')">🗑️</button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+          {% if not subcategories %}
+          <div class="empty-state" style="grid-column:1/-1">
+            <div class="es-ico">📁</div>
+            <p>لا توجد أقسام فرعية — أضف قسماً فرعياً جديداً</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PANEL: PRODUCTS ===== -->
     <div class="panel" id="panel-prods">
       <div class="card">
         <div class="chd">
           <div class="ctl">🛍️ جميع المنتجات</div>
-          <button class="add-btn" onclick="openProdModal()">➕ منتج جديد</button>
+          <div class="btn-group">
+            <button class="add-btn blue" onclick="openExcelModal()">📥 رفع المخزون</button>
+            <button class="add-btn" onclick="openProdModal()">➕ منتج جديد</button>
+          </div>
         </div>
+
         <!-- فلاتر الأقسام -->
         <div class="prod-filters">
-          <button class="pf active" onclick="filterProds('all',this)">الكل</button>
+          <button class="pf active" onclick="filterProds('all', this)">الكل</button>
           {% for cat in categories %}
-          <button class="pf" onclick="filterProds('{{ cat.id }}',this)">{{ cat.icon }} {{ cat.name }}</button>
+          <button class="pf" onclick="filterProds('{{ cat.id }}', this)">{{ cat.icon }} {{ cat.name }}</button>
           {% endfor %}
         </div>
+
+        <!-- بحث -->
+        <div class="search-bar">
+          <input type="text" id="prod-search" placeholder="🔍 ابحث عن منتج..." oninput="searchProds(this.value)">
+        </div>
+
         <table>
           <thead>
             <tr>
@@ -197,7 +807,7 @@ tr.prod-hidden td{opacity:.5}
             {% set sell = p.price + (0.5 if p.price <= 8 else (1.0 if p.price <= 19 else 1.5)) %}
             {% set cat_name = categories | selectattr('id','eq',p.category_id) | map(attribute='name') | first | default('—') %}
             <tr class="prod-row {% if not p.visible %}prod-hidden{% endif %}"
-                data-cat="{{ p.category_id }}">
+                data-cat="{{ p.category_id }}" data-name="{{ p.name }}">
               <td>
                 <div class="prod-img">
                   {% if p.image %}<img src="{{ p.image }}" alt="">
@@ -205,37 +815,45 @@ tr.prod-hidden td{opacity:.5}
                 </div>
               </td>
               <td><b>{{ p.name }}</b></td>
-              <td>{{ cat_name }}</td>
+              <td style="color:var(--g600);font-size:12px">{{ cat_name }}</td>
               <td><span class="price-orig">{{ p.price }}₪</span></td>
               <td><span class="price-sell">{{ "%.1f"|format(sell) }}₪</span></td>
               <td><span class="unit-badge">{{ p.unit }}</span></td>
               <td>
                 {% if p.visible %}
-                  <span style="color:var(--g4);font-weight:700;font-size:12px">✅ ظاهر</span>
+                  <span style="color:var(--g4);font-weight:700;font-size:11.5px">✅ ظاهر</span>
                 {% else %}
-                  <span style="color:var(--g400);font-weight:700;font-size:12px">🙈 مخفي</span>
+                  <span style="color:var(--g400);font-weight:700;font-size:11.5px">🙈 مخفي</span>
                 {% endif %}
               </td>
               <td>
                 <div class="act-btns">
                   <button class="abt" style="background:#e3f2fd" title="تعديل"
-                    onclick="openProdModal({{ p.id }},'{{ p.name }}',{{ p.price }},'{{ p.unit }}',{{ p.category_id }})">✏️</button>
+                    onclick="openProdModal({{ p.id }}, '{{ p.name }}', {{ p.price }}, '{{ p.unit }}', {{ p.category_id }}, {{ p.subcategory_id or 'null' }})">✏️</button>
                   <button class="abt" style="background:var(--gp)" title="إخفاء/إظهار"
                     onclick="toggleProd({{ p.id }})">👁️</button>
                   <button class="abt" style="background:#ffebee" title="حذف"
-                    onclick="deleteProd({{ p.id }},'{{ p.name }}')">🗑️</button>
+                    onclick="deleteProd({{ p.id }}, '{{ p.name }}')">🗑️</button>
                 </div>
               </td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
+
+        {% if not products %}
+        <div class="empty-state">
+          <div class="es-ico">🛍️</div>
+          <p>لا توجد منتجات — أضف منتجاً أو ارفع ملف Excel</p>
+        </div>
+        {% endif %}
       </div>
     </div>
-  </div>
-</div>
 
-<!-- MODAL: قسم -->
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ===== MODAL: قسم رئيسي ===== -->
 <div class="modal-bg" id="cat-modal">
   <div class="modal">
     <div class="modal-hdr">
@@ -247,15 +865,17 @@ tr.prod-hidden td{opacity:.5}
       <div class="field">
         <label>🖼️ صورة القسم (اختياري)</label>
         <div class="img-preview" id="cat-img-preview">🛒</div>
-        <input type="file" id="cat-image" accept="image/*" onchange="previewImg(this,'cat-img-preview')">
+        <input type="file" id="cat-image" accept="image/*" onchange="previewImg(this, 'cat-img-preview')">
       </div>
-      <div class="field">
-        <label>😀 إيموجي القسم</label>
-        <input type="text" id="cat-icon" placeholder="مثال: 🥛 🍞 🥩" value="🛒">
-      </div>
-      <div class="field">
-        <label>📝 اسم القسم *</label>
-        <input type="text" id="cat-name" placeholder="مثال: ألبان وأجبان">
+      <div class="grid-2">
+        <div class="field">
+          <label>😀 إيموجي القسم</label>
+          <input type="text" id="cat-icon" placeholder="🛒" value="🛒">
+        </div>
+        <div class="field">
+          <label>📝 اسم القسم *</label>
+          <input type="text" id="cat-name" placeholder="مثال: ألبان وأجبان">
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -265,7 +885,47 @@ tr.prod-hidden td{opacity:.5}
   </div>
 </div>
 
-<!-- MODAL: منتج -->
+<!-- ===== MODAL: قسم فرعي ===== -->
+<div class="modal-bg" id="sub-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="sub-modal-title">➕ إضافة قسم فرعي</div>
+      <button class="modal-close" onclick="closeSubModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sub-id">
+      <div class="field">
+        <label>🖼️ صورة القسم الفرعي (اختياري)</label>
+        <div class="img-preview" id="sub-img-preview">📦</div>
+        <input type="file" id="sub-image" accept="image/*" onchange="previewImg(this, 'sub-img-preview')">
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>😀 إيموجي</label>
+          <input type="text" id="sub-icon" placeholder="📦" value="📦">
+        </div>
+        <div class="field">
+          <label>📝 اسم القسم الفرعي *</label>
+          <input type="text" id="sub-name" placeholder="مثال: أجبان">
+        </div>
+      </div>
+      <div class="field">
+        <label>📂 القسم الرئيسي *</label>
+        <select id="sub-cat">
+          {% for cat in categories %}
+          <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeSubModal()">إلغاء</button>
+      <button class="btn-save" onclick="saveSub()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: منتج ===== -->
 <div class="modal-bg" id="prod-modal">
   <div class="modal">
     <div class="modal-hdr">
@@ -277,13 +937,13 @@ tr.prod-hidden td{opacity:.5}
       <div class="field">
         <label>🖼️ صورة المنتج (اختياري)</label>
         <div class="img-preview" id="prod-img-preview">🛍️</div>
-        <input type="file" id="prod-image" accept="image/*" onchange="previewImg(this,'prod-img-preview')">
+        <input type="file" id="prod-image" accept="image/*" onchange="previewImg(this, 'prod-img-preview')">
       </div>
       <div class="field">
         <label>📝 اسم المنتج *</label>
         <input type="text" id="prod-name" placeholder="مثال: حليب تنوره 1 لتر">
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="grid-2">
         <div class="field">
           <label>💰 سعر الشراء (₪) *</label>
           <input type="number" id="prod-price" placeholder="0.00" step="0.5" min="0" oninput="calcSell()">
@@ -293,33 +953,34 @@ tr.prod-hidden td{opacity:.5}
           <input type="text" id="prod-sell" readonly style="background:#f0fdf4;color:var(--g2);font-weight:700">
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="grid-2">
         <div class="field">
           <label>⚖️ وحدة القياس *</label>
           <select id="prod-unit">
-            <option>حبة</option>
-            <option>كيلو</option>
-            <option>نص كيلو</option>
-            <option>ربع كيلو</option>
-            <option>علبة</option>
-            <option>كيس</option>
-            <option>زجاجة</option>
-            <option>كرتون</option>
-            <option>ربطة</option>
-            <option>لتر</option>
-            <option>برطمان</option>
-            <option>أنبوب</option>
+            <option>حبة</option><option>كيلو</option><option>نص كيلو</option>
+            <option>ربع كيلو</option><option>علبة</option><option>كيس</option>
+            <option>زجاجة</option><option>كرتون</option><option>ربطة</option>
+            <option>لتر</option><option>برطمان</option><option>أنبوب</option>
             <option>قطعة</option>
           </select>
         </div>
         <div class="field">
-          <label>📂 القسم *</label>
-          <select id="prod-cat">
+          <label>📂 القسم الرئيسي *</label>
+          <select id="prod-cat" onchange="loadSubcats(this.value)">
             {% for cat in categories %}
             <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
             {% endfor %}
           </select>
         </div>
+      </div>
+      <div class="field">
+        <label>📁 القسم الفرعي (اختياري)</label>
+        <select id="prod-subcat">
+          <option value="">— بدون قسم فرعي —</option>
+          {% for sub in subcategories %}
+          <option value="{{ sub.id }}" data-cat="{{ sub.category_id }}">{{ sub.icon }} {{ sub.name }}</option>
+          {% endfor %}
+        </select>
       </div>
     </div>
     <div class="modal-footer">
@@ -329,50 +990,154 @@ tr.prod-hidden td{opacity:.5}
   </div>
 </div>
 
+<!-- ===== MODAL: رفع Excel ===== -->
+<div class="modal-bg" id="excel-modal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-hdr">
+      <div class="modal-title">📥 رفع المخزون من Excel</div>
+      <button class="modal-close" onclick="closeExcelModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="excel-info">
+        <b>📋 الأعمدة المدعومة في ملف Excel:</b><br>
+        اسم المنتج &nbsp;·&nbsp; السعر &nbsp;·&nbsp; الوحدة &nbsp;·&nbsp; القسم الرئيسي &nbsp;·&nbsp; القسم الفرعي
+        <br>
+        <b>💡 ملاحظة:</b> النظام يتعرف على أسماء الأعمدة تلقائياً بالعربي والإنجليزي — الأقسام الجديدة تُنشأ تلقائياً
+      </div>
+
+      <!-- منطقة رفع الملف -->
+      <div class="file-drop" id="file-drop-zone">
+        <input type="file" id="excel-file" accept=".xlsx,.xls"
+          onchange="onFileChosen(this)">
+        <div class="file-drop-ico">📂</div>
+        <div class="file-drop-txt">اسحب الملف هنا أو انقر للاختيار</div>
+        <div class="file-drop-sub">يدعم ملفات .xlsx و .xls فقط</div>
+        <div class="file-chosen" id="file-chosen-name"></div>
+      </div>
+
+      <!-- شريط تقدم -->
+      <div class="progress-wrap" id="excel-progress">
+        <div class="progress-label">⏳ جاري معالجة الملف...</div>
+        <div class="progress-track">
+          <div class="progress-bar" id="excel-bar"></div>
+        </div>
+      </div>
+
+      <!-- نتائج الرفع -->
+      <div class="result-box" id="excel-result">
+        <div class="result-title" id="result-title">✅ اكتملت عملية الرفع!</div>
+        <div class="result-stats">
+          <div class="stat-box">
+            <div class="stat-num stat-created" id="res-created">0</div>
+            <div class="stat-lbl">✨ منتج جديد</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num stat-updated" id="res-updated">0</div>
+            <div class="stat-lbl">🔄 تم تحديثه</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num stat-errors" id="res-errors">0</div>
+            <div class="stat-lbl">⚠️ أخطاء</div>
+          </div>
+        </div>
+        <div class="error-details" id="res-error-rows"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeExcelModal()">إغلاق</button>
+      <button class="btn-save blue-btn" id="excel-upload-btn" onclick="uploadExcel()">📤 رفع الملف</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-const categories = {{ categories | tojson }};
+const categories   = {{ categories | tojson }};
+const subcategories = {{ subcategories | tojson }};
 
-// Tabs
-function switchTab(tab, btn){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+// ===== TABS =====
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('panel-'+tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
 }
 
-// Toast
-function showToast(msg){
+// ===== TOAST =====
+function showToast(msg, color) {
   const t = document.getElementById('toast');
   t.textContent = msg;
+  t.style.background = color || 'var(--g1)';
   t.style.display = 'block';
-  setTimeout(()=>t.style.display='none', 2500);
+  setTimeout(() => t.style.display = 'none', 2500);
 }
 
-// Preview Image
-function previewImg(input, previewId){
+// ===== IMAGE PREVIEW =====
+function previewImg(input, previewId) {
   const preview = document.getElementById(previewId);
-  if(input.files && input.files[0]){
+  if (input.files && input.files[0]) {
     const reader = new FileReader();
-    reader.onload = e => {
-      preview.innerHTML = `<img src="${e.target.result}" alt="">`;
-    };
+    reader.onload = e => preview.innerHTML = `<img src="${e.target.result}" alt="">`;
     reader.readAsDataURL(input.files[0]);
   }
 }
 
-// حساب سعر البيع تلقائياً
-function calcSell(){
+// ===== SELL PRICE CALC =====
+function calcSell() {
   const price = parseFloat(document.getElementById('prod-price').value) || 0;
-  let profit = price <= 8 ? 0.5 : price <= 19 ? 1.0 : 1.5;
+  const profit = price <= 8 ? 0.5 : price <= 19 ? 1.0 : 1.5;
   document.getElementById('prod-sell').value = (price + profit).toFixed(1) + '₪';
 }
 
-// ==================== CATEGORIES ====================
+// ===== SUBCATS LOADER =====
+function loadSubcats(catId, selectedSubId) {
+  const sel = document.getElementById('prod-subcat');
+  sel.innerHTML = '<option value="">— بدون قسم فرعي —</option>';
+  subcategories
+    .filter(s => s.category_id == catId)
+    .forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = s.icon + ' ' + s.name;
+      if (selectedSubId && s.id == selectedSubId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+}
 
-function openCatModal(id=null, name='', icon='🛒'){
+// ===== SEARCH =====
+function searchProds(q) {
+  const lower = q.trim().toLowerCase();
+  document.querySelectorAll('.prod-row').forEach(tr => {
+    const name = tr.dataset.name.toLowerCase();
+    tr.style.display = (!lower || name.includes(lower)) ? '' : 'none';
+  });
+}
+
+// ===== FILTER PRODUCTS =====
+function filterProds(catId, btn) {
+  document.querySelectorAll('.pf').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('prod-search').value = '';
+  document.querySelectorAll('.prod-row').forEach(tr => {
+    tr.style.display = (catId === 'all' || tr.dataset.cat == catId) ? '' : 'none';
+  });
+}
+
+// ===== FILTER SUBCATEGORIES =====
+function filterSubs(catId, btn) {
+  document.querySelectorAll('.pf').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#sub-grid .sub-card').forEach(card => {
+    card.style.display = (catId === 'all' || card.dataset.cat == catId) ? '' : 'none';
+  });
+}
+
+// ==================== CATEGORIES ====================
+function openCatModal(id=null, name='', icon='🛒') {
   document.getElementById('cat-id').value = id || '';
   document.getElementById('cat-name').value = name;
   document.getElementById('cat-icon').value = icon;
@@ -381,130 +1146,234 @@ function openCatModal(id=null, name='', icon='🛒'){
   document.getElementById('cat-modal-title').textContent = id ? '✏️ تعديل القسم' : '➕ قسم جديد';
   document.getElementById('cat-modal').classList.add('show');
 }
+function closeCatModal() { document.getElementById('cat-modal').classList.remove('show'); }
 
-function closeCatModal(){
-  document.getElementById('cat-modal').classList.remove('show');
-}
-
-function saveCat(){
+function saveCat() {
   const id   = document.getElementById('cat-id').value;
   const name = document.getElementById('cat-name').value.trim();
   const icon = document.getElementById('cat-icon').value.trim();
   const file = document.getElementById('cat-image').files[0];
-
-  if(!name){ alert('⚠️ أدخل اسم القسم'); return; }
-
+  if (!name) { alert('⚠️ أدخل اسم القسم'); return; }
   const fd = new FormData();
   fd.append('name', name);
   fd.append('icon', icon);
-  if(file) fd.append('image', file);
-
+  if (file) fd.append('image', file);
   const url = id ? `/api/category/${id}` : '/api/category';
-  fetch(url, {method:'POST', body:fd})
-    .then(r=>r.json())
-    .then(d=>{
-      if(d.success){
-        closeCatModal();
-        showToast('✅ تم الحفظ بنجاح!');
-        setTimeout(()=>location.reload(), 800);
-      }
+  fetch(url, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) { closeCatModal(); showToast('✅ تم حفظ القسم'); setTimeout(() => location.reload(), 800); }
     });
 }
 
-function toggleCat(id){
-  fetch(`/api/category/${id}/toggle`, {method:'POST'})
-    .then(r=>r.json())
-    .then(()=>{
-      const card = document.getElementById('cat-'+id);
-      card.classList.toggle('hidden');
+function toggleCat(id) {
+  fetch(`/api/category/${id}/toggle`, { method: 'POST' })
+    .then(r => r.json())
+    .then(() => {
+      document.getElementById('cat-' + id).classList.toggle('hidden');
       showToast('✅ تم التغيير');
     });
 }
 
-function deleteCat(id, name){
-  if(!confirm(`⚠️ هل تريد حذف قسم "${name}"؟\nسيتم حذف جميع منتجاته أيضاً!`)) return;
-  fetch(`/api/category/${id}/delete`, {method:'POST'})
-    .then(r=>r.json())
-    .then(()=>{
-      showToast('🗑️ تم الحذف');
-      setTimeout(()=>location.reload(), 800);
+function deleteCat(id, name) {
+  if (!confirm(`⚠️ هل تريد حذف قسم "${name}"؟\nسيتم حذف جميع منتجاته أيضاً!`)) return;
+  fetch(`/api/category/${id}/delete`, { method: 'POST' })
+    .then(r => r.json())
+    .then(() => { showToast('🗑️ تم الحذف'); setTimeout(() => location.reload(), 800); });
+}
+
+// ==================== SUBCATEGORIES ====================
+function openSubModal(id=null, name='', icon='📦', catId=null) {
+  document.getElementById('sub-id').value = id || '';
+  document.getElementById('sub-name').value = name;
+  document.getElementById('sub-icon').value = icon;
+  document.getElementById('sub-img-preview').innerHTML = icon;
+  document.getElementById('sub-image').value = '';
+  if (catId) document.getElementById('sub-cat').value = catId;
+  document.getElementById('sub-modal-title').textContent = id ? '✏️ تعديل القسم الفرعي' : '➕ قسم فرعي جديد';
+  document.getElementById('sub-modal').classList.add('show');
+}
+function closeSubModal() { document.getElementById('sub-modal').classList.remove('show'); }
+
+function saveSub() {
+  const id     = document.getElementById('sub-id').value;
+  const name   = document.getElementById('sub-name').value.trim();
+  const icon   = document.getElementById('sub-icon').value.trim();
+  const catId  = document.getElementById('sub-cat').value;
+  const file   = document.getElementById('sub-image').files[0];
+  if (!name) { alert('⚠️ أدخل اسم القسم الفرعي'); return; }
+  const fd = new FormData();
+  fd.append('name', name);
+  fd.append('icon', icon);
+  fd.append('category_id', catId);
+  if (file) fd.append('image', file);
+  const url = id ? `/api/subcategory/${id}` : '/api/subcategory';
+  fetch(url, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) { closeSubModal(); showToast('✅ تم حفظ القسم الفرعي'); setTimeout(() => location.reload(), 800); }
     });
 }
 
-// ==================== PRODUCTS ====================
+function toggleSub(id) {
+  fetch(`/api/subcategory/${id}/toggle`, { method: 'POST' })
+    .then(r => r.json())
+    .then(() => {
+      document.getElementById('sub-' + id).classList.toggle('hidden');
+      showToast('✅ تم التغيير');
+    });
+}
 
-function openProdModal(id=null, name='', price=0, unit='حبة', catId=null){
+function deleteSub(id, name) {
+  if (!confirm(`⚠️ هل تريد حذف القسم الفرعي "${name}"؟`)) return;
+  fetch(`/api/subcategory/${id}/delete`, { method: 'POST' })
+    .then(r => r.json())
+    .then(() => { showToast('🗑️ تم الحذف'); setTimeout(() => location.reload(), 800); });
+}
+
+// ==================== PRODUCTS ====================
+function openProdModal(id=null, name='', price=0, unit='حبة', catId=null, subId=null) {
   document.getElementById('prod-id').value = id || '';
   document.getElementById('prod-name').value = name;
   document.getElementById('prod-price').value = price || '';
   document.getElementById('prod-unit').value = unit;
   document.getElementById('prod-img-preview').innerHTML = '🛍️';
   document.getElementById('prod-image').value = '';
-  if(catId) document.getElementById('prod-cat').value = catId;
+  const firstCat = catId || (categories[0] ? categories[0].id : null);
+  if (firstCat) {
+    document.getElementById('prod-cat').value = firstCat;
+    loadSubcats(firstCat, subId);
+  }
   document.getElementById('prod-modal-title').textContent = id ? '✏️ تعديل المنتج' : '➕ منتج جديد';
   calcSell();
   document.getElementById('prod-modal').classList.add('show');
 }
+function closeProdModal() { document.getElementById('prod-modal').classList.remove('show'); }
 
-function closeProdModal(){
-  document.getElementById('prod-modal').classList.remove('show');
-}
-
-function saveProd(){
-  const id    = document.getElementById('prod-id').value;
-  const name  = document.getElementById('prod-name').value.trim();
-  const price = document.getElementById('prod-price').value;
-  const unit  = document.getElementById('prod-unit').value;
-  const catId = document.getElementById('prod-cat').value;
-  const file  = document.getElementById('prod-image').files[0];
-
-  if(!name || !price){ alert('⚠️ أدخل اسم المنتج والسعر'); return; }
-
+function saveProd() {
+  const id     = document.getElementById('prod-id').value;
+  const name   = document.getElementById('prod-name').value.trim();
+  const price  = document.getElementById('prod-price').value;
+  const unit   = document.getElementById('prod-unit').value;
+  const catId  = document.getElementById('prod-cat').value;
+  const subId  = document.getElementById('prod-subcat').value;
+  const file   = document.getElementById('prod-image').files[0];
+  if (!name || !price) { alert('⚠️ أدخل اسم المنتج والسعر'); return; }
   const fd = new FormData();
   fd.append('name', name);
   fd.append('price', price);
   fd.append('unit', unit);
   fd.append('category_id', catId);
-  if(file) fd.append('image', file);
-
+  if (subId) fd.append('subcategory_id', subId);
+  if (file) fd.append('image', file);
   const url = id ? `/api/product/${id}` : '/api/product';
-  fetch(url, {method:'POST', body:fd})
-    .then(r=>r.json())
-    .then(d=>{
-      if(d.success){
-        closeProdModal();
-        showToast('✅ تم الحفظ بنجاح!');
-        setTimeout(()=>location.reload(), 800);
-      }
+  fetch(url, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) { closeProdModal(); showToast('✅ تم الحفظ بنجاح!'); setTimeout(() => location.reload(), 800); }
     });
 }
 
-function toggleProd(id){
-  fetch(`/api/product/${id}/toggle`, {method:'POST'})
-    .then(r=>r.json())
-    .then(()=>{
-      showToast('✅ تم التغيير');
-      setTimeout(()=>location.reload(), 600);
-    });
+function toggleProd(id) {
+  fetch(`/api/product/${id}/toggle`, { method: 'POST' })
+    .then(r => r.json())
+    .then(() => { showToast('✅ تم التغيير'); setTimeout(() => location.reload(), 600); });
 }
 
-function deleteProd(id, name){
-  if(!confirm(`⚠️ هل تريد حذف منتج "${name}"؟`)) return;
-  fetch(`/api/product/${id}/delete`, {method:'POST'})
-    .then(r=>r.json())
-    .then(()=>{
-      showToast('🗑️ تم الحذف');
-      setTimeout(()=>location.reload(), 800);
-    });
+function deleteProd(id, name) {
+  if (!confirm(`⚠️ هل تريد حذف منتج "${name}"؟`)) return;
+  fetch(`/api/product/${id}/delete`, { method: 'POST' })
+    .then(r => r.json())
+    .then(() => { showToast('🗑️ تم الحذف'); setTimeout(() => location.reload(), 800); });
 }
 
-// فلترة المنتجات
-function filterProds(catId, btn){
-  document.querySelectorAll('.pf').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.prod-row').forEach(tr=>{
-    tr.style.display = (catId==='all' || tr.dataset.cat==catId) ? '' : 'none';
-  });
+// ==================== EXCEL IMPORT ====================
+function onFileChosen(input) {
+  const label = document.getElementById('file-chosen-name');
+  if (input.files && input.files[0]) {
+    label.textContent = '📄 ' + input.files[0].name;
+    label.style.display = 'block';
+  }
+}
+
+function openExcelModal() {
+  document.getElementById('excel-file').value = '';
+  document.getElementById('file-chosen-name').style.display = 'none';
+  document.getElementById('file-chosen-name').textContent = '';
+  document.getElementById('excel-progress').style.display = 'none';
+  document.getElementById('excel-result').style.display = 'none';
+  document.getElementById('excel-result').className = 'result-box';
+  document.getElementById('excel-upload-btn').style.display = '';
+  document.getElementById('excel-bar').style.width = '0%';
+  document.getElementById('excel-modal').classList.add('show');
+}
+
+function closeExcelModal() {
+  const hasResult = document.getElementById('excel-result').style.display !== 'none';
+  document.getElementById('excel-modal').classList.remove('show');
+  if (hasResult) location.reload();
+}
+
+function uploadExcel() {
+  const file = document.getElementById('excel-file').files[0];
+  if (!file) { alert('⚠️ اختر ملف Excel أولاً'); return; }
+
+  const fd = new FormData();
+  fd.append('file', file);
+
+  // إظهار التقدم
+  document.getElementById('excel-progress').style.display = 'block';
+  document.getElementById('excel-result').style.display = 'none';
+  document.getElementById('excel-upload-btn').style.display = 'none';
+
+  let width = 0;
+  const bar = document.getElementById('excel-bar');
+  const interval = setInterval(() => {
+    if (width < 85) { width += 4; bar.style.width = width + '%'; }
+  }, 180);
+
+  fetch('/api/admin/import-excel', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      clearInterval(interval);
+      bar.style.width = '100%';
+
+      setTimeout(() => {
+        document.getElementById('excel-progress').style.display = 'none';
+        const box = document.getElementById('excel-result');
+
+        if (!data.success) {
+          box.className = 'result-box fail';
+          document.getElementById('result-title').textContent = '❌ فشل الرفع';
+          document.getElementById('res-created').textContent = '—';
+          document.getElementById('res-updated').textContent = '—';
+          document.getElementById('res-errors').textContent = '—';
+          const errBox = document.getElementById('res-error-rows');
+          errBox.style.display = 'block';
+          errBox.textContent = data.error || 'خطأ غير معروف';
+        } else {
+          box.className = 'result-box';
+          document.getElementById('result-title').textContent = '✅ اكتملت عملية الرفع!';
+          document.getElementById('res-created').textContent = data.created || 0;
+          document.getElementById('res-updated').textContent = data.updated || 0;
+          document.getElementById('res-errors').textContent  = data.errors  || 0;
+          if (data.error_rows && data.error_rows.length > 0) {
+            const errBox = document.getElementById('res-error-rows');
+            errBox.style.display = 'block';
+            errBox.innerHTML = '<b>تفاصيل الأخطاء:</b><br>' + data.error_rows.join('<br>');
+          }
+        }
+
+        box.style.display = 'block';
+        document.getElementById('excel-upload-btn').style.display = '';
+      }, 400);
+    })
+    .catch(() => {
+      clearInterval(interval);
+      alert('❌ خطأ في الاتصال بالسيرفر');
+      document.getElementById('excel-progress').style.display = 'none';
+      document.getElementById('excel-upload-btn').style.display = '';
+    });
 }
 </script>
 </body>
