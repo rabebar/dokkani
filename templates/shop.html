@@ -59,28 +59,47 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .cat-ico img{width:100%;height:100%;object-fit:cover}
 .cat-lbl{font-size:11px;font-weight:700;color:var(--g800);line-height:1.3}
 
-/* BOTTOM NAV */
+/* --- القالب الموحد لشريط التنقل السفلي --- */
 .bnav {
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: rgba(255, 255, 255, 0.82); /* خلفية شفافة */
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); /* تأثير ضبابي iOS */
-    height: calc(var(--nav) + env(safe-area-inset-bottom)); /* دعم حافة الأيفون */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    height: 65px;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+    z-index: 2000;
     padding-bottom: env(safe-area-inset-bottom);
-    display: flex; align-items: center;
-    border-top: 1px solid rgba(0,0,0,0.05); z-index: 1000;
 }
 .bni {
-    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 3px; text-decoration: none; transition: 0.2s; color: #8e8e93; position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-decoration: none;
+    color: #8e8e93; 
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
 }
-.bni.active { color: var(--g2); }
-.bni-ico { font-size: 23px; line-height: 1; }
-.bni-lbl { font-size: 10px; font-weight: 600; }
+.bni-ico { font-size: 22px; transition: 0.3s; }
+.bni-lbl { font-size: 10px; font-weight: 700; font-family: 'Cairo', sans-serif; }
+
+/* الحالة النشطة */
+.bni.active { color: var(--g1); }
+.bni.active .bni-ico { transform: translateY(-2px); }
+.bni.active .bni-lbl { color: var(--g1); }
+
+/* شارة التنبيه */
 .bni-badge {
-    position: absolute; top: 2px; right: calc(50% - 18px);
-    background: var(--acc); color: var(--g1); font-size: 9px; font-weight: 900;
-    min-width: 16px; height: 16px; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center; border: 2px solid var(--w);
+    position: absolute; top: 4px; right: calc(50% - 18px);
+    background: var(--acc); color: var(--g1);
+    font-size: 9px; font-weight: 900;
+    min-width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #fff;
 }
 
 /* CART BAR */
@@ -234,38 +253,27 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 <!-- البوابات السفلية -->
 <nav class="bnav">
   <a class="bni active" href="/shop">
-    <span class="bni-ico">
-      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    </span>
+    <span class="bni-ico">🏪</span>
     <span class="bni-lbl">المتجر</span>
   </a>
-  <a class="bni" href="/cart" id="nav-cart">
-    <span class="bni-ico">
-      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-    </span>
+  <a class="bni" href="/cart">
+    <span class="bni-ico">🛒</span>
     <span class="bni-lbl">السلة</span>
     <span class="bni-badge" id="nav-cart-count" style="display:none">0</span>
   </a>
   <a class="bni" href="/contact">
-    <span class="bni-ico">
-      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    </span>
+    <span class="bni-ico">💬</span>
     <span class="bni-lbl">تواصل</span>
   </a>
   <a class="bni" href="/orders-history">
-    <span class="bni-ico">
-      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-    </span>
+    <span class="bni-ico">📋</span>
     <span class="bni-lbl">طلباتي</span>
   </a>
   <a class="bni" href="/account">
-    <span class="bni-ico">
-      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    </span>
+    <span class="bni-ico">👤</span>
     <span class="bni-lbl">حسابي</span>
   </a>
 </nav>
-
 <script>
 let cart = JSON.parse(localStorage.getItem('dokkani_cart') || '[]');
 // دالة فحص وقت التوصيل وتحديث شريط التنبيه
