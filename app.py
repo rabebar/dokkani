@@ -32,6 +32,61 @@ last_orders_check = {}
 with app.app_context():
     init_db()
 
+# قاموس ترجمة الأسماء العربية للإنجليزية لتحسين نتائج Unsplash
+ARABIC_TO_EN = {
+    # خضروات
+    'بندورة': 'tomato', 'طماطم': 'tomato', 'خيار': 'cucumber',
+    'بطاطا': 'potato', 'بطاطس': 'potato', 'جزر': 'carrot',
+    'بصل': 'onion', 'ثوم': 'garlic', 'فلفل': 'pepper',
+    'باذنجان': 'eggplant', 'كوسا': 'zucchini', 'ملفوف': 'cabbage',
+    'خس': 'lettuce', 'سبانخ': 'spinach', 'بروكلي': 'broccoli',
+    'قرنبيط': 'cauliflower', 'فاصولياء': 'green beans',
+    'بازلاء': 'peas', 'ذرة': 'corn', 'شمندر': 'beet',
+    # فواكه
+    'تفاح': 'apple', 'موز': 'banana', 'برتقال': 'orange',
+    'ليمون': 'lemon', 'عنب': 'grapes', 'فراولة': 'strawberry',
+    'مانجو': 'mango', 'أناناس': 'pineapple', 'بطيخ': 'watermelon',
+    'شمام': 'cantaloupe', 'كيوي': 'kiwi', 'خوخ': 'peach',
+    'مشمش': 'apricot', 'كمثرى': 'pear', 'رمان': 'pomegranate',
+    'تين': 'fig', 'زيتون': 'olive', 'تمر': 'dates',
+    # ألبان وبيض
+    'حليب': 'milk', 'جبنة': 'cheese', 'جبن': 'cheese',
+    'زبادي': 'yogurt', 'لبن': 'yogurt', 'زبدة': 'butter',
+    'قشطة': 'cream', 'كريمة': 'cream', 'بيض': 'eggs',
+    # لحوم
+    'دجاج': 'chicken', 'لحم': 'meat', 'سمك': 'fish',
+    'تونة': 'tuna', 'لحمة': 'beef', 'كبدة': 'liver',
+    # حبوب ومعكرونة
+    'أرز': 'rice', 'معكرونة': 'pasta', 'باستا': 'pasta',
+    'برغل': 'bulgur', 'عدس': 'lentils', 'حمص': 'chickpeas',
+    'فريكة': 'freekeh', 'شعير': 'barley', 'قمح': 'wheat',
+    'دقيق': 'flour', 'خبز': 'bread', 'توست': 'toast',
+    # مشروبات
+    'شاي': 'tea', 'قهوة': 'coffee', 'عصير': 'juice',
+    'مياه': 'water', 'ماء': 'water', 'كولا': 'cola',
+    'نيروز': 'water bottle', 'بيبسي': 'pepsi', 'فانتا': 'fanta',
+    # زيوت وصلصات
+    'زيت': 'oil', 'خل': 'vinegar', 'كاتشب': 'ketchup',
+    'مايونيز': 'mayonnaise', 'مربى': 'jam', 'عسل': 'honey',
+    'طحينة': 'tahini', 'ملح': 'salt', 'سكر': 'sugar',
+    # منظفات
+    'صابون': 'soap', 'شامبو': 'shampoo', 'منظف': 'detergent',
+    'غسيل': 'laundry detergent', 'معقم': 'disinfectant',
+    # حلويات وشوكولاتة
+    'شوكولاتة': 'chocolate', 'بسكويت': 'biscuit', 'كيك': 'cake',
+    'حلوى': 'candy', 'نوتيلا': 'nutella', 'كيت كات': 'kitkat',
+    # قهوة وشاي
+    'نسكافيه': 'nescafe', 'كابتشينو': 'cappuccino', 'أعشاب': 'herbal tea',
+}
+
+def translate_to_english(product_name):
+    """يترجم اسم المنتج العربي للإنجليزي لتحسين نتائج البحث"""
+    for ar, en in ARABIC_TO_EN.items():
+        if ar in product_name:
+            return en
+    return product_name  # إذا لم يجد ترجمة يرجع الاسم كما هو
+
+
 # --- وظيفة كشف نوع الجهاز ---
 def is_mobile():
     user_agent = request.headers.get('User-Agent', '').lower()
@@ -76,9 +131,9 @@ def subcategory_page(sub_id):
 @app.route('/cart')
 def cart():
     if not is_mobile(): return redirect('/')
-    return render_template('cart.html', app_name=Config.APP_NAME, 
-                           delivery_short=Config.DELIVERY_PRICE_SHORT, 
-                           delivery_mid=Config.DELIVERY_PRICE_MID, 
+    return render_template('cart.html', app_name=Config.APP_NAME,
+                           delivery_short=Config.DELIVERY_PRICE_SHORT,
+                           delivery_mid=Config.DELIVERY_PRICE_MID,
                            delivery_far=Config.DELIVERY_PRICE_FAR)
 
 @app.route('/success')
@@ -110,10 +165,10 @@ def admin():
 
 @app.route('/admin/products')
 def admin_products():
-    return render_template('admin_products.html', 
-                           categories=get_categories(visible_only=False), 
-                           subcategories=get_subcategories(visible_only=False), 
-                           products=get_products(visible_only=False), 
+    return render_template('admin_products.html',
+                           categories=get_categories(visible_only=False),
+                           subcategories=get_subcategories(visible_only=False),
+                           products=get_products(visible_only=False),
                            app_name=Config.APP_NAME)
 
 @app.route('/admin/accounting')
@@ -142,19 +197,18 @@ def place_order():
         return jsonify({'success': False, 'message': 'الطلب قيد المعالجة'})
     last_orders_check[check_key] = now
 
-    # حساب التوصيل والربح (تجميع الكميات)
     data['delivery'] = calculate_delivery_fee(data.get('lat'), data.get('lng'))
     data['profit'] = get_order_profit(data.get('items', []))
-    
+
     order_display_id = add_order(data)
-    
+
     order_data_for_notify = data.copy()
     order_data_for_notify['id'] = order_display_id
     try:
         notify_new_order(order_data_for_notify)
     except Exception as e:
         app.logger.error(f"Telegram Error: {e}")
-        
+
     return jsonify({'success': True, 'order_id': order_display_id})
 
 @app.route('/api/order/<int:order_id>/status', methods=['POST'])
@@ -169,7 +223,6 @@ def update_status(order_id):
 
 @app.route('/api/order-status/<phone>')
 def get_latest_order_status(phone):
-    """تستخدم لتنبيه الزبون بحالة طلبه في صفحة الموبايل"""
     orders = get_orders(phone=phone)
     if orders:
         return jsonify({'id': orders[0]['id'], 'status': orders[0]['status'], 'status_text': orders[0]['status_text']})
@@ -291,16 +344,74 @@ def api_get_stats():
 
 @app.route('/api/get-customer/<phone>')
 def api_get_customer(phone):
-    """البحث عن بيانات زبون قديم بواسطة رقم الهاتف"""
     from database import execute_query
-    # نقوم بتنظيف الرقم من أي مسافات
     clean_phone = phone.strip()
-    customer = execute_query('SELECT name, phone, whatsapp, neighborhood, address, lat, lng FROM customers WHERE phone=?', (clean_phone,), fetchone=True)
-    
+    customer = execute_query(
+        'SELECT name, phone, whatsapp, neighborhood, address, lat, lng FROM customers WHERE phone=?',
+        (clean_phone,), fetchone=True
+    )
     if customer:
         return jsonify({'success': True, 'customer': customer})
     else:
         return jsonify({'success': False, 'message': 'الرقم غير مسجل مسبقاً'})
+
+
+# ==========================================
+# API — جلب صورة منتج من Unsplash
+# ==========================================
+
+@app.route('/api/admin/fetch-image/<int:prod_id>', methods=['POST'])
+def api_fetch_product_image(prod_id):
+    import requests as req
+
+    UNSPLASH_KEY = os.environ.get('UNSPLASH_KEY', '')
+    if not UNSPLASH_KEY:
+        return jsonify({'success': False, 'error': 'مفتاح Unsplash غير موجود في الإعدادات'})
+
+    product = execute_query('SELECT id, name FROM products WHERE id=?', (prod_id,), fetchone=True)
+    if not product:
+        return jsonify({'success': False, 'error': 'المنتج غير موجود'})
+
+    product_name = product['name']
+    search_term  = translate_to_english(product_name)
+
+    try:
+        resp = req.get(
+            'https://api.unsplash.com/search/photos',
+            params={
+                'query': search_term,
+                'per_page': 1,
+                'orientation': 'squarish'
+            },
+            headers={'Authorization': f'Client-ID {UNSPLASH_KEY}'},
+            timeout=10
+        )
+
+        if resp.status_code != 200:
+            return jsonify({'success': False, 'error': f'خطأ من Unsplash: {resp.status_code}'})
+
+        results = resp.json().get('results', [])
+        if not results:
+            return jsonify({'success': False, 'error': f'لم يتم العثور على صورة لـ "{search_term}"'})
+
+        image_url = results[0]['urls']['small']
+
+        img_resp = req.get(image_url, timeout=10)
+        if img_resp.status_code != 200:
+            return jsonify({'success': False, 'error': 'فشل تحميل الصورة'})
+
+        filename = f"auto_{os.urandom(6).hex()}.jpg"
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        with open(filepath, 'wb') as f:
+            f.write(img_resp.content)
+
+        image_path = f"/static/uploads/{filename}"
+        execute_query('UPDATE products SET image=? WHERE id=?', (image_path, prod_id), commit=True)
+
+        return jsonify({'success': True, 'image': image_path, 'searched_for': search_term})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 
 # ==========================================
@@ -325,6 +436,8 @@ def service_worker():
     with open('static/service-worker.js') as f:
         content = f.read()
     return Response(content, mimetype='application/javascript')
+
+
 # ==========================================
 # API — استيراد Excel
 # ==========================================
@@ -333,19 +446,17 @@ def service_worker():
 def api_import_excel():
     if 'file' not in request.files:
         return jsonify({'success': False, 'error': 'لم يتم إرسال أي ملف'})
-    
+
     file = request.files['file']
-    
+
     if file.filename == '':
         return jsonify({'success': False, 'error': 'لم يتم اختيار ملف'})
-    
-    # فحص الامتداد
+
     allowed = {'xlsx', 'xls'}
     ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
     if ext not in allowed:
         return jsonify({'success': False, 'error': 'صيغة الملف غير مدعومة. يُرجى رفع ملف Excel بصيغة .xlsx أو .xls'})
-    
-    # حفظ مؤقت
+
     temp_path = os.path.join('static', 'uploads', f'excel_import_{os.urandom(4).hex()}.{ext}')
     try:
         file.save(temp_path)
@@ -353,69 +464,11 @@ def api_import_excel():
     except Exception as e:
         return jsonify({'success': False, 'error': f'خطأ في المعالجة: {str(e)}'})
     finally:
-        # حذف الملف المؤقت دائماً
         if os.path.exists(temp_path):
             os.remove(temp_path)
-    
+
     return jsonify(result)
-# ==========================================
-# API — جلب صورة منتج من Unsplash
-# ==========================================
 
-@app.route('/api/admin/fetch-image/<int:prod_id>', methods=['POST'])
-def api_fetch_product_image(prod_id):
-    import requests
 
-    UNSPLASH_KEY = os.environ.get('UNSPLASH_KEY', 'kLICSvKlQxFD4UcP2NvnnKpEUHNGtWmASctOjYPWoy8')
-
-    # جلب اسم المنتج من قاعدة البيانات
-    product = execute_query('SELECT id, name, image FROM products WHERE id=?', (prod_id,), fetchone=True)
-    if not product:
-        return jsonify({'success': False, 'error': 'المنتج غير موجود'})
-
-    product_name = product['name']
-
-    try:
-        # البحث في Unsplash
-        resp = requests.get(
-            'https://api.unsplash.com/search/photos',
-            params={
-                'query': product_name,
-                'per_page': 1,
-                'orientation': 'squarish'
-            },
-            headers={'Authorization': f'Client-ID {UNSPLASH_KEY}'},
-            timeout=8
-        )
-
-        if resp.status_code != 200:
-            return jsonify({'success': False, 'error': f'خطأ من Unsplash: {resp.status_code}'})
-
-        results = resp.json().get('results', [])
-        if not results:
-            return jsonify({'success': False, 'error': 'لم يتم العثور على صورة مناسبة'})
-
-        image_url = results[0]['urls']['small']
-
-        # تحميل الصورة وحفظها
-        img_resp = requests.get(image_url, timeout=8)
-        if img_resp.status_code != 200:
-            return jsonify({'success': False, 'error': 'فشل تحميل الصورة'})
-
-        filename = f"auto_{os.urandom(6).hex()}.jpg"
-        filepath = os.path.join(UPLOAD_FOLDER, filename)
-        with open(filepath, 'wb') as f:
-            f.write(img_resp.content)
-
-        image_path = f"/static/uploads/{filename}"
-
-        # حفظ المسار في قاعدة البيانات
-        execute_query('UPDATE products SET image=? WHERE id=?', (image_path, prod_id), commit=True)
-
-        return jsonify({'success': True, 'image': image_path})
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-    
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
