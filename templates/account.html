@@ -6,9 +6,10 @@
 <title>دكّاني — حسابي</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--red:#e53935;--sh:0 2px 8px rgba(0,0,0,.08);--nav:60px}
+:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--red:#e53935;--sh:0 2px 8px rgba(0,0,0,.08);--nav:65px}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);padding-bottom:calc(var(--nav)+16px)}
+body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);padding-bottom:calc(var(--nav)+20px)}
+
 .hdr{background:linear-gradient(135deg,#1a4a1e,var(--g2));padding:24px 16px 20px;text-align:center;box-shadow:0 2px 16px rgba(0,0,0,.2)}
 .avatar{width:72px;height:72px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px;box-shadow:0 4px 16px rgba(0,200,83,.4)}
 .user-name{color:#fff;font-size:18px;font-weight:900}
@@ -38,11 +39,40 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .edit-field input:focus,.edit-field textarea:focus{border-color:var(--g4);background:#fff}
 .edit-field textarea{resize:none}
 .save-btn{width:100%;padding:13px;background:var(--g2);color:#fff;border:none;border-radius:10px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
-.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--w);height:var(--nav);display:flex;align-items:center;border-top:1px solid var(--g200);box-shadow:0 -4px 20px rgba(0,0,0,.08);z-index:200}
-.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;padding:6px 0}
-.bni-ico{font-size:22px;line-height:1}
-.bni-lbl{font-size:9.5px;font-weight:700;color:var(--g400)}
-.bni.active .bni-lbl{color:var(--g2)}
+
+/* --- القالب الموحد لشريط التنقل السفلي --- */
+.bnav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    height: var(--nav);
+    display: flex;
+    align-items: center;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+    z-index: 2000;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+.bni {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; text-decoration: none; color: #8e8e93; 
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
+}
+.bni-ico { font-size: 22px; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+.bni-lbl { font-size: 10px; font-weight: 700; font-family: 'Cairo', sans-serif; }
+
+/* الحالة النشطة */
+.bni.active { color: var(--g1); }
+.bni.active .bni-ico { transform: translateY(-2px); }
+.bni.active .bni-lbl { color: var(--g1); }
+
+/* شارة التنبيه */
+.bni-badge {
+    position: absolute; top: 4px; right: calc(50% - 18px);
+    background: var(--acc); color: var(--g1); font-size: 9px; font-weight: 900;
+    min-width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; border: 2px solid #fff;
+}
 </style>
 </head>
 <body>
@@ -55,7 +85,6 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 </div>
 
 <div class="content">
-
   <!-- الإحصائيات -->
   <div class="card">
     <div class="stats-row">
@@ -100,15 +129,45 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
   <button class="logout-btn" onclick="logout()">
     🚪 تسجيل الخروج
   </button>
-
 </div>
 
 <nav class="bnav">
-  <a class="bni" href="/shop"><span class="bni-ico">🏪</span><span class="bni-lbl">المتجر</span></a>
-  <a class="bni" href="/cart"><span class="bni-ico">🛒</span><span class="bni-lbl">السلة</span></a>
-  <a class="bni" href="/contact"><span class="bni-ico">💬</span><span class="bni-lbl">تواصل</span></a>
-  <a class="bni" href="/orders-history"><span class="bni-ico">📋</span><span class="bni-lbl">طلباتي</span></a>
-  <a class="bni active" href="/account"><span class="bni-ico">👤</span><span class="bni-lbl">حسابي</span></a>
+  <!-- المتجر -->
+  <a class="bni" href="/shop">
+    <span class="bni-ico">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="#1b5e20"><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/></svg>
+    </span>
+    <span class="bni-lbl">المتجر</span>
+  </a>
+  <!-- السلة -->
+  <a class="bni" href="/cart">
+    <span class="bni-ico">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    </span>
+    <span class="bni-lbl">السلة</span>
+    <span class="bni-badge" id="nav-cart-count" style="display:none">0</span>
+  </a>
+  <!-- تواصل -->
+  <a class="bni" href="/contact">
+    <span class="bni-ico">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </span>
+    <span class="bni-lbl">تواصل</span>
+  </a>
+  <!-- طلباتي -->
+  <a class="bni" href="/orders-history">
+    <span class="bni-ico">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+    </span>
+    <span class="bni-lbl">طلباتي</span>
+  </a>
+  <!-- حسابي (نشط) -->
+  <a class="bni active" href="/account">
+    <span class="bni-ico">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </span>
+    <span class="bni-lbl">حسابي</span>
+  </a>
 </nav>
 
 <script>
@@ -120,17 +179,15 @@ function loadProfile(){
   }
   document.getElementById('avatar').textContent = profile.name[0] || '👤';
   document.getElementById('user-name').textContent = profile.name;
-  document.getElementById('user-phone').textContent = '+970' + profile.phone;
+  document.getElementById('user-phone').textContent = profile.phone;
   document.getElementById('st-area').textContent = profile.neighborhood ? profile.neighborhood.substring(0,5) : '—';
 
-  // حقول التعديل
   document.getElementById('edit-name').value  = profile.name || '';
   document.getElementById('edit-phone').value = profile.phone || '';
   document.getElementById('edit-wa').value    = profile.whatsapp || '';
   document.getElementById('edit-hood').value  = profile.neighborhood || '';
   document.getElementById('edit-addr').value  = profile.address || '';
 
-  // إحصائيات من قاعدة البيانات
   fetch('/api/orders/by-phone',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
@@ -143,8 +200,7 @@ function loadProfile(){
     document.getElementById('st-orders').textContent = orders.length;
     document.getElementById('st-spent').textContent  = total.toFixed(0)+'₪';
     if(orders.length >= 3){
-      document.getElementById('vip-wrap').innerHTML =
-        '<div class="vip-badge">⭐ زبون VIP</div>';
+      document.getElementById('vip-wrap').innerHTML = '<div class="vip-badge">⭐ زبون VIP</div>';
     }
   });
 }
@@ -194,4 +250,3 @@ document.addEventListener('gesturestart', function(event) {
 </script>
 </body>
 </html>
-```
