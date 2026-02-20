@@ -290,6 +290,11 @@ def toggle_product(prod_id):
 
 def delete_product(prod_id):
     execute_query('DELETE FROM products WHERE id=?', (prod_id,), commit=True)
+    
+def clear_all_products():
+    """مسح كافة المنتجات من القاعدة للبدء من جديد"""
+    execute_query('DELETE FROM products', commit=True)
+    return True
 
 # --- دوال الطلبات ---
 def add_order(data):

@@ -636,6 +636,7 @@ tr.prod-hidden td  { opacity: .5; }
           <div class="btn-group">
             <button class="add-btn blue" onclick="openExcelModal()">📥 رفع المخزون</button>
             <button class="add-btn" onclick="openProdModal()">➕ منتج جديد</button>
+            <button class="add-btn" style="background: var(--red);" onclick="clearAllProducts()">🗑️ مسح الكل</button>
           </div>
         </div>
         <div class="prod-filters">
@@ -1137,6 +1138,19 @@ function deleteProd(id, name) {
     .then(() => { showToast('🗑️ تم الحذف'); setTimeout(() => location.reload(), 800); });
 }
 
+function clearAllProducts() {
+  if (!confirm('⚠️ تحذير: سيتم مسح كافة المنتجات في المتجر نهائياً!\nهل أنت متأكد؟')) return;
+  if (!confirm('تأكيد أخير: لا يمكن التراجع عن هذا الإجراء!')) return;
+  
+  fetch('/api/admin/clear-products', { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+        if(d.success) {
+            showToast('✅ تم مسح جميع المنتجات');
+            setTimeout(() => location.reload(), 800);
+        }
+    });
+}
 
 // ===== FETCH IMAGE FROM UNSPLASH =====
 function fetchImage(id, name, btn) {

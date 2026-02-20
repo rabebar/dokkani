@@ -327,6 +327,13 @@ def api_delete_product(prod_id):
     delete_product(prod_id)
     return jsonify({'success': True})
 
+@app.route('/api/admin/clear-products', methods=['POST'])
+def api_clear_products():
+    """مسح كافة المنتجات من السيرفر"""
+    from database import clear_all_products
+    clear_all_products()
+    return jsonify({'success': True})
+
 @app.route('/api/subcategories-by-cat/<int:cat_id>')
 def api_subs_by_cat(cat_id):
     subs = get_subcategories(category_id=cat_id, visible_only=False)
