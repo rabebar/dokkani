@@ -375,12 +375,14 @@ def api_fetch_product_image(prod_id):
     if not UNSPLASH_KEY:
         return jsonify({'success': False, 'error': 'مفتاح Unsplash غير موجود في الإعدادات'})
 
-    product = execute_query('SELECT id, name FROM products WHERE id=?', (prod_id,), fetchone=True)
+    # ← جديد: اقرأ image_search من قاعدة البيانات
+    product = execute_query('SELECT id, name, image_search FROM products WHERE id=?', (prod_id,), fetchone=True)
     if not product:
         return jsonify({'success': False, 'error': 'المنتج غير موجود'})
 
     product_name = product['name']
-    search_term  = translate_to_english(product_name)
+    # ← جديد: استخدم image_search إن وُجد، وإلا ترجم تلقائياً
+    search_term = product.get('image_search') or translate_to_english(product_name)
 
     try:
         resp = req.get(
@@ -451,6 +453,8 @@ def service_worker():
 
 @app.route('/api/admin/import-excel', methods=['POST'])
 def api_import_excel():
+    import threading
+
     if 'file' not in request.files:
         return jsonify({'success': False, 'error': 'لم يتم إرسال أي ملف'})
 
@@ -465,16 +469,28 @@ def api_import_excel():
         return jsonify({'success': False, 'error': 'صيغة الملف غير مدعومة. يُرجى رفع ملف Excel بصيغة .xlsx أو .xls'})
 
     temp_path = os.path.join('static', 'uploads', f'excel_import_{os.urandom(4).hex()}.{ext}')
-    try:
-        file.save(temp_path)
-        result = import_excel_to_db(temp_path)
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'خطأ في المعالجة: {str(e)}'})
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+    file.save(temp_path)
 
-    return jsonify(result)
+    # شغّل الاستيراد في الخلفية لتجنب Timeout على Render
+    def _do_import():
+        try:
+            import_excel_to_db(temp_path)
+        except Exception as e:
+            app.logger.error(f'Import error: {e}')
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
+    threading.Thread(target=_do_import, daemon=True).start()
+
+    return jsonify({
+        'success': True,
+        'created': 0,
+        'updated': 0,
+        'errors': 0,
+        'images': 0,
+        'message': '⏳ جاري الاستيراد في الخلفية، انتظر 30 ثانية ثم حدّث الصفحة'
+    })
 
 
 if __name__ == '__main__':
