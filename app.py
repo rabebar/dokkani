@@ -23,6 +23,55 @@ from database import (
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# ==========================================
+# الحماية والأمان
+# ==========================================
+from functools import wraps
+from flask import session, request, jsonify, redirect
+from datetime import timedelta
+
+app.permanent_session_lifetime = timedelta(hours=8)
+
+# Rate limiting بسيط في الذاكرة
+import time as _time
+_rate_store = {}
+
+def rate_limit(max_calls=10, window=60):
+    """منع الطلبات المتكررة من نفس الـ IP"""
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            ip = request.remote_addr
+            key = f"{ip}:{f.__name__}"
+            now = _time.time()
+            calls = [t for t in _rate_store.get(key, []) if now - t < window]
+            if len(calls) >= max_calls:
+                return jsonify({'success': False, 'error': 'طلبات كثيرة، انتظر قليلاً'}), 429
+            calls.append(now)
+            _rate_store[key] = calls
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
+def admin_required(f):
+    """التحقق من تسجيل دخول الأدمن"""
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            return redirect('/admin/login')
+        return f(*args, **kwargs)
+    return wrapped
+
+# Security Headers على كل رد
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    return response
+
+
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -160,10 +209,12 @@ def account():
 # ==========================================
 
 @app.route('/admin')
+@admin_required
 def admin():
     return render_template('dashboard.html', orders=get_orders(), stats=get_daily_stats(), app_name=Config.APP_NAME)
 
 @app.route('/admin/products')
+@admin_required
 def admin_products():
     return render_template('admin_products.html',
                            categories=get_categories(visible_only=False),
@@ -172,10 +223,12 @@ def admin_products():
                            app_name=Config.APP_NAME)
 
 @app.route('/admin/accounting')
+@admin_required
 def admin_accounting():
     return render_template('accounting.html', stats=get_daily_stats(), orders=get_orders(), app_name=Config.APP_NAME)
 
 @app.route('/admin/customers')
+@admin_required
 def admin_customers():
     return render_template('customers.html', customers=get_customers(), app_name=Config.APP_NAME)
 
@@ -185,6 +238,7 @@ def admin_customers():
 # ==========================================
 
 @app.route('/api/order', methods=['POST'])
+@rate_limit(max_calls=10, window=60)
 def place_order():
     data = request.json
     phone = data.get('phone')
@@ -491,6 +545,30 @@ def api_import_excel():
         'images': 0,
         'message': '⏳ جاري الاستيراد في الخلفية، انتظر 30 ثانية ثم حدّث الصفحة'
     })
+
+
+# ==========================================
+# تسجيل دخول الأدمن
+# ==========================================
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+@rate_limit(max_calls=5, window=60)
+def admin_login():
+    error = None
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        if password == app.config.get('ADMIN_PASSWORD', 'dokkani-admin-2024'):
+            session.permanent = True
+            session['admin_logged_in'] = True
+            return redirect('/admin')
+        else:
+            error = 'كلمة السر غلط، حاول مرة أخرى'
+    return render_template('admin_login.html', error=error, app_name=Config.APP_NAME)
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.clear()
+    return redirect('/admin/login')
 
 
 if __name__ == '__main__':

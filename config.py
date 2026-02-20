@@ -1,40 +1,45 @@
 # ==========================================
-# config.py — إعدادات تطبيق دكّاني
+# config.py — إعدادات تطبيق دكّاني (آمنة)
 # ==========================================
 
 import os
+import secrets
 
 class Config:
-    SECRET_KEY = 'dokkani-secret-2024'
-    DEBUG = True
+    # ← مهم: SECRET_KEY من environment variable، مش hardcoded
+    SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
+    DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
     # معلومات التطبيق
     APP_NAME = 'دكّاني'
-    APP_PHONE = '0592776784'
-    APP_WHATSAPP = '970592776784'
+    APP_PHONE = os.environ.get('APP_PHONE', '0592776784')
+    APP_WHATSAPP = os.environ.get('APP_WHATSAPP', '970592776784')
     APP_CITY = 'رام الله'
 
+    # كلمة سر الأدمن ← من environment variable
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'dokkani-admin-2024')
+
     # إعدادات التوصيل
-    DELIVERY_PRICE_SHORT = 5    # 0-2 كم
-    DELIVERY_PRICE_MID   = 8    # 2-5 كم
-    DELIVERY_PRICE_FAR   = 12   # +5 كم
+    DELIVERY_PRICE_SHORT = 5
+    DELIVERY_PRICE_MID   = 8
+    DELIVERY_PRICE_FAR   = 12
 
     # هامش الربح — بقالة
-    PROFIT_LOW  = 0.5   # 1–8 ₪
-    PROFIT_MID  = 1.0   # 9–19 ₪
-    PROFIT_HIGH = 1.5   # 20+ ₪
+    PROFIT_LOW  = 1.0
+    PROFIT_MID  = 1.5
+    PROFIT_HIGH = 2.0
 
     # هامش الربح — كيلو
-    PROFIT_KG_VEG  = 1.0   # خضار/كيلو
-    PROFIT_KG_MEAT = 2.0   # لحمة/كيلو
+    PROFIT_KG_VEG  = 1.0
+    PROFIT_KG_MEAT = 2.0
 
     # VIP
-    VIP_THRESHOLD = 3   # عدد الطلبات للحصول على VIP
+    VIP_THRESHOLD = 3
 
-    # تنبيهات التيليجرام
-    TELEGRAM_TOKEN   = '8301447744:AAGWbUlyEg_vYkWt9kvZKmKizTjl9ZvTuTM'
-    TELEGRAM_CHAT_ID = '1921205945'
+    # تنبيهات التيليجرام ← من environment variable دائماً
+    TELEGRAM_TOKEN   = os.environ.get('TELEGRAM_TOKEN', '')
+    TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '')
 
-    # قاعدة البيانات (للرفع على Render مستقبلاً)
+    # قاعدة البيانات
     _db_url = os.environ.get('DATABASE_URL', '')
     DATABASE_URL = _db_url.replace('postgres://', 'postgresql://', 1) if _db_url else None
