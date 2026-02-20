@@ -42,7 +42,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);dis
 .ex-btn{padding:10px 16px;background:var(--g4);color:#fff;border:none;border-radius:var(--r);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s}
 .ex-btn:hover{background:var(--g2)}
 .cg{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
-.cc{background:var(--w);border-radius:var(--r);padding:16px;box-shadow:var(--sh);border:1px solid var(--g200);transition:all .2s;cursor:pointer}
+.cc{background:var(--w);border-radius:var(--r);padding:16px;box-shadow:var(--sh);border:1px solid var(--g200);transition:all .2s}
 .cc:hover{border-color:var(--g4);box-shadow:0 4px 16px rgba(67,160,71,.15)}
 .ct{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .cav{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;color:#fff;flex-shrink:0}
@@ -52,19 +52,33 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);dis
 .cst{background:var(--gx);border-radius:8px;padding:8px;text-align:center}
 .csv{font-size:15px;font-weight:900;color:var(--g2);font-family:'Tajawal',sans-serif}
 .csl{font-size:10px;color:var(--g400);margin-top:2px}
-.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .tag{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:18px;font-size:10.5px;font-weight:700}
 .tag-vip{background:#fff8e1;color:#e65100}
 .tag-reg{background:var(--gp);color:var(--g2)}
 .tag-new{background:#e3f2fd;color:#1565c0}
-.c-btns{display:flex;gap:6px;margin-top:10px}
+.c-btns{display:flex;gap:6px}
 .cb{flex:1;padding:7px;border-radius:8px;border:none;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
 .cb-wa{background:#e8f5e9;color:var(--g2)}
 .cb-wa:hover{background:#25D366;color:#fff}
 .cb-map{background:#e3f2fd;color:#1565c0}
 .cb-map:hover{background:#1e88e5;color:#fff}
+.cb-del{background:#fce4ec;color:var(--red)}
+.cb-del:hover{background:var(--red);color:#fff}
 .empty-state{text-align:center;padding:50px;color:var(--g400);grid-column:1/-1}
 .empty-state .ei{font-size:50px;margin-bottom:14px}
+
+/* modal تأكيد الحذف */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--w);border-radius:16px;padding:28px 24px;width:340px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+.modal-ico{font-size:44px;margin-bottom:12px}
+.modal-title{font-size:16px;font-weight:900;margin-bottom:6px}
+.modal-sub{font-size:12.5px;color:var(--g400);margin-bottom:22px}
+.modal-btns{display:flex;gap:10px}
+.modal-btn{flex:1;padding:11px;border-radius:10px;border:none;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+.modal-cancel{background:var(--g100);color:var(--g600)}
+.modal-confirm{background:var(--red);color:#fff}
 </style>
 </head>
 <body>
@@ -109,7 +123,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);dis
         {% for c in customers %}
         {% set colors = ['#2e7d32','#1565c0','#6a1b9a','#e65100','#0277bd','#558b2f'] %}
         {% set ci = loop.index0 % 6 %}
-        <div class="cc" id="cc-{{ loop.index }}">
+        <div class="cc" id="cc-{{ loop.index }}" data-phone="{{ c.phone }}">
           <div class="ct">
             <div class="cav" style="background:{{ colors[ci] }}">{{ c.name[0] }}</div>
             <div>
@@ -134,6 +148,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);dis
             {% if c.lat and c.lng %}
             <button class="cb cb-map" onclick="openMap({{ c.lat }}, {{ c.lng }})">🗺️ موقع</button>
             {% endif %}
+            <button class="cb cb-del" onclick="confirmDelete('{{ c.phone }}', '{{ c.name }}')">🗑️ حذف</button>
           </div>
         </div>
         {% endfor %}
@@ -148,7 +163,22 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);dis
   </div>
 </div>
 
+<!-- Modal تأكيد الحذف -->
+<div class="modal-overlay" id="del-modal">
+  <div class="modal">
+    <div class="modal-ico">🗑️</div>
+    <div class="modal-title" id="del-modal-title">حذف الزبون</div>
+    <div class="modal-sub" id="del-modal-sub">هل أنت متأكد من حذف هذا الزبون؟ لا يمكن التراجع.</div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-cancel" onclick="closeModal()">إلغاء</button>
+      <button class="modal-btn modal-confirm" id="del-confirm-btn">حذف</button>
+    </div>
+  </div>
+</div>
+
 <script>
+let deletePhone = null;
+
 function openWA(phone){
   window.open(`https://wa.me/970${phone.replace(/\D/g,'')}`, '_blank');
 }
@@ -162,6 +192,51 @@ function searchCustomers(){
     c.style.display = (!q || txt.includes(q)) ? '' : 'none';
   });
 }
+
+function confirmDelete(phone, name){
+  deletePhone = phone;
+  document.getElementById('del-modal-title').textContent = `حذف: ${name}`;
+  document.getElementById('del-modal-sub').textContent = `هل أنت متأكد من حذف "${name}"؟ سيتم حذف بياناته نهائياً.`;
+  document.getElementById('del-modal').classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('del-modal').classList.remove('show');
+  deletePhone = null;
+}
+
+document.getElementById('del-confirm-btn').onclick = async function(){
+  if(!deletePhone) return;
+  this.textContent = '⏳';
+  this.disabled = true;
+  try {
+    const res = await fetch('/api/customer/delete', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({phone: deletePhone})
+    });
+    const data = await res.json();
+    if(data.success){
+      document.querySelectorAll('.cc').forEach(c=>{
+        if(c.dataset.phone === deletePhone){
+          c.style.transition = 'all .3s';
+          c.style.opacity = '0';
+          c.style.transform = 'scale(.9)';
+          setTimeout(()=> c.remove(), 300);
+        }
+      });
+      closeModal();
+    }
+  } catch(e){
+    alert('حدث خطأ، حاول مرة أخرى');
+  }
+  this.textContent = 'حذف';
+  this.disabled = false;
+};
+
+document.getElementById('del-modal').addEventListener('click', function(e){
+  if(e.target === this) closeModal();
+});
 </script>
 </body>
 </html>
