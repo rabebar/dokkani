@@ -110,6 +110,30 @@
         footer { background: #111827; color: #9ca3af; padding: 60px 10% 30px; text-align: center; }
         .footer-logo { color: white; font-size: 28px; font-weight: 900; margin-bottom: 20px; display: block; }
         .copyright { border-top: 1px solid #374151; margin-top: 50px; padding-top: 30px; font-size: 14px; }
+        /* Video Section */
+.video-section {
+    padding: 100px 10%;
+    background: #fff;
+    text-align: center;
+}
+
+.video-container {
+    max-width: 900px;
+    margin: auto;
+}
+
+.video-container h2 {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--g1);
+    margin-bottom: 30px;
+}
+
+.video-container video {
+    width: 100%;
+    border-radius: 25px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+}
     </style>
 </head>
 <body>
@@ -140,6 +164,23 @@
             <img src="/static/hero-main.jpg" alt="توصيل دكّاني في رام الله">
         </div>
     </section>
+    <!-- Video Section -->
+<section class="video-section">
+    <div class="video-container">
+        <h2>شاهد كيف تعمل "دكّاني" 🚀</h2>
+
+        <video 
+            autoplay 
+            muted 
+            loop 
+            playsinline 
+            preload="metadata"
+            poster="/static/hero-main.jpg">
+
+            <source src="/static/video-1751.mp4" type="video/mp4">
+        </video>
+    </div>
+</section>
 
     <!-- About Us Section -->
     <section class="about" id="about">
