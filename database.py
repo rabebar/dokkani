@@ -373,9 +373,9 @@ def get_daily_stats():
 
 # --- دوال التسعير والمسافة ---
 def calculate_profit(price):
-    if price <= 8: return 0.5
-    elif price <= 19: return 1.0
-    else: return 1.5
+    if price <= 8: return 1.0
+    elif price <= 19: return 1.5
+    else: return 2.0
 
 def get_selling_price(price):
     return round(price + calculate_profit(price), 2)
