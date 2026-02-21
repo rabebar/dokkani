@@ -55,7 +55,11 @@ h1{font-size:22px;font-weight:900;color:#1b5e20;margin-bottom:7px}
 localStorage.removeItem('dokkani_cart');
 
 const orderId = localStorage.getItem('dokkani_last_order');
-if(orderId) document.getElementById('order-num').textContent = '#' + orderId;
+if(orderId) {
+  document.getElementById('order-num').textContent = '#' + orderId;
+  // ← التوجيه للفاتورة الرقمية بعد ثانيتين
+  setTimeout(() => { window.location.href = '/invoice/' + orderId; }, 2000);
+}
 
 // منع التكبير اليدوي لضمان استقرار التطبيق
 document.addEventListener('touchstart', function(event) {

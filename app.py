@@ -381,27 +381,6 @@ def api_delete_product(prod_id):
     delete_product(prod_id)
     return jsonify({'success': True})
 
-# --- دالة الحذف الجماعي الجديدة (مضافة بناءً على الميثاق) ---
-@app.route('/api/admin/products/delete-bulk', methods=['POST'])
-def api_delete_products_bulk():
-    if not session.get('admin_logged_in'): 
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    data = request.get_json()
-    ids = data.get('ids', [])
-    
-    if not ids:
-        return jsonify({'success': False, 'message': 'لم يتم تحديد منتجات'}), 400
-    
-    try:
-        # تحويل القائمة لنص متوافق مع استعلام SQL
-        placeholders = ', '.join(['?'] * len(ids))
-        query = f"DELETE FROM products WHERE id IN ({placeholders})"
-        execute_query(query, ids, commit=True)
-        return jsonify({'success': True, 'message': f'تم حذف {len(ids)} منتج بنجاح'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
 @app.route('/api/admin/clear-products', methods=['POST'])
 def api_clear_products():
     """مسح كافة المنتجات من السيرفر"""
@@ -443,53 +422,60 @@ def api_get_customer(phone):
 # ==========================================
 
 @app.route('/api/admin/fetch-image/<int:prod_id>', methods=['POST'])
-@admin_required
 def api_fetch_product_image(prod_id):
     import requests as req
 
-    UNSPLASH_KEY = os.environ.get('UNSPLASH_KEY')
+    UNSPLASH_KEY = os.environ.get('UNSPLASH_KEY', '')
     if not UNSPLASH_KEY:
-        return jsonify({'success': False, 'error': 'مفتاح Unsplash مفقود من إعدادات Render'})
+        return jsonify({'success': False, 'error': 'مفتاح Unsplash غير موجود في الإعدادات'})
+
+    # ← جديد: اقرأ image_search من قاعدة البيانات
+    product = execute_query('SELECT id, name, image_search FROM products WHERE id=?', (prod_id,), fetchone=True)
+    if not product:
+        return jsonify({'success': False, 'error': 'المنتج غير موجود'})
+
+    product_name = product['name']
+    # ← جديد: استخدم image_search إن وُجد، وإلا ترجم تلقائياً
+    search_term = product.get('image_search') or translate_to_english(product_name)
 
     try:
-        # جلب الاسم فقط (تجنباً لخطأ العمود المفقود)
-        product = execute_query('SELECT id, name FROM products WHERE id=?', (prod_id,), fetchone=True)
-        if not product:
-            return jsonify({'success': False, 'error': 'المنتج غير موجود'})
-
-        product_name = product['name']
-        search_term = translate_to_english(product_name)
-
         resp = req.get(
             'https://api.unsplash.com/search/photos',
-            params={'query': search_term, 'per_page': 1, 'orientation': 'squarish'},
+            params={
+                'query': search_term,
+                'per_page': 1,
+                'orientation': 'squarish'
+            },
             headers={'Authorization': f'Client-ID {UNSPLASH_KEY}'},
-            timeout=15
+            timeout=10
         )
 
         if resp.status_code != 200:
-            return jsonify({'success': False, 'error': f'Unsplash Error: {resp.status_code}'})
+            return jsonify({'success': False, 'error': f'خطأ من Unsplash: {resp.status_code}'})
 
         results = resp.json().get('results', [])
         if not results:
-            return jsonify({'success': False, 'error': f'لم نجد صورة لـ "{search_term}"'})
+            return jsonify({'success': False, 'error': f'لم يتم العثور على صورة لـ "{search_term}"'})
 
         image_url = results[0]['urls']['small']
-        img_data = req.get(image_url, timeout=15).content
-        
-        filename = f"auto_{prod_id}_{os.urandom(3).hex()}.jpg"
+
+        img_resp = req.get(image_url, timeout=10)
+        if img_resp.status_code != 200:
+            return jsonify({'success': False, 'error': 'فشل تحميل الصورة'})
+
+        filename = f"auto_{os.urandom(6).hex()}.jpg"
         filepath = os.path.join(UPLOAD_FOLDER, filename)
-        
         with open(filepath, 'wb') as f:
-            f.write(img_data)
+            f.write(img_resp.content)
 
         image_path = f"/static/uploads/{filename}"
         execute_query('UPDATE products SET image=? WHERE id=?', (image_path, prod_id), commit=True)
 
-        return jsonify({'success': True, 'image': image_path})
+        return jsonify({'success': True, 'image': image_path, 'searched_for': search_term})
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+
 
 # ==========================================
 # معالجة الصور و PWA
@@ -583,6 +569,32 @@ def admin_login():
 def admin_logout():
     session.clear()
     return redirect('/admin/login')
+
+
+# ==========================================
+# صفحة الفاتورة الرقمية
+# ==========================================
+
+@app.route('/invoice/<int:order_id>')
+def invoice(order_id):
+    order = execute_query('SELECT * FROM orders WHERE id=?', (order_id,), fetchone=True)
+    if not order:
+        return redirect('/')
+    import json
+    if isinstance(order.get('items'), str):
+        try:
+            order['items'] = json.loads(order['items'])
+        except:
+            order['items'] = []
+    # أضف سعر البيع لكل منتج
+    for item in order['items']:
+        price = float(item.get('price', 0))
+        item['sell_price'] = get_selling_price(price)
+    return render_template('invoice.html',
+        order=order,
+        app_whatsapp=Config.APP_WHATSAPP,
+        app_phone=Config.APP_PHONE
+    )
 
 
 if __name__ == '__main__':

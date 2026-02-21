@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>دكّاني — فاتورة #{{ order.id }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:16px 14px 30px}
+
+.invoice{background:#fff;border-radius:20px;max-width:420px;margin:0 auto;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+
+/* Header */
+.inv-header{background:linear-gradient(135deg,#1b5e20,#2e7d32);padding:22px 20px;text-align:center;position:relative}
+.inv-logo{font-size:32px;margin-bottom:4px}
+.inv-brand{color:#fff;font-size:20px;font-weight:900;letter-spacing:1px}
+.inv-sub{color:rgba(255,255,255,.65);font-size:11px;margin-top:2px}
+.inv-badge{position:absolute;top:16px;left:16px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:5px 10px;color:#fff;font-size:10px;font-weight:700}
+
+/* Status */
+.inv-status{background:#e8f5e9;padding:14px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #e5e7eb}
+.status-ico{width:38px;height:38px;background:#43a047;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.status-txt{font-size:13px;font-weight:700;color:#1b5e20}
+.status-sub{font-size:11px;color:#9ca3af;margin-top:2px}
+
+/* Order info */
+.inv-info{padding:16px 20px;border-bottom:1px solid #f3f4f6}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12.5px}
+.info-lbl{color:#9ca3af;font-weight:600}
+.info-val{color:#1f2937;font-weight:700}
+.inv-num{color:#2e7d32;font-size:15px;font-weight:900}
+
+/* Items */
+.inv-items{padding:16px 20px;border-bottom:1px solid #f3f4f6}
+.items-title{font-size:12px;font-weight:900;color:#9ca3af;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
+.item-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #f3f4f6}
+.item-row:last-child{border-bottom:none}
+.item-name{font-size:13px;font-weight:700;color:#1f2937;flex:1}
+.item-qty{font-size:11px;color:#9ca3af;margin-top:2px}
+.item-price{font-size:13px;font-weight:900;color:#2e7d32;white-space:nowrap;margin-right:8px}
+
+/* Totals */
+.inv-totals{padding:14px 20px;background:#f9fafb;border-bottom:1px solid #f3f4f6}
+.total-row{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;color:#4b5563}
+.total-row.grand{font-size:15px;font-weight:900;color:#1b5e20;border-top:1.5px solid #e5e7eb;margin-top:8px;padding-top:10px}
+
+/* Customer */
+.inv-customer{padding:14px 20px;border-bottom:1px solid #f3f4f6}
+.cust-title{font-size:11px;font-weight:900;color:#9ca3af;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.cust-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#4b5563;padding:3px 0}
+.cust-row b{color:#1f2937}
+
+/* Footer / Actions */
+.inv-actions{padding:16px 20px;display:flex;flex-direction:column;gap:9px}
+.btn{padding:13px;border-radius:12px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .2s;text-decoration:none;display:block;text-align:center}
+.btn:active{transform:scale(.97)}
+.btn-share{background:#25D366;color:#fff}
+.btn-shop{background:linear-gradient(135deg,#43a047,#2e7d32);color:#fff}
+.btn-close{background:#f3f4f6;color:#4b5563;border:1.5px solid #e5e7eb}
+
+/* Watermark */
+.inv-watermark{text-align:center;padding:10px 20px 16px;font-size:10px;color:#d1d5db}
+</style>
+</head>
+<body>
+<div class="invoice">
+
+  <!-- Header -->
+  <div class="inv-header">
+    <div class="inv-badge">رقمي · Digital</div>
+    <div class="inv-logo">🛒</div>
+    <div class="inv-brand">دكّاني</div>
+    <div class="inv-sub">رام الله 🇵🇸 · خدمة التوصيل</div>
+  </div>
+
+  <!-- Status -->
+  <div class="inv-status">
+    <div class="status-ico">✅</div>
+    <div>
+      <div class="status-txt">تم استلام طلبك بنجاح!</div>
+      <div class="status-sub">وقت التوصيل المتوقع: 45–60 دقيقة</div>
+    </div>
+  </div>
+
+  <!-- Order Info -->
+  <div class="inv-info">
+    <div class="info-row">
+      <span class="info-lbl">رقم الفاتورة</span>
+      <span class="info-val inv-num">#{{ order.id }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-lbl">التاريخ</span>
+      <span class="info-val">{{ order.created_at | string | truncate(16, True, '') }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-lbl">طريقة الدفع</span>
+      <span class="info-val">💵 {{ 'كاش عند الاستلام' if order.payment == 'cash' else order.payment }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-lbl">الحالة</span>
+      <span class="info-val" style="color:#43a047">🆕 جديد</span>
+    </div>
+  </div>
+
+  <!-- Items -->
+  <div class="inv-items">
+    <div class="items-title">📦 تفاصيل الطلب</div>
+    {% for item in order.items %}
+    <div class="item-row">
+      <div>
+        <div class="item-name">{{ item.name }}</div>
+        <div class="item-qty">{{ item.qty }} × {{ item.sell_price or item.price }}₪</div>
+      </div>
+      <div class="item-price">{{ "%.1f"|format((item.sell_price or item.price) * item.qty) }}₪</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Totals -->
+  <div class="inv-totals">
+    <div class="total-row">
+      <span>المجموع الفرعي</span>
+      <span>{{ order.total }}₪</span>
+    </div>
+    <div class="total-row">
+      <span>🚗 رسوم التوصيل</span>
+      <span>{{ order.delivery }}₪</span>
+    </div>
+    <div class="total-row grand">
+      <span>الإجمالي</span>
+      <span>{{ "%.1f"|format((order.total or 0) + (order.delivery or 0)) }}₪</span>
+    </div>
+  </div>
+
+  <!-- Customer -->
+  <div class="inv-customer">
+    <div class="cust-title">👤 بيانات التوصيل</div>
+    <div class="cust-row">👤 <span><b>{{ order.name }}</b></span></div>
+    <div class="cust-row">📞 <span dir="ltr"><b>{{ order.phone }}</b></span></div>
+    {% if order.neighborhood %}<div class="cust-row">📍 <span><b>{{ order.neighborhood }}</b></span></div>{% endif %}
+    {% if order.address %}<div class="cust-row">🏠 <span>{{ order.address }}</span></div>{% endif %}
+    {% if order.notes %}<div class="cust-row">📝 <span>{{ order.notes }}</span></div>{% endif %}
+  </div>
+
+  <!-- Actions -->
+  <div class="inv-actions">
+    <a class="btn btn-share" id="wa-btn" href="#">💬 مشاركة عبر واتساب</a>
+    <a class="btn btn-shop" href="/shop">🛒 طلب مرة أخرى</a>
+    <a class="btn btn-close" href="/">🏠 العودة للرئيسية</a>
+  </div>
+
+  <div class="inv-watermark">دكّاني · فاتورة رقمية · #{{ order.id }}</div>
+</div>
+
+<script>
+// رسالة واتساب جاهزة بتفاصيل الطلب
+const msg = `🧾 *فاتورة دكّاني #{{ order.id }}*\n\n` +
+  `👤 {{ order.name }}\n` +
+  `📞 {{ order.phone }}\n` +
+  `📍 {{ order.neighborhood or '' }}\n\n` +
+  `📦 *الطلب:*\n` +
+  {% for item in order.items %}`• {{ item.name }} × {{ item.qty }}\n` + {% endfor %}
+  `\n💰 المجموع: {{ order.total }}₪\n` +
+  `🚗 التوصيل: {{ order.delivery }}₪\n` +
+  `✅ *الإجمالي: {{ "%.1f"|format((order.total or 0) + (order.delivery or 0)) }}₪*`;
+
+document.getElementById('wa-btn').href = 
+  `https://wa.me/{{ app_whatsapp }}?text=${encodeURIComponent(msg)}`;
+
+// تفريغ السلة
+localStorage.removeItem('dokkani_cart');
+
+// منع التكبير
+document.addEventListener('touchstart', e => { if(e.touches.length > 1) e.preventDefault(); }, {passive:false});
+document.addEventListener('gesturestart', e => e.preventDefault());
+</script>
+</body>
+</html>
