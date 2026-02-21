@@ -431,12 +431,13 @@ def api_fetch_product_image(prod_id):
         return jsonify({'success': False, 'error': 'مفتاح Unsplash مفقود من إعدادات Render'})
 
     try:
-        product = execute_query('SELECT id, name, image_search FROM products WHERE id=?', (prod_id,), fetchone=True)
+        # جلب الاسم فقط (تجنباً لخطأ العمود المفقود)
+        product = execute_query('SELECT id, name FROM products WHERE id=?', (prod_id,), fetchone=True)
         if not product:
             return jsonify({'success': False, 'error': 'المنتج غير موجود'})
 
         product_name = product['name']
-        search_term = product.get('image_search') or translate_to_english(product_name)
+        search_term = translate_to_english(product_name)
 
         resp = req.get(
             'https://api.unsplash.com/search/photos',
@@ -450,12 +451,12 @@ def api_fetch_product_image(prod_id):
 
         results = resp.json().get('results', [])
         if not results:
-            return jsonify({'success': False, 'error': 'لم نجد صورة تناسب هذا الاسم'})
+            return jsonify({'success': False, 'error': f'لم نجد صورة لـ "{search_term}"'})
 
         image_url = results[0]['urls']['small']
         img_data = req.get(image_url, timeout=15).content
         
-        filename = f"auto_{prod_id}.jpg"
+        filename = f"auto_{prod_id}_{os.urandom(3).hex()}.jpg"
         filepath = os.path.join(UPLOAD_FOLDER, filename)
         
         with open(filepath, 'wb') as f:
