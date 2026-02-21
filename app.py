@@ -422,60 +422,52 @@ def api_get_customer(phone):
 # ==========================================
 
 @app.route('/api/admin/fetch-image/<int:prod_id>', methods=['POST'])
+@admin_required
 def api_fetch_product_image(prod_id):
     import requests as req
 
-    UNSPLASH_KEY = os.environ.get('UNSPLASH_KEY', '')
+    UNSPLASH_KEY = os.environ.get('UNSPLASH_KEY')
     if not UNSPLASH_KEY:
-        return jsonify({'success': False, 'error': 'مفتاح Unsplash غير موجود في الإعدادات'})
-
-    # ← جديد: اقرأ image_search من قاعدة البيانات
-    product = execute_query('SELECT id, name, image_search FROM products WHERE id=?', (prod_id,), fetchone=True)
-    if not product:
-        return jsonify({'success': False, 'error': 'المنتج غير موجود'})
-
-    product_name = product['name']
-    # ← جديد: استخدم image_search إن وُجد، وإلا ترجم تلقائياً
-    search_term = product.get('image_search') or translate_to_english(product_name)
+        return jsonify({'success': False, 'error': 'مفتاح Unsplash مفقود من إعدادات Render'})
 
     try:
+        product = execute_query('SELECT id, name, image_search FROM products WHERE id=?', (prod_id,), fetchone=True)
+        if not product:
+            return jsonify({'success': False, 'error': 'المنتج غير موجود'})
+
+        product_name = product['name']
+        search_term = product.get('image_search') or translate_to_english(product_name)
+
         resp = req.get(
             'https://api.unsplash.com/search/photos',
-            params={
-                'query': search_term,
-                'per_page': 1,
-                'orientation': 'squarish'
-            },
+            params={'query': search_term, 'per_page': 1, 'orientation': 'squarish'},
             headers={'Authorization': f'Client-ID {UNSPLASH_KEY}'},
-            timeout=10
+            timeout=15
         )
 
         if resp.status_code != 200:
-            return jsonify({'success': False, 'error': f'خطأ من Unsplash: {resp.status_code}'})
+            return jsonify({'success': False, 'error': f'Unsplash Error: {resp.status_code}'})
 
         results = resp.json().get('results', [])
         if not results:
-            return jsonify({'success': False, 'error': f'لم يتم العثور على صورة لـ "{search_term}"'})
+            return jsonify({'success': False, 'error': 'لم نجد صورة تناسب هذا الاسم'})
 
         image_url = results[0]['urls']['small']
-
-        img_resp = req.get(image_url, timeout=10)
-        if img_resp.status_code != 200:
-            return jsonify({'success': False, 'error': 'فشل تحميل الصورة'})
-
-        filename = f"auto_{os.urandom(6).hex()}.jpg"
+        img_data = req.get(image_url, timeout=15).content
+        
+        filename = f"auto_{prod_id}.jpg"
         filepath = os.path.join(UPLOAD_FOLDER, filename)
+        
         with open(filepath, 'wb') as f:
-            f.write(img_resp.content)
+            f.write(img_data)
 
         image_path = f"/static/uploads/{filename}"
         execute_query('UPDATE products SET image=? WHERE id=?', (image_path, prod_id), commit=True)
 
-        return jsonify({'success': True, 'image': image_path, 'searched_for': search_term})
+        return jsonify({'success': True, 'image': image_path})
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
-
 
 # ==========================================
 # معالجة الصور و PWA
