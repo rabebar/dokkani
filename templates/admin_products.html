@@ -637,6 +637,7 @@ tr.prod-hidden td  { opacity: .5; }
             <button class="add-btn blue" onclick="openExcelModal()">📥 رفع المخزون</button>
             <button class="add-btn" onclick="openProdModal()">➕ منتج جديد</button>
             <button class="add-btn" style="background: var(--red);" onclick="clearAllProducts()">🗑️ مسح الكل</button>
+            <button class="add-btn" id="bulk-delete-btn" style="background: #b71c1c; display: none;" onclick="bulkDeleteSelected()">🗑️ حذف المحدد (<span id="selected-count">0</span>)</button>
           </div>
         </div>
         <div class="prod-filters">
@@ -671,7 +672,7 @@ tr.prod-hidden td  { opacity: .5; }
             <tr class="prod-row {% if not p.visible %}prod-hidden{% endif %}"
                 data-cat="{{ p.category_id }}" data-name="{{ p.name }}">
                 <td style="text-align: center;">
-  <input type="checkbox" class="prod-checkbox" data-id="{{ p.id }}" onchange="updateBulkBtnVisibility()" style="width: 18px; height: 18px; cursor: pointer;">
+  <input type="checkbox" class="prod-checkbox" data-id="{{ p.id }}" onclick="updateBulkBtnVisibility()" style="width: 18px; height: 18px; cursor: pointer;">
 </td>
               <td>
                 <div class="prod-img">
@@ -1156,6 +1157,51 @@ function clearAllProducts() {
             setTimeout(() => location.reload(), 800);
         }
     });
+}
+// 1. دالة تحديد الكل المحسنة
+function toggleSelectAll(master) {
+  const checkboxes = document.querySelectorAll('.prod-checkbox');
+  checkboxes.forEach(cb => cb.checked = master.checked);
+  updateBulkBtnVisibility(); // تحديث ظهور الزر فوراً
+}
+
+// 2. دالة تحديث الزر (تستخدم الآن أسلوب العرض المباشر)
+function updateBulkBtnVisibility() {
+  const selected = document.querySelectorAll('.prod-checkbox:checked');
+  const btn = document.getElementById('bulk-delete-btn');
+  const countSpan = document.getElementById('selected-count');
+  
+  if (selected.length > 0) {
+    btn.setAttribute('style', 'background: #b71c1c; display: flex !important;');
+    countSpan.textContent = selected.length;
+  } else {
+    btn.style.display = 'none';
+    if(document.getElementById('master-checkbox')) 
+       document.getElementById('master-checkbox').checked = false;
+  }
+}
+
+// 3. دالة الحذف الجماعي (مع إضافة تنظيف الواجهة)
+function bulkDeleteSelected() {
+  const selected = document.querySelectorAll('.prod-checkbox:checked');
+  const ids = Array.from(selected).map(cb => cb.getAttribute('data-id'));
+
+  if (!confirm(`⚠️ هل أنت متأكد من حذف ${ids.length} منتجات مختارة نهائياً؟`)) return;
+
+  fetch('/api/admin/products/delete-bulk', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids: ids })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message);
+      setTimeout(() => location.reload(), 500);
+    } else {
+      alert('خطأ: ' + data.message);
+    }
+  }).catch(err => alert('فشل الاتصال بالسيرفر'));
 }
 
 // ===== FETCH IMAGE FROM UNSPLASH =====
