@@ -163,7 +163,7 @@ const msg = `🧾 *فاتورة دكّاني #{{ order['id'] }}*\n\n` +
   `📦 *الطلب:*\n` +
   {% for item in order['items'] %}`• {{ item['name'] }} × {{ item['qty'] }}\n` + {% endfor %}
   `\n🚗 التوصيل: {{ order['delivery'] }}₪\n` +
-  `✅ *الإجمالي النهائي: {{ "%.1f"|format(order['total']) }}₪*`;
+  `✅ *الإجمالي النهائي: {{ "%.1f"|format((order['total'] or 0) + (order['delivery'] or 0)) }}₪*`;
 
 document.getElementById('wa-btn').href = 
   `https://wa.me/{{ app_whatsapp }}?text=${encodeURIComponent(msg)}`;
