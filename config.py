@@ -19,10 +19,10 @@ class Config:
     # كلمة سر الأدمن ← من environment variable
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'dokkani-admin-2024')
 
-    # إعدادات التوصيل
-    DELIVERY_PRICE_SHORT = 5
-    DELIVERY_PRICE_MID   = 8
-    DELIVERY_PRICE_FAR   = 12
+    # إعدادات التوصيل المحدثة
+    DELIVERY_PRICE_MIN   = 10  # الحد الأدنى الجديد
+    DELIVERY_PRICE_MAX   = 20  # الحد الأقصى الجديد
+    DELIVERY_PER_KM     = 2.5 # تكلفة الكيلومتر المحدثة
 
     # هامش الربح — بقالة
     PROFIT_LOW  = 1.0
