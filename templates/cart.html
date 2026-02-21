@@ -165,7 +165,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
   <div class="sec-hdr">🧾 ملخص الفاتورة</div>
   <div class="summary">
     <div class="sr"><span>المنتجات</span><span id="sum-products">0₪</span></div>
-    <div class="sr delivery-row"><span>🚗 رسوم التوصيل</span><span id="sum-delivery">{{ delivery_short }}₪</span></div>
+    <div class="sr delivery-row"><span>🚗 رسوم التوصيل</span><span id="sum-delivery">{{ delivery_min }}₪</span></div>
     <div class="sr total"><span>الإجمالي</span><span id="sum-total">0₪</span></div>
   </div>
 </div>
@@ -248,8 +248,8 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 <script>
 let cart = JSON.parse(localStorage.getItem('dokkani_cart') || '[]');
 let profile = JSON.parse(localStorage.getItem('dokkani_profile') || '{}');
+const DELIVERY = {{ delivery_min }};
 let payMethod = 'cash';
-const DELIVERY = {{ delivery_short }};
 
 // دالة تحديث موعد التوصيل في السلة
 function updateCartDeliveryNotice() {

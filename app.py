@@ -181,9 +181,7 @@ def subcategory_page(sub_id):
 def cart():
     if not is_mobile(): return redirect('/')
     return render_template('cart.html', app_name=Config.APP_NAME,
-                           delivery_short=Config.DELIVERY_PRICE_SHORT,
-                           delivery_mid=Config.DELIVERY_PRICE_MID,
-                           delivery_far=Config.DELIVERY_PRICE_FAR)
+                           delivery_min=Config.DELIVERY_PRICE_MIN)
 
 @app.route('/success')
 def success():
