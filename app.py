@@ -381,6 +381,27 @@ def api_delete_product(prod_id):
     delete_product(prod_id)
     return jsonify({'success': True})
 
+# --- دالة الحذف الجماعي الجديدة (مضافة بناءً على الميثاق) ---
+@app.route('/api/admin/products/delete-bulk', methods=['POST'])
+def api_delete_products_bulk():
+    if not session.get('admin_logged_in'): 
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.get_json()
+    ids = data.get('ids', [])
+    
+    if not ids:
+        return jsonify({'success': False, 'message': 'لم يتم تحديد منتجات'}), 400
+    
+    try:
+        # تحويل القائمة لنص متوافق مع استعلام SQL
+        placeholders = ', '.join(['?'] * len(ids))
+        query = f"DELETE FROM products WHERE id IN ({placeholders})"
+        execute_query(query, ids, commit=True)
+        return jsonify({'success': True, 'message': f'تم حذف {len(ids)} منتج بنجاح'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/admin/clear-products', methods=['POST'])
 def api_clear_products():
     """مسح كافة المنتجات من السيرفر"""
