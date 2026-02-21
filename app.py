@@ -578,22 +578,37 @@ def invoice(order_id):
     order = execute_query('SELECT * FROM orders WHERE id=?', (order_id,), fetchone=True)
     if not order:
         return redirect('/')
+    
     import json
     if isinstance(order.get('items'), str):
         try:
-            order['items'] = json.loads(order['items'])
+            items = json.loads(order['items'])
         except:
-            order['items'] = []
-    # أضف سعر البيع لكل منتج
-    for item in order['items']:
-        price = float(item.get('price', 0))
-        item['sell_price'] = get_selling_price(price)
+            items = []
+    else:
+        items = order.get('items', [])
+
+    # --- الجديد: تصنيف المنتجات حسب أقسامها ---
+    grouped_items = {}
+    for item in items:
+        # البحث عن اسم القسم الرئيسي لهذا المنتج
+        res = execute_query('''
+            SELECT c.name FROM categories c 
+            JOIN products p ON p.category_id = c.id 
+            WHERE p.name = ? LIMIT 1''', (item['name'],), fetchone=True)
+        
+        cat_name = res['name'] if res else "أصناف متنوعة"
+        
+        if cat_name not in grouped_items:
+            grouped_items[cat_name] = []
+        
+        # نعتمد السعر المخزن في الطلب ونمرر الوحدة
+        item['final_price'] = float(item.get('price', 0))
+        grouped_items[cat_name].append(item)
+
     return render_template('invoice.html',
         order=order,
+        grouped_items=grouped_items, # نرسل القائمة المجمعة الجديدة
         app_whatsapp=Config.APP_WHATSAPP,
         app_phone=Config.APP_PHONE
     )
-
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')

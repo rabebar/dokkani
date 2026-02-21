@@ -105,15 +105,30 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
 
   <!-- Items -->
   <div class="inv-items">
-    <div class="items-title">📦 تفاصيل الطلب</div>
-    {% for item in order['items'] %}
-    <div class="item-row">
-      <div>
-        <div class="item-name">{{ item.name }}</div>
-        <div class="item-qty">{{ item.qty }} × {{ item.sell_price or item.price }}₪</div>
+    <div class="items-title">📦 تفاصيل الطلب حسب الأصناف</div>
+    
+    {% for cat_name, items in grouped_items.items() %}
+      <!-- عنوان القسم الرئيسي -->
+      <div style="background: #f1f8e9; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 900; color: #2e7d32; margin-top: 12px; border-right: 4px solid #43a047; display: flex; align-items: center; gap: 6px;">
+        <span>📂</span> {{ cat_name }}
       </div>
-      <div class="item-price">{{ "%.1f"|format((item.sell_price or item.price) * item.qty) }}₪</div>
-    </div>
+
+      {% for item in items %}
+      <div class="item-row">
+        <div style="flex: 1;">
+          <div class="item-name">{{ item.name }}</div>
+          <div class="item-qty">
+            الكمية: <b>{{ item.qty }}</b> <span style="color:#43a047; font-weight:700;">{{ item.unit or 'حبة' }}</span>
+          </div>
+        </div>
+        <div class="item-price">
+          {{ "%.1f"|format(item.final_price * item.qty) }}₪
+          <div style="font-size: 9px; color: #9ca3af; font-weight: 400; text-align: left;">
+            ({{ item.final_price }}₪ للوحدة)
+          </div>
+        </div>
+      </div>
+      {% endfor %}
     {% endfor %}
   </div>
 
@@ -154,14 +169,17 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
 </div>
 
 <script>
-// رسالة واتساب جاهزة بتفاصيل الطلب
+
 // رسالة واتساب جاهزة بتفاصيل الطلب
 const msg = `🧾 *فاتورة دكّاني #{{ order['id'] }}*\n\n` +
   `👤 {{ order['name'] }}\n` +
   `📞 {{ order['phone'] }}\n` +
   `📍 {{ order['neighborhood'] or '' }}\n\n` +
-  `📦 *الطلب:*\n` +
-  {% for item in order['items'] %}`• {{ item['name'] }} × {{ item['qty'] }}\n` + {% endfor %}
+  `📦 *تفاصيل الطلب:*\n` +
+  {% for cat_name, items in grouped_items.items() %}
+    `\n*--- {{ cat_name }} ---*\n` +
+    {% for item in items %}`• {{ item['name'] }} ({{ item['qty'] }} {{ item['unit'] or 'حبة' }})\n` + {% endfor %}
+  {% endfor %}
   `\n🚗 التوصيل: {{ order['delivery'] }}₪\n` +
   `✅ *الإجمالي النهائي: {{ "%.1f"|format((order['total'] or 0) + (order['delivery'] or 0)) }}₪*`;
 
