@@ -106,7 +106,7 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
   <!-- Items -->
   <div class="inv-items">
     <div class="items-title">📦 تفاصيل الطلب</div>
-    {% for item in order.items %}
+    {% for item in order['items'] %}
     <div class="item-row">
       <div>
         <div class="item-name">{{ item.name }}</div>
@@ -155,19 +155,18 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
 
 <script>
 // رسالة واتساب جاهزة بتفاصيل الطلب
-const msg = `🧾 *فاتورة دكّاني #{{ order.id }}*\n\n` +
-  `👤 {{ order.name }}\n` +
-  `📞 {{ order.phone }}\n` +
-  `📍 {{ order.neighborhood or '' }}\n\n` +
+// رسالة واتساب جاهزة بتفاصيل الطلب
+const msg = `🧾 *فاتورة دكّاني #{{ order['id'] }}*\n\n` +
+  `👤 {{ order['name'] }}\n` +
+  `📞 {{ order['phone'] }}\n` +
+  `📍 {{ order['neighborhood'] or '' }}\n\n` +
   `📦 *الطلب:*\n` +
-  {% for item in order.items %}`• {{ item.name }} × {{ item.qty }}\n` + {% endfor %}
-  `\n💰 المجموع: {{ order.total }}₪\n` +
-  `🚗 التوصيل: {{ order.delivery }}₪\n` +
-  `✅ *الإجمالي: {{ "%.1f"|format((order.total or 0) + (order.delivery or 0)) }}₪*`;
+  {% for item in order['items'] %}`• {{ item['name'] }} × {{ item['qty'] }}\n` + {% endfor %}
+  `\n🚗 التوصيل: {{ order['delivery'] }}₪\n` +
+  `✅ *الإجمالي النهائي: {{ "%.1f"|format(order['total']) }}₪*`;
 
 document.getElementById('wa-btn').href = 
   `https://wa.me/{{ app_whatsapp }}?text=${encodeURIComponent(msg)}`;
-
 // تفريغ السلة
 localStorage.removeItem('dokkani_cart');
 
