@@ -378,6 +378,21 @@ def api_toggle_product(prod_id):
 def api_delete_product(prod_id):
     delete_product(prod_id)
     return jsonify({'success': True})
+@app.route('/api/admin/products/delete-bulk', methods=['POST'])
+@admin_required
+def api_delete_bulk_products():
+    data = request.json
+    ids = data.get('ids', [])
+    # إذا كان يرسل معرف واحد فقط في خانة id بدلاً من قائمة ids
+    if not ids and data.get('id'):
+        ids = [data.get('id')]
+        
+    if not ids:
+        return jsonify({'success': False, 'error': 'لم يتم تحديد أي منتج'})
+    
+    placeholders = ', '.join(['?'] * len(ids))
+    execute_query(f'DELETE FROM products WHERE id IN ({placeholders})', ids, commit=True)
+    return jsonify({'success': True, 'message': f'تم حذف {len(ids)} منتج بنجاح'})
 
 @app.route('/api/admin/clear-products', methods=['POST'])
 def api_clear_products():
