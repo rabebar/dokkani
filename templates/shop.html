@@ -58,6 +58,17 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .cat-ico svg{width:32px;height:32px}
 .cat-ico img{width:100%;height:100%;object-fit:cover}
 .cat-lbl{font-size:11px;font-weight:700;color:var(--g800);line-height:1.3}
+#search-results{display:none;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px;margin-top:8px}
+.prod-card-s{background:var(--w);border-radius:14px;padding:10px;box-shadow:var(--sh);display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .2s;border:1px solid rgba(0,0,0,0.04)}
+.prod-card-s:active{transform:scale(.97)}
+.prod-img-s{width:50px;height:50px;border-radius:10px;background:var(--gx);display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;flex-shrink:0}
+.prod-img-s img{width:100%;height:100%;object-fit:cover}
+.prod-info-s{flex:1;min-width:0}
+.prod-name-s{font-size:11px;font-weight:700;color:var(--g800);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prod-cat-s{font-size:9px;color:var(--g400);margin:2px 0}
+.prod-price-s{font-size:13px;font-weight:900;color:var(--g2)}
+.prod-unit-s{font-size:9px;color:var(--g400);font-weight:600}
+.prod-add-s{width:30px;height:30px;background:var(--g4);color:#fff;border:none;border-radius:9px;font-size:20px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 
 /* --- القالب الموحد لشريط التنقل السفلي --- */
 .bnav {
@@ -164,7 +175,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .alert-orange { background: #fff8e1; border-color: #ffb300 !important; color: #e65100; }
 .alert-blue { background: #e3f2fd; border-color: #2196f3 !important; color: #0d47a1; }
 </style>
-
+<div id="search-results"></div>
 <div class="sec-hdr">
   <div class="sec-title">الأقسام</div>
   <div style="font-size:11px;color:var(--g400)">{{ categories|length }} قسم</div>
@@ -370,14 +381,51 @@ function goCart(){
   window.location.href='/cart';
 }
 
+let _st=null;
 function searchCats(){
-  const q = document.getElementById('search').value.trim().toLowerCase();
-  document.querySelectorAll('.cat-card').forEach(c=>{
-    c.style.display = (!q || c.querySelector('.cat-lbl').textContent.toLowerCase().includes(q)) ? '' : 'none';
-  });
+  const q=document.getElementById('search').value.trim();
+  const resGrid=document.getElementById('search-results');
+  const catGrid=document.getElementById('cat-grid');
+  const secHdr=document.querySelector('.sec-hdr');
+  const banner=document.querySelector('.banner');
+  const alertBar=document.getElementById('delivery-alert-bar');
+  if(!q||q.length<2){
+    resGrid.style.display='none'; catGrid.style.display='grid';
+    if(secHdr)secHdr.style.display='flex';
+    if(banner)banner.style.display='flex';
+    if(alertBar)alertBar.style.display='flex';
+    return;
+  }
+  clearTimeout(_st);
+  _st=setTimeout(async()=>{
+    try{
+      const r=await fetch('/api/search?q='+encodeURIComponent(q));
+      const d=await r.json(); const prods=d.products||[];
+      catGrid.style.display='none';
+      if(secHdr)secHdr.style.display='none';
+      if(banner)banner.style.display='none';
+      if(alertBar)alertBar.style.display='none';
+      if(!prods.length){
+        resGrid.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--g400);grid-column:1/-1"><div style="font-size:40px">🔍</div><div style="font-weight:700">لا توجد نتائج</div></div>';
+      }else{
+        resGrid.innerHTML=prods.map(p=>`<div class="prod-card-s" onclick="addToSearchCart(${p.id},'${p.name.replace(/'/g,"\\'")}',${p.sell_price},'${p.unit}',this)"><div class="prod-img-s">${p.image?`<img src="${p.image}" alt="">`:'🛍️'}</div><div class="prod-info-s"><div class="prod-name-s">${p.name}</div><div class="prod-cat-s">${p.cat_name||''}</div><div class="prod-price-s">${p.sell_price}₪ <span class="prod-unit-s">/ ${p.unit}</span></div></div><button class="prod-add-s">+</button></div>`).join('');
+      }
+      resGrid.style.display='grid';
+    }catch(e){console.error(e);}
+  },400);
+}
+
+function addToSearchCart(id,name,price,unit,el){
+  const ex=cart.find(i=>i.id===id);
+  if(ex){ex.qty++;}else{cart.push({id,name,price,qty:1,unit,type:'product'});}
+  localStorage.setItem('dokkani_cart',JSON.stringify(cart));
+  const btn=el.querySelector('.prod-add-s');
+  if(btn){btn.textContent='✅';setTimeout(()=>btn.textContent='+',1000);}
+  updateUI();
 }
 
 updateUI();
+
 // منع التكبير اليدوي لضمان استقرار التطبيق
 document.addEventListener('touchstart', function(event) {
   if (event.touches.length > 1) { event.preventDefault(); }

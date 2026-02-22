@@ -583,6 +583,23 @@ def admin_logout():
     session.clear()
     return redirect('/admin/login')
 
+@app.route('/api/search')
+def api_search():
+    query = request.args.get('q', '').strip()
+    if len(query) < 2:
+        return jsonify({'products': []})
+    sql = '''
+        SELECT p.*, c.name as cat_name 
+        FROM products p 
+        JOIN categories c ON p.category_id = c.id 
+        WHERE p.name LIKE ? AND p.visible = 1 
+        LIMIT 20
+    '''
+    results = execute_query(sql, ('%' + query + '%',), fetchall=True)
+    for p in results:
+        p['sell_price'] = get_selling_price(p['price'])
+    return jsonify({'products': results})
+
 
 # ==========================================
 # صفحة الفاتورة الرقمية
