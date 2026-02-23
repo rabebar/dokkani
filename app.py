@@ -644,3 +644,8 @@ def invoice(order_id):
         app_whatsapp=Config.APP_WHATSAPP,
         app_phone=Config.APP_PHONE
     )
+@app.route('/admin/image-review')
+@admin_required
+def image_review_page():
+    prods = execute_query('SELECT * FROM products WHERE image_status < 2 ORDER BY image_status DESC, id LIMIT 50', fetchall=True)
+    return render_template('image_review.html', products=prods, app_name=Config.APP_NAME)
