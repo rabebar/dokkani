@@ -653,23 +653,31 @@ def invoice(order_id):
 @app.route('/admin/image-review')
 @admin_required
 def image_review_page():
+    # 1. جلب الفلاتر من الرابط (الرئيسي والفرعي والصفحة)
     cat_filter = request.args.get('cat', '')
+    sub_filter = request.args.get('sub', '')
     page = int(request.args.get('page', 1))
     per_page = 30
     offset = (page - 1) * per_page
 
-    # مصفاة مزدوجة: تستبعد من حالته 2 (معتمد) وتستبعد من يمتلك أي رابط صورة
+    # 2. بناء المصفاة الصارمة
     where_clause = """
         WHERE (p.image_status IS NULL OR p.image_status < 2) 
         AND (p.image IS NULL OR p.image = '' OR p.image = 'None' OR p.image = '/static/uploads/default.jpg')
     """
     params = []
 
+    # فلترة بالقسم الرئيسي
     if cat_filter:
         where_clause += " AND p.category_id = ?"
         params.append(cat_filter)
+    
+    # فلترة بالقسم الفرعي (الجديد)
+    if sub_filter:
+        where_clause += " AND p.subcategory_id = ?"
+        params.append(sub_filter)
 
-    # جلب المنتجات التي تحتاج صوراً فعلياً
+    # 3. جلب المنتجات والعدد الكلي
     prods = execute_query(f'''
         SELECT p.*, c.name as cat_name FROM products p
         LEFT JOIN categories c ON c.id = p.category_id
@@ -677,18 +685,24 @@ def image_review_page():
         ORDER BY p.id
         LIMIT ? OFFSET ?''', params + [per_page, offset], fetchall=True)
     
-    # حساب العدد الحقيقي للمتبقي - تم التأكد من اسم المتغير هنا
     total_res = execute_query(f"SELECT COUNT(*) as n FROM products p {where_clause}", params, fetchone=True)
 
+    # 4. جلب الأقسام الرئيسية (دائماً)
     cats = execute_query('SELECT id, name FROM categories ORDER BY sort, id', fetchall=True)
     
-    # تصحيح اسم المتغير هنا ليتوافق مع total_res
+    # 5. جلب الأقسام الفرعية (فقط إذا تم اختيار قسم رئيسي) لكي تظهر في الفلتر الثاني
+    subs = []
+    if cat_filter:
+        subs = execute_query('SELECT id, name FROM subcategories WHERE category_id = ? ORDER BY id', (cat_filter,), fetchall=True)
+
     total_no_img = total_res['n'] if total_res else 0
     
     return render_template('image_review.html',
         products=prods or [],
         categories=cats or [],
+        subcategories=subs or [],
         cat_filter=cat_filter,
+        sub_filter=sub_filter,
         page=page,
         per_page=per_page,
         total=total_no_img,

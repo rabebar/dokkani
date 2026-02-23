@@ -6,7 +6,7 @@
 <title>دكّاني — مراجعة الصور</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gx:#f1f8e9;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--sh:0 4px 12px rgba(0,0,0,.08)}
+:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gx:#f1f8e9;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--red:#e53935;--sh:0 4px 12px rgba(0,0,0,.08)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);padding-bottom:100px}
 
@@ -14,7 +14,6 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .hdr{background:linear-gradient(135deg,#1a4a1e,var(--g2));padding:14px 16px;color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.2)}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .hdr-title{font-size:16px;font-weight:900}
-.hdr-stats{font-size:11px;color:rgba(255,255,255,.7)}
 .back-btn{background:rgba(255,255,255,.15);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-family:'Cairo';font-size:12px;cursor:pointer;text-decoration:none}
 
 /* Filter Bar */
@@ -28,8 +27,6 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .stats-bar{background:var(--w);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--g200)}
 .stats-text{font-size:13px;color:var(--g800);font-weight:700}
 .stats-sub{font-size:11px;color:var(--g400);margin-top:2px}
-.progress-wrap{width:160px;height:8px;background:var(--g200);border-radius:4px;overflow:hidden}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--g4),var(--g2));border-radius:4px;transition:.3s}
 
 /* Grid */
 .review-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:14px}
@@ -74,11 +71,9 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     <a href="/admin/products" class="back-btn">← لوحة التحكم</a>
   </div>
 
-  <!-- فلتر الأقسام -->
+  <!-- فلتر الأقسام الرئيسية -->
   <div class="filter-bar">
-    <a href="/admin/image-review?page=1" class="filter-btn {% if not cat_filter %}active{% endif %}">
-      الكل
-    </a>
+    <a href="/admin/image-review?page=1" class="filter-btn {% if not cat_filter %}active{% endif %}">الكل</a>
     {% for cat in categories %}
     <a href="/admin/image-review?cat={{ cat.id }}&page=1" 
        class="filter-btn {% if cat_filter|string == cat.id|string %}active{% endif %}">
@@ -86,13 +81,26 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     </a>
     {% endfor %}
   </div>
+
+  <!-- فلتر الأقسام الفرعية (يظهر عند اختيار قسم رئيسي) -->
+  {% if subcategories %}
+  <div class="filter-bar" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; margin-top: 4px;">
+    <a href="/admin/image-review?cat={{ cat_filter }}&page=1" 
+       class="filter-btn {% if not sub_filter %}active{% endif %}" style="font-size: 11px;">الكل (فرعي)</a>
+    {% for sub in subcategories %}
+    <a href="/admin/image-review?cat={{ cat_filter }}&sub={{ sub.id }}&page=1" 
+       class="filter-btn {% if sub_filter|string == sub.id|string %}active{% endif %}" style="font-size: 11px;">
+      {{ sub.name }}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
 
-<!-- إحصائيات -->
 <div class="stats-bar">
   <div>
-    <div class="stats-text">{{ total }} منتج بدون صورة</div>
-    <div class="stats-sub">صفحة {{ page }} — {{ products|length }} منتج ظاهر</div>
+    <div class="stats-text">{{ total }} منتج متبقي بدون صورة</div>
+    <div class="stats-sub">صفحة {{ page }} — قسم: {{ cat_filter or 'الكل' }}</div>
   </div>
 </div>
 
@@ -107,13 +115,11 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
       {% endif %}
     </div>
 
-    <a href="https://www.google.com/search?q={{ p.name | urlencode }}+product&tbm=isch" 
-       target="_blank" class="btn-google">
-       🔍 ابحث في جوجل
-    </a>
+    <a href="https://www.google.com/search?q={{ p.name | urlencode }}+product+white+background&tbm=isch" 
+       target="_blank" class="btn-google">🔍 ابحث في جوجل</a>
 
     <div class="input-group">
-      <span class="input-label">الصق رابط الصورة (Image Address):</span>
+      <span class="input-label">الصق رابط الصورة هنا:</span>
       <input type="text" class="url-input" id="input-{{ p.id }}" placeholder="https://...">
     </div>
 
@@ -125,26 +131,21 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
   {% endfor %}
 </div>
 
-<!-- Pagination -->
 <div class="pagination">
   {% if page > 1 %}
-  <a href="/admin/image-review?cat={{ cat_filter }}&page={{ page - 1 }}" class="page-btn">← السابق</a>
+  <a href="/admin/image-review?cat={{ cat_filter }}&sub={{ sub_filter }}&page={{ page - 1 }}" class="page-btn">← السابق</a>
   {% endif %}
-
-  <span class="page-info">صفحة {{ page }} من {{ ((total / per_page) | int) + (1 if total % per_page > 0 else 0) }}</span>
-
-  {% if page * per_page < total %}
-  <a href="/admin/image-review?cat={{ cat_filter }}&page={{ page + 1 }}" class="page-btn active-pg">التالي ←</a>
+  <span class="page-info">صفحة {{ page }}</span>
+  {% if products|length >= per_page %}
+  <a href="/admin/image-review?cat={{ cat_filter }}&sub={{ sub_filter }}&page={{ page + 1 }}" class="page-btn active-pg">التالي ←</a>
   {% endif %}
 </div>
 
 {% else %}
 <div class="empty">
   <div class="empty-icon">✅</div>
-  <div style="font-size:18px;font-weight:900;color:var(--g1);margin-bottom:8px">
-    {% if cat_filter %}هذا القسم مكتمل!{% else %}كل المنتجات لديها صور!{% endif %}
-  </div>
-  <div style="font-size:13px">لا يوجد منتجات بدون صور {% if cat_filter %}في هذا القسم{% endif %}</div>
+  <div style="font-size:18px;font-weight:900;color:var(--g1);margin-bottom:8px">القسم مكتمل!</div>
+  <div style="font-size:13px">لا توجد منتجات بدون صور هنا.</div>
 </div>
 {% endif %}
 
@@ -152,46 +153,24 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 async function saveImage(id, btn) {
     const input = document.getElementById(`input-${id}`);
     const imageUrl = input.value.trim();
-    
-    if (!imageUrl || !imageUrl.startsWith('http')) {
-        alert('يرجى لصق رابط صورة صحيح يبدأ بـ http');
-        return;
-    }
-
-    btn.innerText = '⏳ جاري الحفظ...';
-    btn.disabled = true;
-
+    if (!imageUrl || !imageUrl.startsWith('http')) { alert('يرجى لصق رابط صحيح'); return; }
+    btn.innerText = '⏳ حفظ...'; btn.disabled = true;
     try {
         const response = await fetch('/api/admin/confirm-image', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ prod_id: id, image_url: imageUrl })
         });
-        
         const data = await response.json();
         if (data.success) {
             const card = document.getElementById(`card-${id}`);
-            card.style.transition = 'all 0.3s';
-            card.style.transform = 'scale(0.9)';
-            card.style.opacity = '0';
-            setTimeout(() => card.remove(), 300);
-        } else {
-            alert('فشل الحفظ: ' + data.error);
-            btn.disabled = false;
-            btn.innerText = '💾 حفظ';
-        }
-    } catch (err) {
-        alert('خطأ في الاتصال');
-        btn.disabled = false;
-        btn.innerText = '💾 حفظ';
-    }
+            card.style.opacity = '0'; setTimeout(() => card.remove(), 300);
+        } else { alert('فشل الحفظ'); btn.disabled = false; btn.innerText = '💾 حفظ'; }
+    } catch (err) { alert('خطأ اتصال'); btn.disabled = false; btn.innerText = '💾 حفظ'; }
 }
-
 function hideCard(id) {
     const card = document.getElementById(`card-${id}`);
-    card.style.transition = 'all 0.3s';
-    card.style.opacity = '0';
-    setTimeout(() => card.remove(), 300);
+    card.style.opacity = '0'; setTimeout(() => card.remove(), 300);
 }
 </script>
 </body>
