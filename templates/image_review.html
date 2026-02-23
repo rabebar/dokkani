@@ -3,69 +3,153 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>دكّاني — مساعد البحث الذكي</title>
+<title>دكّاني — مراجعة الصور</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gx:#f1f8e9;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--red:#e53935;--sh:0 4px 12px rgba(0,0,0,.08)}
+:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gx:#f1f8e9;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--sh:0 4px 12px rgba(0,0,0,.08)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);padding-bottom:100px}
 
 /* Header */
-.hdr{background:linear-gradient(135deg,#1a4a1e,var(--g2));padding:18px 16px;color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:space-between}
-.hdr-title{font-size:17px;font-weight:900}
+.hdr{background:linear-gradient(135deg,#1a4a1e,var(--g2));padding:14px 16px;color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.hdr-title{font-size:16px;font-weight:900}
+.hdr-stats{font-size:11px;color:rgba(255,255,255,.7)}
+.back-btn{background:rgba(255,255,255,.15);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-family:'Cairo';font-size:12px;cursor:pointer;text-decoration:none}
+
+/* Filter Bar */
+.filter-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.filter-btn{white-space:nowrap;padding:7px 14px;border-radius:20px;border:none;font-family:'Cairo';font-size:12px;font-weight:700;cursor:pointer;transition:.2s;text-decoration:none}
+.filter-btn.active{background:var(--g4);color:#fff}
+.filter-btn:not(.active){background:rgba(255,255,255,.15);color:rgba(255,255,255,.85)}
+
+/* Stats Bar */
+.stats-bar{background:var(--w);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--g200)}
+.stats-text{font-size:13px;color:var(--g800);font-weight:700}
+.stats-sub{font-size:11px;color:var(--g400);margin-top:2px}
+.progress-wrap{width:160px;height:8px;background:var(--g200);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--g4),var(--g2));border-radius:4px;transition:.3s}
 
 /* Grid */
-.review-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:16px;padding:16px}
-.item-card{background:var(--w);border-radius:18px;overflow:hidden;box-shadow:var(--sh);border:1.5px solid var(--g200);padding:16px;display:flex;flex-direction:column;gap:12px}
-.item-name{font-size:15px;font-weight:900;color:var(--g1)}
+.review-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:14px}
+.item-card{background:var(--w);border-radius:16px;overflow:hidden;box-shadow:var(--sh);border:1.5px solid var(--g200);padding:14px;display:flex;flex-direction:column;gap:10px}
+.card-header{display:flex;align-items:flex-start;gap:10px}
+.cat-badge{background:var(--gx);color:var(--g1);font-size:9px;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap}
+.item-name{font-size:14px;font-weight:900;color:var(--g1);flex:1;line-height:1.4}
 
-/* Search Button */
-.btn-google{background:#4285f4;color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:10px;font-weight:700;font-size:13px;transition:0.2s}
+/* Google Button */
+.btn-google{background:#4285f4;color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:10px;font-weight:700;font-size:13px;transition:.2s}
 .btn-google:hover{background:#357ae8}
 
-/* Input Area */
-.input-group{display:flex;flex-direction:column;gap:5px}
-.input-label{font-size:11px;font-weight:700;color:var(--g400)}
-.url-input{width:100%;padding:10px;border:2px solid var(--g200);border-radius:8px;font-family:sans-serif;font-size:12px;outline:none;transition:0.2s}
+/* Input */
+.input-group{display:flex;flex-direction:column;gap:4px}
+.input-label{font-size:10px;font-weight:700;color:var(--g400)}
+.url-input{width:100%;padding:9px 10px;border:2px solid var(--g200);border-radius:8px;font-family:sans-serif;font-size:11px;outline:none;transition:.2s;direction:ltr}
 .url-input:focus{border-color:var(--g4)}
 
-/* Save Button */
-.btn-save{background:var(--g4);color:#fff;border:none;padding:12px;border-radius:10px;cursor:pointer;font-weight:900;font-family:'Cairo';transition:0.2s}
+/* Buttons */
+.card-actions{display:flex;gap:8px}
+.btn-save{flex:1;background:var(--g4);color:#fff;border:none;padding:10px;border-radius:10px;cursor:pointer;font-weight:900;font-family:'Cairo';font-size:13px;transition:.2s}
 .btn-save:disabled{background:var(--g200);cursor:not-allowed}
+.btn-skip{background:var(--g100);color:var(--g400);border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-family:'Cairo';font-size:12px}
 
-.skip-link{text-align:center;color:var(--g400);font-size:11px;text-decoration:none;margin-top:5px}
+/* Pagination */
+.pagination{display:flex;align-items:center;justify-content:center;gap:10px;padding:20px}
+.page-btn{padding:8px 18px;border-radius:10px;border:none;font-family:'Cairo';font-weight:700;cursor:pointer;font-size:13px;text-decoration:none;display:inline-block}
+.page-btn.active-pg{background:var(--g2);color:#fff}
+.page-btn:not(.active-pg){background:var(--w);color:var(--g800);box-shadow:var(--sh)}
+.page-info{font-size:13px;color:var(--g400);font-weight:700}
+
+/* Empty */
+.empty{text-align:center;padding:60px 20px;color:var(--g400)}
+.empty-icon{font-size:60px;margin-bottom:16px}
 </style>
 </head>
 <body>
 
 <div class="hdr">
-  <div class="hdr-title">🔬 مساعد جلب الصور (7,400 منتج)</div>
+  <div class="hdr-top">
+    <div class="hdr-title">🖼️ مراجعة صور المنتجات</div>
+    <a href="/admin/products" class="back-btn">← لوحة التحكم</a>
+  </div>
+
+  <!-- فلتر الأقسام -->
+  <div class="filter-bar">
+    <a href="/admin/image-review?page=1" class="filter-btn {% if not cat_filter %}active{% endif %}">
+      الكل
+    </a>
+    {% for cat in categories %}
+    <a href="/admin/image-review?cat={{ cat.id }}&page=1" 
+       class="filter-btn {% if cat_filter|string == cat.id|string %}active{% endif %}">
+      {{ cat.name }}
+    </a>
+    {% endfor %}
+  </div>
 </div>
 
+<!-- إحصائيات -->
+<div class="stats-bar">
+  <div>
+    <div class="stats-text">{{ total }} منتج بدون صورة</div>
+    <div class="stats-sub">صفحة {{ page }} — {{ products|length }} منتج ظاهر</div>
+  </div>
+</div>
+
+{% if products %}
 <div class="review-grid">
   {% for p in products %}
   <div class="item-card" id="card-{{ p.id }}">
-    <div class="item-name">{{ p.name }}</div>
-    
-    <!-- زر البحث في جوجل -->
-    <a href="https://www.google.com/search?q={{ p.name }}+product+white+background&tbm=isch" 
+    <div class="card-header">
+      <div class="item-name">{{ p.name }}</div>
+      {% if p.cat_name %}
+      <div class="cat-badge">{{ p.cat_name }}</div>
+      {% endif %}
+    </div>
+
+    <a href="https://www.google.com/search?q={{ p.name | urlencode }}+product&tbm=isch" 
        target="_blank" class="btn-google">
-       🔍 ابحث عن صورة في جوجل
+       🔍 ابحث في جوجل
     </a>
 
     <div class="input-group">
-      <span class="input-label">الصق رابط الصورة هنا (Image Address):</span>
-      <input type="text" class="url-input" id="input-{{ p.id }}" placeholder="https://example.com/image.jpg">
+      <span class="input-label">الصق رابط الصورة (Image Address):</span>
+      <input type="text" class="url-input" id="input-{{ p.id }}" placeholder="https://...">
     </div>
 
-    <button class="btn-save" onclick="saveImage({{ p.id }})">💾 حفظ واعتماد الصورة</button>
-    <a href="#" class="skip-link" onclick="hideCard({{ p.id }})">تخطي مؤقتاً</a>
+    <div class="card-actions">
+      <button class="btn-save" onclick="saveImage({{ p.id }}, this)">💾 حفظ</button>
+      <button class="btn-skip" onclick="hideCard({{ p.id }})">تخطي</button>
+    </div>
   </div>
   {% endfor %}
 </div>
 
+<!-- Pagination -->
+<div class="pagination">
+  {% if page > 1 %}
+  <a href="/admin/image-review?cat={{ cat_filter }}&page={{ page - 1 }}" class="page-btn">← السابق</a>
+  {% endif %}
+
+  <span class="page-info">صفحة {{ page }} من {{ ((total / per_page) | int) + (1 if total % per_page > 0 else 0) }}</span>
+
+  {% if page * per_page < total %}
+  <a href="/admin/image-review?cat={{ cat_filter }}&page={{ page + 1 }}" class="page-btn active-pg">التالي ←</a>
+  {% endif %}
+</div>
+
+{% else %}
+<div class="empty">
+  <div class="empty-icon">✅</div>
+  <div style="font-size:18px;font-weight:900;color:var(--g1);margin-bottom:8px">
+    {% if cat_filter %}هذا القسم مكتمل!{% else %}كل المنتجات لديها صور!{% endif %}
+  </div>
+  <div style="font-size:13px">لا يوجد منتجات بدون صور {% if cat_filter %}في هذا القسم{% endif %}</div>
+</div>
+{% endif %}
+
 <script>
-async function saveImage(id) {
+async function saveImage(id, btn) {
     const input = document.getElementById(`input-${id}`);
     const imageUrl = input.value.trim();
     
@@ -74,7 +158,6 @@ async function saveImage(id) {
         return;
     }
 
-    const btn = event.target;
     btn.innerText = '⏳ جاري الحفظ...';
     btn.disabled = true;
 
@@ -88,24 +171,27 @@ async function saveImage(id) {
         const data = await response.json();
         if (data.success) {
             const card = document.getElementById(`card-${id}`);
-            card.style.transition = 'all 0.4s';
+            card.style.transition = 'all 0.3s';
             card.style.transform = 'scale(0.9)';
             card.style.opacity = '0';
-            setTimeout(() => card.remove(), 400);
+            setTimeout(() => card.remove(), 300);
         } else {
             alert('فشل الحفظ: ' + data.error);
             btn.disabled = false;
-            btn.innerText = '💾 حفظ واعتماد الصورة';
+            btn.innerText = '💾 حفظ';
         }
     } catch (err) {
-        alert('خطأ في الاتصال بالسيرفر');
+        alert('خطأ في الاتصال');
         btn.disabled = false;
-        btn.innerText = '💾 حفظ واعتماد الصورة';
+        btn.innerText = '💾 حفظ';
     }
 }
 
 function hideCard(id) {
-    document.getElementById(`card-${id}`).remove();
+    const card = document.getElementById(`card-${id}`);
+    card.style.transition = 'all 0.3s';
+    card.style.opacity = '0';
+    setTimeout(() => card.remove(), 300);
 }
 </script>
 </body>
