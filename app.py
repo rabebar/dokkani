@@ -4,6 +4,8 @@
 
 import os
 import time
+from duckduckgo_search import DDGS
+import json
 from flask import Flask, render_template, request, jsonify, redirect
 from config import Config
 from telegram_notify import notify_new_order, notify_order_status
@@ -134,6 +136,17 @@ def translate_to_english(product_name):
         if ar in product_name:
             return en
     return product_name  # إذا لم يجد ترجمة يرجع الاسم كما هو
+def search_product_images(query):
+    """البحث عن صور للمنتج بخلفية بيضاء باستخدام DuckDuckGo"""
+    try:
+        with DDGS() as ddgs:
+            search_query = f"{query} product white background"
+            results = ddgs.images(search_query, max_results=5)
+            if results:
+                return [r['image'] for r in results]
+    except Exception as e:
+        print(f"Error searching for {query}: {e}")
+    return []
 
 
 # --- وظيفة كشف نوع الجهاز ---
@@ -649,37 +662,33 @@ def invoice(order_id):
 def image_review_page():
     prods = execute_query('SELECT * FROM products WHERE image_status < 2 ORDER BY image_status DESC, id LIMIT 50', fetchall=True)
     return render_template('image_review.html', products=prods, app_name=Config.APP_NAME)
+
 @app.route('/api/admin/get-image-suggestions/<int:prod_id>')
 @admin_required
 def get_image_suggestions(prod_id):
-    import requests
     product = execute_query('SELECT name FROM products WHERE id=?', (prod_id,), fetchone=True)
     if not product:
-        return jsonify({'success': False, 'error': 'Product not found'})
+        return jsonify({'success': False, 'error': 'المنتج غير موجود'})
     
-    api_key = os.environ.get('BING_SEARCH_KEY')
-    if not api_key:
-        return jsonify({'success': False, 'error': 'Search Key Missing'})
+    # استخدام الدالة التي أضفناها سابقاً (DuckDuckGo)
+    image_urls = search_product_images(product['name'])
+    
+    if not image_urls:
+        return jsonify({'success': False, 'error': 'لم يتم العثور على صور'})
 
-    search_query = f"{product['name']} product white background isolated png"
-    url = "https://api.bing.microsoft.com/v7.0/images/search"
-    headers = {"Ocp-Apim-Subscription-Key": api_key}
-    params = {
-        "q": search_query,
-        "count": 3,
-        "imageType": "Product",
-        "color": "White",
-        "safeSearch": "Strict"
-    }
+    # حفظ الصور المقترحة مؤقتاً بصيغة JSON
+    urls_json = json.dumps(image_urls)
+    execute_query('UPDATE products SET temp_images=?, image_status=1 WHERE id=?', (urls_json, prod_id), commit=True)
+    
+    return jsonify({'success': True, 'images': image_urls})
 
-    try:
-        resp = requests.get(url, headers=headers, params=params, timeout=10)
-        results = resp.json().get('value', [])
-        image_urls = [r['contentUrl'] for r in results]
-        
-        urls_json = json.dumps(image_urls)
-        execute_query('UPDATE products SET temp_images=?, image_status=1 WHERE id=?', (urls_json, prod_id), commit=True)
-        
-        return jsonify({'success': True, 'images': image_urls})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+@app.route('/api/admin/confirm-image', methods=['POST'])
+@admin_required
+def confirm_image():
+    data = request.json
+    prod_id = data.get('prod_id')
+    image_url = data.get('image_url')
+    
+    # اعتماد الصورة المختارة وتغيير الحالة إلى 2 (مكتمل)
+    execute_query('UPDATE products SET image=?, image_status=2 WHERE id=?', (image_url, prod_id), commit=True)
+    return jsonify({'success': True})

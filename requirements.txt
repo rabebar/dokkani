@@ -5,3 +5,4 @@ psycopg2-binary
 Pillow
 pandas
 openpyxl
+duckduckgo_search==4.4.3
