@@ -137,15 +137,25 @@ def translate_to_english(product_name):
             return en
     return product_name  # إذا لم يجد ترجمة يرجع الاسم كما هو
 def search_product_images(query):
-    """البحث عن صور للمنتج بخلفية بيضاء باستخدام DuckDuckGo"""
+    """البحث عن صور للمنتج باستخدام أحدث نسخة من المحرك وبشكل آمن"""
     try:
+        from duckduckgo_search import DDGS
+        # إضافة كلمات بحث إنجليزية بجانب العربية لنتائج أفضل
+        full_query = f"{query} product white background"
+        
         with DDGS() as ddgs:
-            search_query = f"{query} product white background"
-            results = ddgs.images(search_query, max_results=5)
+            # استخدام 'images' مع تحديد المنطقة لتبدو كبحث عادي
+            results = list(ddgs.images(
+                keywords=full_query,
+                region="wt-wt",
+                safesearch="off",
+                max_results=5
+            ))
+            
             if results:
                 return [r['image'] for r in results]
     except Exception as e:
-        print(f"Error searching for {query}: {e}")
+        print(f"Detailed Error for {query}: {e}")
     return []
 
 
