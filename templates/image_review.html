@@ -76,22 +76,92 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 </div>
 
 <script>
-// سيتم إضافة المنطق البرمجي (JS) لاحقاً لربط النتائج بالمحرك الجديد
-function selectImg(id, optNum) {
-  document.querySelectorAll(`#opts-${id} .opt-box`).forEach(b => b.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
+// تخزين الصور المختارة مؤقتاً لكل منتج
+const selectedImages = {};
+
+// 1. وظيفة جلب الصور آلياً عند تحميل الصفحة
+window.onload = function() {
+    {% for p in products %}
+    fetchSuggestions({{ p.id }});
+    {% endfor %}
+};
+
+async function fetchSuggestions(id) {
+    const optsRow = document.getElementById(`opts-${id}`);
+    try {
+        const response = await fetch(`/api/admin/get-image-suggestions/${id}`);
+        const data = await response.json();
+        
+        if (data.success && data.images.length > 0) {
+            optsRow.innerHTML = ''; // تفريغ الساعة الرملية
+            data.images.forEach((url, index) => {
+                const box = document.createElement('div');
+                box.className = 'opt-box';
+                box.innerHTML = `<img src="${url}" loading="lazy" onerror="this.parentElement.style.display='none'">`;
+                box.onclick = () => selectImg(id, url, box);
+                optsRow.appendChild(box);
+            });
+        } else {
+            optsRow.innerHTML = '<div style="font-size:10px; padding:10px;">لم يتم العثور على صور</div>';
+        }
+    } catch (err) {
+        console.error('Error fetching images:', err);
+    }
 }
 
+// 2. اختيار صورة
+function selectImg(prodId, url, element) {
+    // إزالة التحديد عن البقية في نفس السطر
+    document.querySelectorAll(`#opts-${prodId} .opt-box`).forEach(b => b.classList.remove('selected'));
+    // تحديد المختار
+    element.classList.add('selected');
+    selectedImages[prodId] = url;
+}
+
+// 3. اعتماد المختار (إرسال للسيرفر)
+async function approveItem(id) {
+    const imageUrl = selectedImages[id];
+    if (!imageUrl) {
+        alert('يرجى اختيار صورة أولاً!');
+        return;
+    }
+
+    const btn = event.target;
+    btn.innerText = '⏳ جاري الحفظ...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/api/admin/confirm-image', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ prod_id: id, image_url: imageUrl })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            const card = document.getElementById(`card-${id}`);
+            card.style.transition = 'all 0.5s';
+            card.style.opacity = '0';
+            setTimeout(() => card.remove(), 500); // إخفاء الكرت بعد النجاح
+        }
+    } catch (err) {
+        alert('خطأ في الاتصال بالسيرفر');
+        btn.disabled = false;
+        btn.innerText = '✅ اعتماد المختار';
+    }
+}
+
+// 4. تخطي المنتج
 function skipItem(id) {
-  document.getElementById(`card-${id}`).style.opacity = '0.3';
-}
-
-function approveItem(id) {
-  document.getElementById(`card-${id}`).style.borderColor = 'var(--acc)';
+    const card = document.getElementById(`card-${id}`);
+    card.style.opacity = '0.3';
+    card.style.filter = 'grayscale(1)';
+    // يمكن إضافة مسار للسيرفر لاحقاً لتسجيل التخطي
 }
 
 function submitBatch() {
-  alert('سيتم تفعيل الحفظ فور ربط محرك البحث الجديد في الخطوة القادمة!');
+    alert('تمت معالجة الصور المختارة بنجاح!');
+    window.location.reload();
 }
 </script>
 </body>
