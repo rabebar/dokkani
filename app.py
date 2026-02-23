@@ -639,18 +639,18 @@ def image_review_page():
         prods = execute_query('''
             SELECT p.*, c.name as cat_name FROM products p
             LEFT JOIN categories c ON c.id = p.category_id
-            WHERE (p.image IS NULL OR p.image = '') AND p.category_id = ?
-            ORDER BY p.category_id, p.id
+            WHERE p.image_status < 2 AND p.category_id = ?
+            ORDER BY p.id
             LIMIT ? OFFSET ?''', (cat_filter, per_page, offset), fetchall=True)
-        total = execute_query("SELECT COUNT(*) as n FROM products WHERE (image IS NULL OR image = '') AND category_id = ?", (cat_filter,), fetchone=True)
+        total = execute_query("SELECT COUNT(*) as n FROM products WHERE image_status < 2 AND category_id = ?", (cat_filter,), fetchone=True)
     else:
         prods = execute_query('''
             SELECT p.*, c.name as cat_name FROM products p
             LEFT JOIN categories c ON c.id = p.category_id
-            WHERE (p.image IS NULL OR p.image = '')
-            ORDER BY p.category_id, p.id
+            WHERE p.image_status < 2
+            ORDER BY p.id
             LIMIT ? OFFSET ?''', (per_page, offset), fetchall=True)
-        total = execute_query("SELECT COUNT(*) as n FROM products WHERE (image IS NULL OR image = '')", fetchone=True)
+        total = execute_query("SELECT COUNT(*) as n FROM products WHERE image_status < 2", fetchone=True)
 
     cats = execute_query('SELECT id, name FROM categories ORDER BY sort, id', fetchall=True)
     total_no_img = total['n'] if total else 0
