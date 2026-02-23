@@ -57,10 +57,9 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     </div>
     
     <div class="options-row" id="opts-{{ p.id }}">
-      <!-- هنا ستظهر الصور الـ 3 المقترحة لاحقاً عبر الجافاسكريبت -->
-      <div class="opt-box" onclick="selectImg({{ p.id }}, 1)"><div class="no-img-placeholder">⏳</div></div>
-      <div class="opt-box" onclick="selectImg({{ p.id }}, 2)"><div class="no-img-placeholder">⏳</div></div>
-      <div class="opt-box" onclick="selectImg({{ p.id }}, 3)"><div class="no-img-placeholder">⏳</div></div>
+      <div class="opt-box"><div class="no-img-placeholder">⏳</div></div>
+      <div class="opt-box"><div class="no-img-placeholder">⏳</div></div>
+      <div class="opt-box"><div class="no-img-placeholder">⏳</div></div>
     </div>
 
     <div class="card-actions">
@@ -76,25 +75,27 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 </div>
 
 <script>
-// تخزين الصور المختارة مؤقتاً لكل منتج
 const selectedImages = {};
+const productIds = [{% for p in products %}{{ p.id }}, {% endfor %}];
 
-// 1. وظيفة جلب الصور آلياً عند تحميل الصفحة
-window.onload = function() {
-    {% for p in products %}
-    fetchSuggestions({{ p.id }});
-    {% endfor %}
+window.onload = async function() {
+    for (const id of productIds) {
+        await fetchSuggestions(id);
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
 };
 
 async function fetchSuggestions(id) {
     const optsRow = document.getElementById(`opts-${id}`);
+    const card = document.getElementById(`card-${id}`);
+    card.style.border = "2px solid var(--g4)";
     try {
         const response = await fetch(`/api/admin/get-image-suggestions/${id}`);
+        if (!response.ok) throw new Error('Server Error');
         const data = await response.json();
-        
         if (data.success && data.images.length > 0) {
-            optsRow.innerHTML = ''; // تفريغ الساعة الرملية
-            data.images.forEach((url, index) => {
+            optsRow.innerHTML = ''; 
+            data.images.forEach((url) => {
                 const box = document.createElement('div');
                 box.className = 'opt-box';
                 box.innerHTML = `<img src="${url}" loading="lazy" onerror="this.parentElement.style.display='none'">`;
@@ -105,62 +106,59 @@ async function fetchSuggestions(id) {
             optsRow.innerHTML = '<div style="font-size:10px; padding:10px;">لم يتم العثور على صور</div>';
         }
     } catch (err) {
-        console.error('Error fetching images:', err);
+        console.error(`Error for product ${id}:`, err);
+        optsRow.innerHTML = '<div style="font-size:10px; color:red; padding:10px;">فشل الجلب</div>';
+    } finally {
+        card.style.border = "1.5px solid var(--g200)";
     }
 }
 
-// 2. اختيار صورة
 function selectImg(prodId, url, element) {
-    // إزالة التحديد عن البقية في نفس السطر
     document.querySelectorAll(`#opts-${prodId} .opt-box`).forEach(b => b.classList.remove('selected'));
-    // تحديد المختار
     element.classList.add('selected');
     selectedImages[prodId] = url;
 }
 
-// 3. اعتماد المختار (إرسال للسيرفر)
 async function approveItem(id) {
     const imageUrl = selectedImages[id];
     if (!imageUrl) {
         alert('يرجى اختيار صورة أولاً!');
         return;
     }
-
-    const btn = event.target;
+    const btn = document.querySelector(`#card-${id} .btn-approve`);
+    const originalText = btn.innerText;
     btn.innerText = '⏳ جاري الحفظ...';
     btn.disabled = true;
-
     try {
         const response = await fetch('/api/admin/confirm-image', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ prod_id: id, image_url: imageUrl })
         });
-        
         const data = await response.json();
         if (data.success) {
             const card = document.getElementById(`card-${id}`);
             card.style.transition = 'all 0.5s';
             card.style.opacity = '0';
-            setTimeout(() => card.remove(), 500); // إخفاء الكرت بعد النجاح
+            setTimeout(() => card.remove(), 500); 
+        } else {
+            throw new Error('Save failed');
         }
     } catch (err) {
-        alert('خطأ في الاتصال بالسيرفر');
+        alert('حدث خطأ أثناء الحفظ، حاول مرة أخرى');
         btn.disabled = false;
-        btn.innerText = '✅ اعتماد المختار';
+        btn.innerText = originalText;
     }
 }
 
-// 4. تخطي المنتج
 function skipItem(id) {
     const card = document.getElementById(`card-${id}`);
     card.style.opacity = '0.3';
     card.style.filter = 'grayscale(1)';
-    // يمكن إضافة مسار للسيرفر لاحقاً لتسجيل التخطي
 }
 
 function submitBatch() {
-    alert('تمت معالجة الصور المختارة بنجاح!');
+    alert('تمت معالجة الدفعة الحالية بنجاح!');
     window.location.reload();
 }
 </script>
