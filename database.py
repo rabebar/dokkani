@@ -83,8 +83,16 @@ def init_db():
         category_id INTEGER,
         visible     INTEGER DEFAULT 1,
         sort        INTEGER DEFAULT 0,
+        image_status   INTEGER DEFAULT 0,
+        temp_images    TEXT,
         FOREIGN KEY (category_id) REFERENCES categories(id)
     )''', commit=True)
+    try:
+        execute_query('ALTER TABLE products ADD COLUMN image_status INTEGER DEFAULT 0', commit=True)
+    except: pass
+    try:
+        execute_query('ALTER TABLE products ADD COLUMN temp_images TEXT', commit=True)
+    except: pass
 
     execute_query(f'''CREATE TABLE IF NOT EXISTS products (
         id             {pk},
