@@ -4,7 +4,6 @@
 
 import os
 import time
-import json
 from flask import Flask, render_template, request, jsonify, redirect
 from config import Config
 from telegram_notify import notify_new_order, notify_order_status
@@ -136,6 +135,7 @@ def translate_to_english(product_name):
             return en
     return product_name  # إذا لم يجد ترجمة يرجع الاسم كما هو
 
+
 # --- وظيفة كشف نوع الجهاز ---
 def is_mobile():
     user_agent = request.headers.get('User-Agent', '').lower()
@@ -181,7 +181,9 @@ def subcategory_page(sub_id):
 def cart():
     if not is_mobile(): return redirect('/')
     return render_template('cart.html', app_name=Config.APP_NAME,
-                           delivery_min=Config.DELIVERY_PRICE_MIN)
+                           delivery_short=Config.DELIVERY_PRICE_SHORT,
+                           delivery_mid=Config.DELIVERY_PRICE_MID,
+                           delivery_far=Config.DELIVERY_PRICE_FAR)
 
 @app.route('/success')
 def success():
@@ -234,6 +236,24 @@ def admin_customers():
 # ==========================================
 # API — الطلبات (المنطق المطور)
 # ==========================================
+
+@app.route('/api/search')
+def api_search():
+    q = request.args.get('q', '').strip()
+    if not q or len(q) < 2:
+        return jsonify({'products': []})
+    results = execute_query(
+        """SELECT p.id, p.name, p.price, p.image, p.unit, c.name as cat_name, p.category_id
+           FROM products p
+           LEFT JOIN categories c ON c.id = p.category_id
+           WHERE p.visible=1 AND p.name LIKE ?
+           LIMIT 30""",
+        (f'%{q}%',), fetchall=True
+    ) or []
+    for p in results:
+        p['sell_price'] = get_selling_price(p['price'])
+    return jsonify({'products': results})
+
 
 @app.route('/api/order', methods=['POST'])
 @rate_limit(max_calls=10, window=60)
@@ -378,21 +398,6 @@ def api_toggle_product(prod_id):
 def api_delete_product(prod_id):
     delete_product(prod_id)
     return jsonify({'success': True})
-@app.route('/api/admin/products/delete-bulk', methods=['POST'])
-@admin_required
-def api_delete_bulk_products():
-    data = request.json
-    ids = data.get('ids', [])
-    # إذا كان يرسل معرف واحد فقط في خانة id بدلاً من قائمة ids
-    if not ids and data.get('id'):
-        ids = [data.get('id')]
-        
-    if not ids:
-        return jsonify({'success': False, 'error': 'لم يتم تحديد أي منتج'})
-    
-    placeholders = ', '.join(['?'] * len(ids))
-    execute_query(f'DELETE FROM products WHERE id IN ({placeholders})', ids, commit=True)
-    return jsonify({'success': True, 'message': f'تم حذف {len(ids)} منتج بنجاح'})
 
 @app.route('/api/admin/clear-products', methods=['POST'])
 def api_clear_products():
@@ -400,6 +405,14 @@ def api_clear_products():
     from database import clear_all_products
     clear_all_products()
     return jsonify({'success': True})
+
+@app.route('/api/admin/products/delete-bulk', methods=['POST'])
+def api_delete_bulk_products():
+    """مسح منتجات محددة دفعة واحدة"""
+    ids = request.json.get('ids', [])
+    for prod_id in ids:
+        delete_product(int(prod_id))
+    return jsonify({'success': True, 'deleted': len(ids)})
 
 @app.route('/api/subcategories-by-cat/<int:cat_id>')
 def api_subs_by_cat(cat_id):
@@ -583,23 +596,6 @@ def admin_logout():
     session.clear()
     return redirect('/admin/login')
 
-@app.route('/api/search')
-def api_search():
-    query = request.args.get('q', '').strip()
-    if len(query) < 2:
-        return jsonify({'products': []})
-    sql = '''
-        SELECT p.*, c.name as cat_name 
-        FROM products p 
-        JOIN categories c ON p.category_id = c.id 
-        WHERE p.name LIKE ? AND p.visible = 1 
-        LIMIT 20
-    '''
-    results = execute_query(sql, ('%' + query + '%',), fetchall=True)
-    for p in results:
-        p['sell_price'] = get_selling_price(p['price'])
-    return jsonify({'products': results})
-
 
 # ==========================================
 # صفحة الفاتورة الرقمية
@@ -610,56 +606,74 @@ def invoice(order_id):
     order = execute_query('SELECT * FROM orders WHERE id=?', (order_id,), fetchone=True)
     if not order:
         return redirect('/')
-    
     import json
     if isinstance(order.get('items'), str):
         try:
-            items = json.loads(order['items'])
+            order['items'] = json.loads(order['items'])
         except:
-            items = []
-    else:
-        items = order.get('items', [])
-
-    # --- الجديد: تصنيف المنتجات حسب أقسامها ---
-    grouped_items = {}
-    for item in items:
-        # البحث عن اسم القسم الرئيسي لهذا المنتج
-        res = execute_query('''
-            SELECT c.name FROM categories c 
-            JOIN products p ON p.category_id = c.id 
-            WHERE p.name = ? LIMIT 1''', (item['name'],), fetchone=True)
-        
-        cat_name = res['name'] if res else "أصناف متنوعة"
-        
-        if cat_name not in grouped_items:
-            grouped_items[cat_name] = []
-        
-        # نعتمد السعر المخزن في الطلب ونمرر الوحدة
-        item['final_price'] = float(item.get('price', 0))
-        grouped_items[cat_name].append(item)
-
+            order['items'] = []
+    # أضف سعر البيع لكل منتج
+    for item in order['items']:
+        price = float(item.get('price', 0))
+        item['sell_price'] = get_selling_price(price)
     return render_template('invoice.html',
         order=order,
-        grouped_items=grouped_items, # نرسل القائمة المجمعة الجديدة
         app_whatsapp=Config.APP_WHATSAPP,
         app_phone=Config.APP_PHONE
     )
+
+
+# ==========================================
+# صفحة مراجعة الصور
+# ==========================================
+
 @app.route('/admin/image-review')
 @admin_required
 def image_review_page():
-    prods = execute_query('SELECT * FROM products WHERE image_status < 2 ORDER BY image_status DESC, id LIMIT 50', fetchall=True)
-    return render_template('image_review.html', products=prods, app_name=Config.APP_NAME)
+    cat_filter = request.args.get('cat', '')
+    page = int(request.args.get('page', 1))
+    per_page = 30
+    offset = (page - 1) * per_page
+
+    if cat_filter:
+        prods = execute_query('''
+            SELECT p.*, c.name as cat_name FROM products p
+            LEFT JOIN categories c ON c.id = p.category_id
+            WHERE (p.image IS NULL OR p.image = '') AND p.category_id = ?
+            ORDER BY p.category_id, p.id
+            LIMIT ? OFFSET ?''', (cat_filter, per_page, offset), fetchall=True)
+        total = execute_query("SELECT COUNT(*) as n FROM products WHERE (image IS NULL OR image = '') AND category_id = ?", (cat_filter,), fetchone=True)
+    else:
+        prods = execute_query('''
+            SELECT p.*, c.name as cat_name FROM products p
+            LEFT JOIN categories c ON c.id = p.category_id
+            WHERE (p.image IS NULL OR p.image = '')
+            ORDER BY p.category_id, p.id
+            LIMIT ? OFFSET ?''', (per_page, offset), fetchall=True)
+        total = execute_query("SELECT COUNT(*) as n FROM products WHERE (image IS NULL OR image = '')", fetchone=True)
+
+    cats = execute_query('SELECT id, name FROM categories ORDER BY sort, id', fetchall=True)
+    total_no_img = total['n'] if total else 0
+    return render_template('image_review.html',
+        products=prods or [],
+        categories=cats or [],
+        cat_filter=cat_filter,
+        page=page,
+        per_page=per_page,
+        total=total_no_img,
+        app_name=Config.APP_NAME)
+
 @app.route('/api/admin/confirm-image', methods=['POST'])
 @admin_required
 def confirm_image():
-    """حفظ رابط الصورة الذي يضعه المستخدم يدوياً"""
     data = request.json
     prod_id = data.get('prod_id')
     image_url = data.get('image_url')
-    
     if not image_url:
         return jsonify({'success': False, 'error': 'الرابط فارغ'})
-
-    # حفظ الرابط في قاعدة البيانات وتحديث الحالة إلى 2 (مكتمل)
     execute_query('UPDATE products SET image=?, image_status=2 WHERE id=?', (image_url, prod_id), commit=True)
     return jsonify({'success': True})
+
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0')
