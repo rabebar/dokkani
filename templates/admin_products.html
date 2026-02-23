@@ -1167,24 +1167,42 @@ function clearAllProducts() {
         }
     });
 }
-// 1. دالة تحديد الكل المحسنة
+// 1. دالة تحديد الكل (الذكية): تختار فقط المنتجات الظاهرة بعد البحث
 function toggleSelectAll(master) {
-  const checkboxes = document.querySelectorAll('.prod-checkbox');
-  checkboxes.forEach(cb => cb.checked = master.checked);
-  updateBulkBtnVisibility(); // تحديث ظهور الزر فوراً
+  // نمر على كل سطر منتج في الجدول
+  document.querySelectorAll('.prod-row').forEach(row => {
+    // إذا كان السطر ظاهراً (غير مخفي بالبحث أو الفلتر)
+    if (row.style.display !== 'none') {
+      const cb = row.querySelector('.prod-checkbox');
+      if (cb) cb.checked = master.checked;
+    } else {
+      // إذا كان مخفياً، نتأكد من إلغاء تحديده لكي لا يُنقل بالخطأ
+      const cb = row.querySelector('.prod-checkbox');
+      if (cb) cb.checked = false;
+    }
+  });
+  updateBulkBtnVisibility();
 }
 
-// 2. دالة تحديث شريط الإجراءات الجماعية (المطورة)
+// 2. دالة تحديث الزر: تحسب فقط المربعات المحددة والظاهرة
 function updateBulkBtnVisibility() {
-  const selected = document.querySelectorAll('.prod-checkbox:checked');
+  let count = 0;
+  // نحسب فقط المربعات التي تم تحديدها (checked) وهي في أسطر ظاهرة
+  document.querySelectorAll('.prod-row').forEach(row => {
+    if (row.style.display !== 'none') {
+      const cb = row.querySelector('.prod-checkbox');
+      if (cb && cb.checked) count++;
+    }
+  });
+
   const actionBar = document.getElementById('bulk-action-bar');
   const countSpan = document.getElementById('selected-count');
   
-  if (selected.length > 0) {
-    actionBar.style.display = 'flex'; // إظهار الشريط بالكامل
-    countSpan.textContent = selected.length;
+  if (count > 0) {
+    actionBar.style.display = 'flex';
+    countSpan.textContent = count;
   } else {
-    actionBar.style.display = 'none'; // إخفاء الشريط
+    actionBar.style.display = 'none';
     if(document.getElementById('master-checkbox')) 
        document.getElementById('master-checkbox').checked = false;
   }
