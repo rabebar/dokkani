@@ -413,6 +413,34 @@ def api_delete_bulk_products():
     for prod_id in ids:
         delete_product(int(prod_id))
     return jsonify({'success': True, 'deleted': len(ids)})
+@app.route('/api/admin/products/move-bulk', methods=['POST'])
+@admin_required
+def api_move_bulk_products():
+    data = request.json
+    ids = data.get('ids', [])
+    sub_id = data.get('sub_id')
+
+    if not ids or not sub_id:
+        return jsonify({'success': False, 'error': 'البيانات المرسلة ناقصة'})
+
+    # 1. جلب القسم الرئيسي المرتبط بهذا القسم الفرعي لضمان تناسق البيانات
+    sub = execute_query('SELECT category_id FROM subcategories WHERE id=?', (sub_id,), fetchone=True)
+    if not sub:
+        return jsonify({'success': False, 'error': 'القسم الفرعي المختار غير موجود'})
+
+    cat_id = sub['category_id']
+    
+    # 2. تجهيز علامات الاستفهام للاستعلام (SQL In Clause)
+    placeholders = ', '.join(['?'] * len(ids))
+
+    # 3. تحديث القسم الفرعي والقسم الرئيسي معاً لجميع المنتجات المحددة
+    execute_query(
+        f'UPDATE products SET subcategory_id = ?, category_id = ? WHERE id IN ({placeholders})',
+        [sub_id, cat_id] + ids,
+        commit=True
+    )
+    
+    return jsonify({'success': True})
 
 @app.route('/api/subcategories-by-cat/<int:cat_id>')
 def api_subs_by_cat(cat_id):

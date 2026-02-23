@@ -637,7 +637,16 @@ tr.prod-hidden td  { opacity: .5; }
             <button class="add-btn blue" onclick="openExcelModal()">📥 رفع المخزون</button>
             <button class="add-btn" onclick="openProdModal()">➕ منتج جديد</button>
             <button class="add-btn" style="background: var(--red);" onclick="clearAllProducts()">🗑️ مسح الكل</button>
-            <button class="add-btn" id="bulk-delete-btn" style="background: #b71c1c; display: none;" onclick="bulkDeleteSelected()">🗑️ حذف المحدد (<span id="selected-count">0</span>)</button>
+            <div id="bulk-action-bar" style="display: none; align-items: center; gap: 8px; background: var(--blue-light); padding: 5px 12px; border-radius: 10px; border: 1px solid var(--blue); margin-right: 10px;">
+    <select id="bulk-sub-id" style="padding: 6px; border-radius: 7px; border: 1px solid var(--blue); font-family: 'Cairo'; font-size: 11px; outline: none;">
+        <option value="">— اختر قسم فرعي للنقل —</option>
+        {% for sub in subcategories %}
+        <option value="{{ sub.id }}">{{ sub.name }}</option>
+        {% endfor %}
+    </select>
+    <button class="add-btn blue" style="padding: 6px 12px; font-size: 11px;" onclick="bulkMoveSelected()">🚚 نقل المحدد</button>
+    <button class="add-btn" id="bulk-delete-btn" style="background: #b71c1c; padding: 6px 12px; font-size: 11px;" onclick="bulkDeleteSelected()">🗑️ حذف (<span id="selected-count">0</span>)</button>
+</div>
           </div>
         </div>
         <div class="prod-filters">
@@ -1165,41 +1174,47 @@ function toggleSelectAll(master) {
   updateBulkBtnVisibility(); // تحديث ظهور الزر فوراً
 }
 
-// 2. دالة تحديث الزر (تستخدم الآن أسلوب العرض المباشر)
+// 2. دالة تحديث شريط الإجراءات الجماعية (المطورة)
 function updateBulkBtnVisibility() {
   const selected = document.querySelectorAll('.prod-checkbox:checked');
-  const btn = document.getElementById('bulk-delete-btn');
+  const actionBar = document.getElementById('bulk-action-bar');
   const countSpan = document.getElementById('selected-count');
   
   if (selected.length > 0) {
-    btn.setAttribute('style', 'background: #b71c1c; display: flex !important;');
+    actionBar.style.display = 'flex'; // إظهار الشريط بالكامل
     countSpan.textContent = selected.length;
   } else {
-    btn.style.display = 'none';
+    actionBar.style.display = 'none'; // إخفاء الشريط
     if(document.getElementById('master-checkbox')) 
        document.getElementById('master-checkbox').checked = false;
   }
 }
 
-// 3. دالة الحذف الجماعي (مع إضافة تنظيف الواجهة)
-function bulkDeleteSelected() {
+// 3. دالة النقل الجماعي (الجديدة)
+function bulkMoveSelected() {
   const selected = document.querySelectorAll('.prod-checkbox:checked');
   const ids = Array.from(selected).map(cb => cb.getAttribute('data-id'));
+  const subId = document.getElementById('bulk-sub-id').value;
 
-  if (!confirm(`⚠️ هل أنت متأكد من حذف ${ids.length} منتجات مختارة نهائياً؟`)) return;
+  if (!subId) {
+    alert('⚠️ يرجى اختيار القسم الفرعي الذي تريد النقل إليه');
+    return;
+  }
 
-  fetch('/api/admin/products/delete-bulk', {
+  if (!confirm(`⚠️ هل أنت متأكد من نقل ${ids.length} منتجات إلى القسم المختار؟`)) return;
+
+  fetch('/api/admin/products/move-bulk', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids: ids })
+    body: JSON.stringify({ ids: ids, sub_id: subId })
   })
   .then(r => r.json())
   .then(data => {
     if (data.success) {
-      showToast(data.message);
+      showToast('🚚 تم نقل المنتجات بنجاح');
       setTimeout(() => location.reload(), 500);
     } else {
-      alert('خطأ: ' + data.message);
+      alert('خطأ: ' + data.error);
     }
   }).catch(err => alert('فشل الاتصال بالسيرفر'));
 }
