@@ -1237,6 +1237,30 @@ function bulkMoveSelected() {
     }
   }).catch(err => alert('فشل الاتصال بالسيرفر'));
 }
+// 4. إعادة دالة الحذف الجماعي (المفقودة)
+function bulkDeleteSelected() {
+  const selected = document.querySelectorAll('.prod-checkbox:checked');
+  const ids = Array.from(selected).map(cb => cb.getAttribute('data-id'));
+
+  if (ids.length === 0) return;
+
+  if (!confirm(`⚠️ هل أنت متأكد من حذف ${ids.length} منتجات مختارة نهائياً؟`)) return;
+
+  fetch('/api/admin/products/delete-bulk', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids: ids })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      showToast('🗑️ تم الحذف بنجاح');
+      setTimeout(() => location.reload(), 500);
+    } else {
+      alert('خطأ: ' + data.message);
+    }
+  }).catch(err => alert('فشل الاتصال بالسيرفر'));
+}
 
 // ===== FETCH IMAGE FROM UNSPLASH =====
 function fetchImage(id, name, btn) {
