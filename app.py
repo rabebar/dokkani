@@ -622,11 +622,6 @@ def invoice(order_id):
         app_phone=Config.APP_PHONE
     )
 
-
-# ==========================================
-# صفحة مراجعة الصور
-# ==========================================
-
 @app.route('/admin/image-review')
 @admin_required
 def image_review_page():
@@ -635,25 +630,33 @@ def image_review_page():
     per_page = 30
     offset = (page - 1) * per_page
 
+    # مصفاة مزدوجة: تستبعد من حالته 2 (معتمد) وتستبعد من يمتلك أي رابط صورة
+    where_clause = """
+        WHERE (p.image_status IS NULL OR p.image_status < 2) 
+        AND (p.image IS NULL OR p.image = '' OR p.image = 'None' OR p.image = '/static/uploads/default.jpg')
+    """
+    params = []
+
     if cat_filter:
-        prods = execute_query('''
-            SELECT p.*, c.name as cat_name FROM products p
-            LEFT JOIN categories c ON c.id = p.category_id
-            WHERE p.image_status < 2 AND p.category_id = ?
-            ORDER BY p.id
-            LIMIT ? OFFSET ?''', (cat_filter, per_page, offset), fetchall=True)
-        total = execute_query("SELECT COUNT(*) as n FROM products WHERE image_status < 2 AND category_id = ?", (cat_filter,), fetchone=True)
-    else:
-        prods = execute_query('''
-            SELECT p.*, c.name as cat_name FROM products p
-            LEFT JOIN categories c ON c.id = p.category_id
-            WHERE p.image_status < 2
-            ORDER BY p.id
-            LIMIT ? OFFSET ?''', (per_page, offset), fetchall=True)
-        total = execute_query("SELECT COUNT(*) as n FROM products WHERE image_status < 2", fetchone=True)
+        where_clause += " AND p.category_id = ?"
+        params.append(cat_filter)
+
+    # جلب المنتجات التي تحتاج صوراً فعلياً
+    prods = execute_query(f'''
+        SELECT p.*, c.name as cat_name FROM products p
+        LEFT JOIN categories c ON c.id = p.category_id
+        {where_clause}
+        ORDER BY p.id
+        LIMIT ? OFFSET ?''', params + [per_page, offset], fetchall=True)
+    
+    # حساب العدد الحقيقي للمتبقي - تم التأكد من اسم المتغير هنا
+    total_res = execute_query(f"SELECT COUNT(*) as n FROM products p {where_clause}", params, fetchone=True)
 
     cats = execute_query('SELECT id, name FROM categories ORDER BY sort, id', fetchall=True)
-    total_no_img = total['n'] if total else 0
+    
+    # تصحيح اسم المتغير هنا ليتوافق مع total_res
+    total_no_img = total_res['n'] if total_res else 0
+    
     return render_template('image_review.html',
         products=prods or [],
         categories=cats or [],
