@@ -1221,6 +1221,8 @@ function filterBySub(subId) {
   // تحديث العداد فوراً بعد الفلترة
   updateBulkBtnVisibility();
   showToast('🔍 تم عرض منتجات القسم الفرعي');
+  // الانتقال آلياً لتبويب المنتجات لرؤية النتائج
+  switchTab('prods', document.querySelectorAll('.tab')[2]);
 }
 
 // 3. دالة النقل الجماعي (الجديدة)
