@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكّاني — مختبر مراجعة الصور</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gx:#f1f8e9;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--red:#e53935;--sh:0 4px 12px rgba(0,0,0,.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);padding-bottom:100px}
+
+/* Header */
+.hdr{background:linear-gradient(135deg,#1a4a1e,var(--g2));padding:18px 16px;color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:space-between}
+.hdr-title{font-size:17px;font-weight:900}
+.stats-badge{background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700}
+
+/* Grid */
+.review-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:16px;padding:16px}
+.item-card{background:var(--w);border-radius:18px;overflow:hidden;box-shadow:var(--sh);border:1.5px solid var(--g200);display:flex;flex-direction:column}
+.item-info{padding:12px 16px;border-bottom:1px solid var(--g200);background:var(--gx)}
+.item-name{font-size:14px;font-weight:900;color:var(--g1)}
+.item-id{font-size:10px;color:var(--g400);margin-top:2px}
+
+/* Image Options */
+.options-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px}
+.opt-box{aspect-ratio:1;border-radius:12px;border:2px solid var(--g200);overflow:hidden;cursor:pointer;position:relative;transition:all .2s}
+.opt-box img{width:100%;height:100%;object-fit:cover}
+.opt-box.selected{border-color:var(--acc,#00c853);box-shadow:0 0 0 4px rgba(0,200,83,.2)}
+.opt-box.selected::after{content:'✅';position:absolute;top:5px;right:5px;font-size:14px;background:#fff;border-radius:50%;padding:2px}
+.no-img-placeholder{display:flex;align-items:center;justify-content:center;height:100%;font-size:24px;background:#f9fafb;color:var(--g200)}
+
+/* Actions */
+.card-actions{padding:12px;display:flex;gap:8px;margin-top:auto;border-top:1px solid var(--g200)}
+.btn{flex:1;padding:10px;border-radius:10px;font-family:'Cairo';font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .2s}
+.btn-approve{background:var(--g4);color:#fff}
+.btn-skip{background:var(--g100);color:var(--g600)}
+
+/* Footer Bar */
+.footer-bar{position:fixed;bottom:0;left:0;right:0;background:var(--w);padding:16px;box-shadow:0 -4px 20px rgba(0,0,0,.1);display:flex;gap:12px;z-index:200}
+.btn-submit-all{flex:1;padding:14px;background:linear-gradient(135deg,var(--g4),var(--g2));color:#fff;border:none;border-radius:12px;font-family:'Cairo';font-size:15px;font-weight:900;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-title">🔬 مختبر مراجعة الصور</div>
+  <div class="stats-badge">جاري مراجعة {{ products|length }} صنف</div>
+</div>
+
+<div class="review-grid">
+  {% for p in products %}
+  <div class="item-card" id="card-{{ p.id }}">
+    <div class="item-info">
+      <div class="item-name">{{ p.name }}</div>
+      <div class="item-id">منتج رقم: #{{ p.id }} | القسم: {{ p.category_id }}</div>
+    </div>
+    
+    <div class="options-row" id="opts-{{ p.id }}">
+      <!-- هنا ستظهر الصور الـ 3 المقترحة لاحقاً عبر الجافاسكريبت -->
+      <div class="opt-box" onclick="selectImg({{ p.id }}, 1)"><div class="no-img-placeholder">⏳</div></div>
+      <div class="opt-box" onclick="selectImg({{ p.id }}, 2)"><div class="no-img-placeholder">⏳</div></div>
+      <div class="opt-box" onclick="selectImg({{ p.id }}, 3)"><div class="no-img-placeholder">⏳</div></div>
+    </div>
+
+    <div class="card-actions">
+      <button class="btn btn-skip" onclick="skipItem({{ p.id }})">🚫 تخطي</button>
+      <button class="btn btn-approve" onclick="approveItem({{ p.id }})">✅ اعتماد المختار</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="footer-bar">
+  <button class="btn-submit-all" onclick="submitBatch()">💾 حفظ واعتماد الدفعة الحالية</button>
+</div>
+
+<script>
+// سيتم إضافة المنطق البرمجي (JS) لاحقاً لربط النتائج بالمحرك الجديد
+function selectImg(id, optNum) {
+  document.querySelectorAll(`#opts-${id} .opt-box`).forEach(b => b.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+}
+
+function skipItem(id) {
+  document.getElementById(`card-${id}`).style.opacity = '0.3';
+}
+
+function approveItem(id) {
+  document.getElementById(`card-${id}`).style.borderColor = 'var(--acc)';
+}
+
+function submitBatch() {
+  alert('سيتم تفعيل الحفظ فور ربط محرك البحث الجديد في الخطوة القادمة!');
+}
+</script>
+</body>
+</html>
