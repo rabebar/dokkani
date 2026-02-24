@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكّاني — المساعد الذكي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gx:#f1f8e9;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--sh:0 4px 12px rgba(0,0,0,.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);height:100vh;display:flex;flex-direction:column}
+
+/* Header */
+.hdr{background:linear-gradient(135deg,#1a4a1e,var(--g2));padding:14px 16px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hdr-left{display:flex;align-items:center;gap:12px}
+.hdr-title{font-size:16px;font-weight:900}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
+.back-btn{background:rgba(255,255,255,.15);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-family:'Cairo';font-size:12px;cursor:pointer;text-decoration:none}
+.ai-badge{background:rgba(255,255,255,.2);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+
+/* Quick Buttons */
+.quick-btns{padding:10px 12px;display:flex;gap:8px;overflow-x:auto;flex-shrink:0;scrollbar-width:none;border-bottom:1px solid var(--g200);background:var(--w)}
+.quick-btns::-webkit-scrollbar{display:none}
+.qbtn{white-space:nowrap;padding:7px 14px;border-radius:20px;border:1.5px solid var(--g4);background:var(--gx);color:var(--g1);font-family:'Cairo';font-size:12px;font-weight:700;cursor:pointer;transition:.2s;flex-shrink:0}
+.qbtn:hover{background:var(--g4);color:#fff}
+
+/* Chat Area */
+.chat-area{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+
+/* Messages */
+.msg{max-width:85%;padding:12px 16px;border-radius:16px;font-size:13px;line-height:1.7;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.msg-user{background:var(--g2);color:#fff;border-radius:16px 16px 4px 16px;align-self:flex-end}
+.msg-ai{background:var(--w);color:var(--g800);border-radius:16px 16px 16px 4px;align-self:flex-start;box-shadow:var(--sh);border:1px solid var(--g200)}
+.msg-ai pre{white-space:pre-wrap;font-family:'Cairo',sans-serif;font-size:12.5px}
+.msg-loading{background:var(--w);padding:14px 18px;border-radius:16px 16px 16px 4px;align-self:flex-start;box-shadow:var(--sh)}
+.dots span{display:inline-block;width:8px;height:8px;background:var(--g4);border-radius:50%;animation:dot 1.2s infinite;margin:0 2px}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
+
+/* Welcome */
+.welcome{text-align:center;padding:30px 20px;color:var(--g400)}
+.welcome-icon{font-size:50px;margin-bottom:12px}
+.welcome-title{font-size:16px;font-weight:900;color:var(--g1);margin-bottom:6px}
+.welcome-sub{font-size:12px;line-height:1.6}
+
+/* Input */
+.input-area{padding:12px 14px;background:var(--w);border-top:1px solid var(--g200);display:flex;gap:10px;flex-shrink:0}
+.msg-input{flex:1;padding:11px 14px;border:2px solid var(--g200);border-radius:12px;font-family:'Cairo';font-size:14px;outline:none;resize:none;transition:.2s;max-height:100px}
+.msg-input:focus{border-color:var(--g4)}
+.send-btn{width:44px;height:44px;background:linear-gradient(135deg,var(--g4),var(--g2));color:#fff;border:none;border-radius:12px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s}
+.send-btn:disabled{background:var(--g200);cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <div>
+      <div class="hdr-title">🤖 المساعد الذكي</div>
+      <div class="hdr-sub">يحلل قاعدة بياناتك مباشرة</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="ai-badge">GPT-4o</span>
+    <a href="/admin" class="back-btn">← لوحة التحكم</a>
+  </div>
+</div>
+
+<!-- أزرار سريعة -->
+<div class="quick-btns">
+  <button class="qbtn" onclick="sendQuick('ابحث عن منتجات مكررة')">🔍 منتجات مكررة</button>
+  <button class="qbtn" onclick="sendQuick('أعطني ملخص وإحصائيات المتجر')">📊 إحصائيات</button>
+  <button class="qbtn" onclick="sendQuick('كم منتج بدون صورة وفي أي أقسام')">🖼️ بدون صور</button>
+  <button class="qbtn" onclick="sendQuick('اعرض إحصائيات كل قسم')">📂 الأقسام</button>
+  <button class="qbtn" onclick="sendQuick('هل هناك منتجات في أقسام خاطئة؟')">⚠️ أقسام خاطئة</button>
+</div>
+
+<!-- منطقة الدردشة -->
+<div class="chat-area" id="chat-area">
+  <div class="welcome">
+    <div class="welcome-icon">🤖</div>
+    <div class="welcome-title">أهلاً! أنا مساعدك الذكي</div>
+    <div class="welcome-sub">
+      أستطيع تحليل قاعدة بيانات متجرك مباشرة<br>
+      اسألني عن المنتجات المكررة، الأقسام، الصور، والإحصائيات
+    </div>
+  </div>
+</div>
+
+<!-- منطقة الإدخال -->
+<div class="input-area">
+  <textarea class="msg-input" id="msg-input" rows="1" placeholder="اسألني عن قاعدة البيانات..." 
+    onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+  <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+</div>
+
+<script>
+let isLoading = false;
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function sendQuick(text) {
+  document.getElementById('msg-input').value = text;
+  sendMessage();
+}
+
+function addMessage(text, type) {
+  const chat = document.getElementById('chat-area');
+  
+  // إزالة رسالة الترحيب
+  const welcome = chat.querySelector('.welcome');
+  if (welcome) welcome.remove();
+
+  const div = document.createElement('div');
+  div.className = `msg msg-${type}`;
+  
+  if (type === 'ai') {
+    // تحويل النص العادي لـ HTML مع الحفاظ على التنسيق
+    div.innerHTML = formatAIResponse(text);
+  } else {
+    div.textContent = text;
+  }
+  
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+function formatAIResponse(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>')
+    .replace(/^- /gm, '• ');
+}
+
+function showLoading() {
+  const chat = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg-loading';
+  div.id = 'loading-msg';
+  div.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function hideLoading() {
+  const loading = document.getElementById('loading-msg');
+  if (loading) loading.remove();
+}
+
+async function sendMessage() {
+  if (isLoading) return;
+  
+  const input = document.getElementById('msg-input');
+  const message = input.value.trim();
+  if (!message) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  
+  addMessage(message, 'user');
+  
+  isLoading = true;
+  document.getElementById('send-btn').disabled = true;
+  showLoading();
+
+  try {
+    const resp = await fetch('/api/admin/ai-chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ message })
+    });
+    
+    const data = await resp.json();
+    hideLoading();
+    
+    if (data.success) {
+      addMessage(data.answer, 'ai');
+    } else {
+      addMessage('❌ ' + (data.error || 'حدث خطأ'), 'ai');
+    }
+  } catch(e) {
+    hideLoading();
+    addMessage('❌ فشل الاتصال بالسيرفر', 'ai');
+  }
+  
+  isLoading = false;
+  document.getElementById('send-btn').disabled = false;
+  document.getElementById('msg-input').focus();
+}
+</script>
+</body>
+</html>

@@ -698,5 +698,148 @@ def confirm_image():
     return jsonify({'success': True})
 
 
+# ==========================================
+# AI Assistant — مساعد الذكاء الاصطناعي
+# ==========================================
+
+@app.route('/admin/ai-assistant')
+@admin_required
+def ai_assistant_page():
+    return render_template('admin_ai.html', app_name=Config.APP_NAME)
+
+@app.route('/api/admin/ai-chat', methods=['POST'])
+@admin_required
+def ai_chat():
+    import requests as req
+    
+    OPENAI_KEY = os.environ.get('OPENAI_API_KEY', '')
+    if not OPENAI_KEY:
+        return jsonify({'success': False, 'error': 'مفتاح OpenAI غير موجود'})
+
+    user_message = request.json.get('message', '').strip()
+    if not user_message:
+        return jsonify({'success': False, 'error': 'الرسالة فارغة'})
+
+    # جلب بيانات قاعدة البيانات للسياق
+    try:
+        products_count = execute_query('SELECT COUNT(*) as n FROM products', fetchone=True)['n']
+        cats = execute_query('SELECT id, name FROM categories ORDER BY id', fetchall=True) or []
+        
+        # جلب بيانات حسب السؤال
+        db_context = ""
+        
+        q_lower = user_message.lower()
+        
+        if any(w in user_message for w in ['مكرر', 'مكررة', 'تكرار']):
+            dupes = execute_query("""
+                SELECT name, COUNT(*) as cnt, GROUP_CONCAT(id) as ids
+                FROM products GROUP BY name HAVING cnt > 1
+                ORDER BY cnt DESC LIMIT 50
+            """, fetchall=True) or []
+            db_context = f"المنتجات المكررة ({len(dupes)} مجموعة):
+"
+            for d in dupes:
+                db_context += f"- '{d['name']}' مكرر {d['cnt']} مرات (IDs: {d['ids']})
+"
+        
+        elif any(w in user_message for w in ['بدون صورة', 'بلا صورة', 'صور']):
+            no_img = execute_query("""
+                SELECT p.name, c.name as cat FROM products p
+                LEFT JOIN categories c ON c.id = p.category_id
+                WHERE (p.image IS NULL OR p.image = '') LIMIT 100
+            """, fetchall=True) or []
+            db_context = f"منتجات بدون صورة ({len(no_img)}):
+"
+            for p in no_img[:50]:
+                db_context += f"- {p['name']} (قسم: {p['cat']})
+"
+        
+        elif any(w in user_message for w in ['قسم', 'أقسام', 'تصنيف']):
+            cat_stats = execute_query("""
+                SELECT c.name, COUNT(p.id) as cnt
+                FROM categories c
+                LEFT JOIN products p ON p.category_id = c.id
+                GROUP BY c.id ORDER BY cnt DESC
+            """, fetchall=True) or []
+            db_context = "إحصائيات الأقسام:
+"
+            for c in cat_stats:
+                db_context += f"- {c['name']}: {c['cnt']} منتج
+"
+        
+        elif any(w in user_message for w in ['منتج', 'منتجات', 'ابحث', 'بحث']):
+            # استخرج كلمة البحث
+            words = user_message.split()
+            search_results = []
+            for word in words:
+                if len(word) > 2:
+                    results = execute_query("""
+                        SELECT p.name, p.price, c.name as cat FROM products p
+                        LEFT JOIN categories c ON c.id = p.category_id
+                        WHERE p.name LIKE ? LIMIT 20
+                    """, (f'%{word}%',), fetchall=True) or []
+                    search_results.extend(results)
+            if search_results:
+                db_context = f"نتائج البحث ({len(search_results)} منتج):
+"
+                for p in search_results[:30]:
+                    db_context += f"- {p['name']} | السعر: {p['price']}₪ | القسم: {p['cat']}
+"
+        
+        elif any(w in user_message for w in ['إحصاء', 'إحصائيات', 'ملخص', 'كم']):
+            orders_count = execute_query('SELECT COUNT(*) as n FROM orders', fetchone=True)['n']
+            customers_count = execute_query('SELECT COUNT(*) as n FROM customers', fetchone=True)['n']
+            no_img_count = execute_query("SELECT COUNT(*) as n FROM products WHERE (image IS NULL OR image = '')", fetchone=True)['n']
+            db_context = f"""ملخص قاعدة البيانات:
+- إجمالي المنتجات: {products_count}
+- عدد الأقسام: {len(cats)}
+- إجمالي الطلبات: {orders_count}
+- إجمالي الزبائن: {customers_count}
+- منتجات بدون صورة: {no_img_count}
+الأقسام: {', '.join([c['name'] for c in cats])}"""
+        
+        else:
+            # سياق عام
+            db_context = f"""معلومات عامة عن المتجر:
+- إجمالي المنتجات: {products_count}
+- الأقسام ({len(cats)}): {', '.join([c['name'] for c in cats])}"""
+
+    except Exception as e:
+        db_context = f"تعذر جلب البيانات: {str(e)}"
+
+    # إرسال للـ OpenAI
+    system_prompt = """أنت مساعد ذكي لإدارة متجر دكّاني الإلكتروني الفلسطيني.
+مهمتك تحليل بيانات المنتجات وقاعدة البيانات وتقديم توصيات واضحة بالعربية.
+كن دقيقاً ومختصراً. إذا وجدت مشاكل اذكرها بوضوح مع الحلول المقترحة."""
+
+    try:
+        resp = req.post(
+            'https://api.openai.com/v1/chat/completions',
+            headers={
+                'Authorization': f'Bearer {OPENAI_KEY}',
+                'Content-Type': 'application/json'
+            },
+            json={
+                'model': 'gpt-4o-mini',
+                'messages': [
+                    {'role': 'system', 'content': system_prompt},
+                    {'role': 'user', 'content': f"بيانات المتجر:\n{db_context}\n\nسؤالي: {user_message}"}
+                ],
+                'max_tokens': 1000,
+                'temperature': 0.3
+            },
+            timeout=30
+        )
+        
+        if resp.status_code != 200:
+            return jsonify({'success': False, 'error': f'خطأ OpenAI: {resp.status_code}'})
+        
+        answer = resp.json()['choices'][0]['message']['content']
+        return jsonify({'success': True, 'answer': answer})
+    
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
