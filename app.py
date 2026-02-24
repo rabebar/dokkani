@@ -710,65 +710,76 @@ def ai_assistant_page():
 def ai_chat():
     import requests as req
     OPENAI_KEY = os.environ.get('OPENAI_API_KEY', '')
-    if not OPENAI_KEY: return jsonify({'success': False, 'error': 'مفتاح OpenAI مفقود'})
+    if not OPENAI_KEY: 
+        return jsonify({'success': False, 'error': 'مفتاح OpenAI مفقود'})
 
     user_message = request.json.get('message', '').strip()
-    if not user_message: return jsonify({'success': False, 'error': 'الرسالة فارغة'})
+    if not user_message: 
+        return jsonify({'success': False, 'error': 'الرسالة فارغة'})
 
     try:
-        # 1. جلب الهيكل العام للمتجر (الأقسام)
-        cats_list = execute_query('SELECT id, name FROM categories', fetchall=True)
-        subs_list = execute_query('SELECT id, name, category_id FROM subcategories', fetchall=True)
-        
-        structure = "خريطة الأقسام:\n"
-        for c in cats_list:
-            structure += f"- {c['name']}: " + ", ".join([s['name'] for s in subs_list if s['category_id'] == c['id']]) + "\n"
+        # 1. جلب هيكل المتجر بالكامل (للخلفية المعرفية)
+        cats = execute_query('SELECT id, name FROM categories', fetchall=True)
+        subs = execute_query('SELECT id, name, category_id FROM subcategories', fetchall=True)
+        structure = "خريطة الأقسام المتوفرة: " + ", ".join([f"{c['name']}" for c in cats]) + "\n"
 
-        # 2. تحضير سياق البيانات بناءً على نوع سؤال المدير
         db_context = ""
-        
-        # أ. إذا سأل عن التكرار
-        if any(w in user_message for w in ['مكرر', 'تكرار']):
-            dupes = execute_query("""
-                SELECT name, COUNT(*) as cnt, string_agg(id::text, ', ') as ids
-                FROM products GROUP BY name HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 20
-            """, fetchall=True) or []
-            db_context = "تقرير التكرار (الاسم | العدد | IDs):\n"
-            for d in dupes: db_context += f"- {d['name']} مكرر {d['cnt']} مرات (IDs: {d['ids']})\n"
+        msg_query = user_message.lower()
 
-        # ب. إذا سأل عن أخطاء إملائية أو عينات من قسم معين
-        elif any(w in user_message for w in ['غلط', 'خطأ', 'إملاء', 'راجع', 'عينات']):
-            # جلب عينة عشوائية من المنتجات لمراجعتها
+        # أ. احتمال البحث عن التكرار (بحث ذكي يتجاهل المسافات - PostgreSQL)
+        if any(w in msg_query for w in ['مكرر', 'تكرار']):
+            dupes = execute_query("""
+                SELECT TRIM(name) as clean_name, COUNT(*) as cnt, string_agg(id::text, ', ') as ids
+                FROM products GROUP BY clean_name HAVING COUNT(*) > 1 
+                ORDER BY cnt DESC LIMIT 30
+            """, fetchall=True) or []
+            db_context = f"قائمة التكرار المكتشفة ({len(dupes)} مجموعة):\n"
+            for d in dupes: 
+                db_context += f"- {d['clean_name']} (مكرر {d['cnt']} مرات) IDs: {d['ids']}\n"
+
+        # ب. احتمال البحث عن أخطاء الأسعار
+        elif any(w in msg_query for w in ['سعر', 'أسعار', 'غالي', 'رخيص', 'صفر']):
+            price_issues = execute_query("""
+                SELECT name, price, id FROM products 
+                WHERE price <= 0 OR price > 500 ORDER BY price ASC LIMIT 20
+            """, fetchall=True) or []
+            db_context = "منتجات تحتاج مراجعة السعر (صفرية أو مرتفعة جداً):\n"
+            for p in price_issues: 
+                db_context += f"- {p['name']} (السعر الحالي: {p['price']}₪) ID: {p['id']}\n"
+
+        # ج. احتمال تحليل قسم 'أخرى' أو التدقيق اللغوي
+        elif any(w in msg_query for w in ['أخرى', 'راجع', 'عينات', 'إملاء']):
             samples = execute_query("""
                 SELECT p.id, p.name, p.price, c.name as cat 
                 FROM products p JOIN categories c ON p.category_id = c.id 
-                ORDER BY RANDOM() LIMIT 40
+                WHERE (c.name = 'أخرى' OR 1=1) ORDER BY RANDOM() LIMIT 50
             """, fetchall=True)
-            db_context = "عينة من المنتجات للتدقيق الإملائي والمنطقي:\n"
-            for s in samples: db_context += f"- ID:{s['id']} | {s['name']} | {s['price']}₪ | قسم:{s['cat']}\n"
+            db_context = "عينات عشوائية للتدقيق الإملائي والتنظيمي:\n"
+            for s in samples: 
+                db_context += f"- ID:{s['id']} | {s['name']} | قسم: {s['cat']}\n"
 
-        # ج. إذا سأل عن منتج محدد أو سعر
+        # د. البحث المباشر عن منتج معين
         else:
             words = [w for w in user_message.split() if len(w) > 2]
             if words:
                 search = execute_query("""
-                    SELECT p.name, p.price, p.unit, c.name as cat 
-                    FROM products p JOIN categories c ON p.category_id = c.id 
-                    WHERE p.name LIKE ? LIMIT 20
+                    SELECT p.name, p.price, c.name as cat, s.name as sub 
+                    FROM products p 
+                    LEFT JOIN categories c ON c.id = p.category_id 
+                    LEFT JOIN subcategories s ON p.subcategory_id = s.id
+                    WHERE p.name LIKE ? LIMIT 30
                 """, (f'%{words[0]}%',), fetchall=True)
                 if search:
-                    db_context = "نتائج البحث الحية:\n"
-                    for r in search: db_context += f"- {r['name']} | {r['price']}₪ | {r['cat']}\n"
+                    db_context = "نتائج البحث الحية من قاعدة البيانات:\n"
+                    for r in search: 
+                        db_context += f"- {r['name']} | {r['price']}₪ | {r['cat']} ({r['sub']})\n"
 
-        # 3. إعداد التعليمات النهائية للمساعد
-        system_prompt = f"""أنت مدير جودة بيانات متجر دكّاني.
-{structure}
-صلاحياتك: تحليل الأسماء، الأسعار، والتكرار.
-مهمتك:
-1. كشف الأخطاء الإملائية في العينات (مثل بصل مكتوب بصال).
-2. كشف الأسعار غير المنطقية (مثلاً صنف رخيص جداً أو غالي جداً بشكل شاذه).
-3. تحديد المنتجات "الأساسية" (مثل الأرز والزيت) وحث المدير على الاهتمام بصورها.
-أجب باختصار شديد ولهجة مهنية عربية."""
+        # 3. إرسال الأوامر النهائية لـ OpenAI
+        system_prompt = f"""أنت مدير جودة بيانات متجر دكّاني في فلسطين. {structure}
+        مهمتك مساعدة المدير في تنظيف المتجر (7,400 صنف). 
+        استخدم البيانات المرفقة حصراً للإجابة. 
+        إذا طلب 'أكثر 10' أو 'قائمة'، استخرجها من البيانات المقدمة لك بذكاء.
+        كن صارماً في كشف الأخطاء الإملائية والأسعار الشاذة. أجب باختصار شديد ومهني باللغة العربية."""
 
         resp = req.post(
             'https://api.openai.com/v1/chat/completions',
@@ -777,18 +788,23 @@ def ai_chat():
                 'model': 'gpt-4o-mini',
                 'messages': [
                     {'role': 'system', 'content': system_prompt},
-                    {'role': 'user', 'content': f"بيانات حقيقية:\n{db_context}\n\nسؤال المدير: {user_message}"}
+                    {'role': 'user', 'content': f"البيانات الحقيقية المستخرجة حالياً:\n{db_context}\n\nسؤال المدير: {user_message}"}
                 ],
-                'max_tokens': 1000, 'temperature': 0.2
+                'max_tokens': 1000, 'temperature': 0.1
             }, timeout=45
         )
         
-        if resp.status_code != 200: return jsonify({'success': False, 'error': f"خطأ OpenAI: {resp.status_code}"})
+        if resp.status_code != 200: 
+            return jsonify({'success': False, 'error': f"مشكلة في الاتصال بـ OpenAI: {resp.status_code}"})
+            
         return jsonify({'success': True, 'answer': resp.json()['choices'][0]['message']['content']})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': f"خطأ تقني: {str(e)}"})
+        return jsonify({'success': False, 'error': f"خطأ تقني في المحرك: {str(e)}"})
 
+
+# ==========================================
+# تشغيل السيرفر
+# ==========================================
 if __name__ == '__main__':
-    # تشغيل السيرفر
     app.run(debug=True, host='0.0.0.0')
