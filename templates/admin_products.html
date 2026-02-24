@@ -936,6 +936,8 @@ tr.prod-hidden td  { opacity: .5; }
 <script>
 const categories    = {{ categories | tojson }};
 const subcategories = {{ subcategories | tojson }};
+let currentCatFilter = 'all';
+let currentSubFilter = null;
 
 // ===== TABS =====
 function switchTab(tab, btn) {
@@ -987,25 +989,49 @@ function loadSubcats(catId, selectedSubId) {
 }
 
 // ===== SEARCH =====
-function searchProds(q) {
-  const lower = q.trim().toLowerCase();
-  document.querySelectorAll('.prod-row').forEach(tr => {
-    const name = tr.dataset.name.toLowerCase();
-    tr.style.display = (!lower || name.includes(lower)) ? '' : 'none';
+// دالة الفلترة الشاملة (المحرك الذكي الذي يربط البحث بالأقسام)
+function applyFilters() {
+  const query = document.getElementById('prod-search').value.trim().toLowerCase();
+  
+  document.querySelectorAll('.prod-row').forEach(row => {
+    const name = row.dataset.name.toLowerCase();
+    const catId = row.dataset.cat;
+    const subId = row.dataset.sub;
+
+    const matchesSearch = !query || name.includes(query);
+    const matchesCat = currentCatFilter === 'all' || catId == currentCatFilter;
+    const matchesSub = !currentSubFilter || subId == currentSubFilter;
+
+    if (matchesSearch && matchesCat && matchesSub) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+      // أمان: إلغاء تحديد أي منتج يختفي لكي لا يُنقل بالخطأ
+      const cb = row.querySelector('.prod-checkbox');
+      if (cb) cb.checked = false;
+    }
   });
+  updateBulkBtnVisibility();
 }
 
-// ===== FILTER PRODUCTS =====
+// تحديث دالة البحث لتستخدم المحرك الجديد
+function searchProds(q) {
+  applyFilters();
+}
+
+// تحديث دالة فلترة الأقسام الرئيسية لتستخدم المحرك الجديد
 function filterProds(catId, btn) {
   document.querySelectorAll('.pf').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('prod-search').value = '';
-  document.querySelectorAll('.prod-row').forEach(tr => {
-    tr.style.display = (catId === 'all' || tr.dataset.cat == catId) ? '' : 'none';
-  });
+  
+  currentCatFilter = catId;
+  currentSubFilter = null; // تصفير الفرعي عند اختيار قسم رئيسي جديد
+  document.getElementById('prod-search').value = ''; // تصفير البحث لسهولة التنقل
+  
+  applyFilters();
 }
 
-// ===== FILTER SUBCATEGORIES =====
+// فلترة بطاقات الأقسام الفرعية (للعرض البصري فقط)
 function filterSubs(catId, btn) {
   document.querySelectorAll('.pf').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -1204,24 +1230,18 @@ function updateBulkBtnVisibility() {
   }
 }
 
-// 2.5 دالة فلترة المنتجات بالقسم الفرعي (التي طلبتم تفعيلها)
+// 2.5 دالة فلترة المنتجات بالقسم الفرعي (المطورة لتعمل مع المحرك الذكي)
 function filterBySub(subId) {
-  // إخفاء كل المنتجات أولاً
-  document.querySelectorAll('.prod-row').forEach(row => {
-    // إظهار فقط المنتجات التي تطابق رقم القسم الفرعي المختار
-    if (row.dataset.sub === subId) {
-      row.style.display = '';
-    } else {
-      row.style.display = 'none';
-      // أمان: إلغاء تحديد أي منتج سيختفي لكي لا يُنقل بالخطأ
-      const cb = row.querySelector('.prod-checkbox');
-      if (cb) cb.checked = false;
-    }
-  });
-  // تحديث العداد فوراً بعد الفلترة
-  updateBulkBtnVisibility();
+  // 1. تحديث الذاكرة بالقسم الفرعي المختار وتصفير البحث
+  currentSubFilter = subId;
+  currentCatFilter = 'all'; 
+  document.getElementById('prod-search').value = ''; 
+  
+  // 2. تشغيل المحرك الشامل للفلترة
+  applyFilters();
+  
+  // 3. إشعار بجمالية والانتقال آلياً لتبويب المنتجات
   showToast('🔍 تم عرض منتجات القسم الفرعي');
-  // الانتقال آلياً لتبويب المنتجات لرؤية النتائج
   switchTab('prods', document.querySelectorAll('.tab')[2]);
 }
 
@@ -1253,6 +1273,7 @@ function bulkMoveSelected() {
     }
   }).catch(err => alert('فشل الاتصال بالسيرفر'));
 }
+
 // 4. إعادة دالة الحذف الجماعي (المفقودة)
 function bulkDeleteSelected() {
   const selected = document.querySelectorAll('.prod-checkbox:checked');
