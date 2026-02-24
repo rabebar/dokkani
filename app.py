@@ -716,21 +716,29 @@ def ai_chat():
     user_message = request.json.get('message', '').strip()
     if not user_message: return jsonify({'success': False, 'error': 'الرسالة فارغة'})
 
-    # --- وظيفة التنفيذ المباشر على قاعدة البيانات ---
+    # --- وظيفة التنفيذ المباشر المحصنة ---
     def execute_ai_sql(sql):
         try:
-            # حماية بسيطة من الأوامر التدميرية
-            forbidden = ["DROP ", "TRUNCATE ", "ALTER TABLE"]
+            # 1. منع الأوامر التدميرية
+            forbidden = ["DROP ", "TRUNCATE ", "ALTER TABLE", "GRANT"]
             if any(word in sql.upper() for word in forbidden):
-                return "خطأ: لا يمكن تنفيذ عمليات مسح الجداول."
+                return "خطأ أمني: لا يمكن تنفيذ هذا الأمر."
             
-            # تحديد هل الأمر تعديل (Update/Delete) أم جلب (Select)
-            is_write = any(keyword in sql.upper() for keyword in ["UPDATE", "DELETE", "INSERT"])
+            # 2. تحديد نوع العملية
+            is_write = any(k in sql.upper() for k in ["UPDATE", "DELETE", "INSERT"])
             
+            # 3. التنفيذ مع معالجة ذكية للنتائج
             res = execute_query(sql, commit=is_write, fetchall=not is_write)
-            return res if res else "تمت العملية بنجاح"
+            
+            if is_write:
+                return "تم تنفيذ التعديل بنجاح في قاعدة البيانات."
+            
+            if not res or len(res) == 0:
+                return "لا توجد بيانات تطابق هذا البحث حالياً."
+                
+            return res # إرجاع النتائج كما هي ليحللها الـ AI
         except Exception as e:
-            return f"خطأ في SQL: {str(e)}"
+            return f"خطأ أثناء التنفيذ: {str(e)}"
 
     # --- خريطة البيانات (Schema) ---
     db_schema = "جداولنا: products(id, name, price, unit, category_id, subcategory_id), categories(id, name), subcategories(id, name, category_id), orders(id, total, status)"
