@@ -719,113 +719,60 @@ def ai_chat():
     if not user_message:
         return jsonify({'success': False, 'error': 'الرسالة فارغة'})
 
-    # جلب بيانات قاعدة البيانات للسياق
     try:
-        products_count = execute_query('SELECT COUNT(*) as n FROM products', fetchone=True)['n']
-        cats = execute_query('SELECT id, name FROM categories ORDER BY id', fetchall=True) or []
+        # --- الخطوة 1: جلب الإحصائيات الحقيقية (لكل المتجر) ---
+        total_all = execute_query('SELECT COUNT(*) as n FROM products', fetchone=True)['n']
+        total_no_img = execute_query("SELECT COUNT(*) as n FROM products WHERE (image IS NULL OR image = '' OR image = 'None')", fetchone=True)['n']
+        total_cats = execute_query('SELECT COUNT(*) as n FROM categories', fetchone=True)['n']
         
-        db_context = ""
-        q_lower = user_message.lower()
+        # --- الخطوة 2: تحليل محتوى سؤال المدير ---
+        db_context = f"إحصائيات المتجر الحالية: الإجمالي {total_all} منتج، بدون صور {total_no_img} منتج، عدد الأقسام {total_cats}.\n"
         
-        # 1. تحليل التكرار (تم تحويله ليتوافق مع PostgreSQL)
-        if any(w in user_message for w in ['مكرر', 'مكررة', 'تكرار']):
+        if any(w in user_message for w in ['مكرر', 'تكرار']):
             dupes = execute_query("""
-                SELECT name, COUNT(*) as cnt, string_agg(id::text, ', ') as ids
-                FROM products GROUP BY name HAVING COUNT(*) > 1
-                ORDER BY cnt DESC LIMIT 50
+                SELECT name, COUNT(*) as cnt FROM products 
+                GROUP BY name HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 20
             """, fetchall=True) or []
-            db_context = f"المنتجات المكررة ({len(dupes)} مجموعة):\n"
+            db_context += f"تفاصيل التكرار: يوجد {len(dupes)} مجموعة مكررة.\n"
             for d in dupes:
-                db_context += f"- '{d['name']}' مكرر {d['cnt']} مرات (IDs: {d['ids']})\n"
+                db_context += f"- المنتج '{d['name']}' مكرر {d['cnt']} مرات.\n"
         
-        # 2. تحليل المنتجات بدون صور
-        elif any(w in user_message for w in ['بدون صورة', 'بلا صورة', 'صور']):
-            no_img = execute_query("""
-                SELECT p.name, c.name as cat FROM products p
+        elif any(w in user_message for w in ['صور', 'صورة', 'بدون']):
+            no_img_samples = execute_query("""
+                SELECT p.name, c.name as cat FROM products p 
                 LEFT JOIN categories c ON c.id = p.category_id
-                WHERE (p.image IS NULL OR p.image = '' OR p.image = 'None') LIMIT 50
+                WHERE (p.image IS NULL OR p.image = '' OR p.image = 'None') LIMIT 20
             """, fetchall=True) or []
-            db_context = f"عينة من منتجات بدون صورة ({len(no_img)}):\n"
-            for p in no_img:
+            db_context += f"عينة من المنتجات التي تفتقد للصور (من أصل {total_no_img}):\n"
+            for p in no_img_samples:
                 db_context += f"- {p['name']} (قسم: {p['cat']})\n"
-        
-        # 3. إحصائيات الأقسام
-        elif any(w in user_message for w in ['قسم', 'أقسام', 'تصنيف']):
-            cat_stats = execute_query("""
-                SELECT c.name, COUNT(p.id) as cnt
-                FROM categories c
-                LEFT JOIN products p ON p.category_id = c.id
-                GROUP BY c.name ORDER BY cnt DESC
-            """, fetchall=True) or []
-            db_context = "إحصائيات الأقسام:\n"
-            for c in cat_stats:
-                db_context += f"- {c['name']}: {c['cnt']} منتج\n"
-        
-        # 4. البحث السريع للـ AI
-        elif any(w in user_message for w in ['منتج', 'منتجات', 'ابحث', 'بحث']):
-            words = [w for w in user_message.split() if len(w) > 2]
-            search_results = []
-            if words:
-                search_results = execute_query("""
-                    SELECT p.name, p.price, c.name as cat FROM products p
-                    LEFT JOIN categories c ON c.id = p.category_id
-                    WHERE p.name LIKE ? LIMIT 20
-                """, (f'%{words[0]}%',), fetchall=True) or []
-            
-            if search_results:
-                db_context = f"نتائج البحث ({len(search_results)} منتج):\n"
-                for p in search_results:
-                    db_context += f"- {p['name']} | السعر: {p['price']}₪ | القسم: {p['cat']}\n"
-        
-        # 5. ملخص عام
-        elif any(w in user_message for w in ['إحصاء', 'إحصائيات', 'ملخص', 'كم']):
-            orders_count = execute_query('SELECT COUNT(*) as n FROM orders', fetchone=True)['n']
-            customers_count = execute_query('SELECT COUNT(*) as n FROM customers', fetchone=True)['n']
-            db_context = f"""ملخص قاعدة البيانات:
-- إجمالي المنتجات: {products_count}
-- عدد الأقسام: {len(cats)}
-- إجمالي الطلبات: {orders_count}
-- إجمالي الزبائن: {customers_count}"""
-        
-        else:
-            db_context = f"المتجر يحتوي على {products_count} منتج في {len(cats)} أقسام."
 
-    except Exception as e:
-        db_context = f"تنبيه: حدثت مشكلة أثناء جلب البيانات من القاعدة: {str(e)}"
+        # --- الخطوة 3: إرسال الحقيقة الكاملة للذكاء الاصطناعي ---
+        system_prompt = f"""أنت مدير بيانات متجر دكّاني. أمامك أرقام حقيقية وحية من قاعدة البيانات. 
+يمنع منعاً باتاً أن تقول 'لا أملك وصولاً للبيانات'. 
+إذا سألك المدير عن الأرقام، أجب بناءً على الإحصائيات المقدمة لك في سياق الرسالة.
+كن حازماً، دقيقاً، ومختصراً جداً باللغة العربية."""
 
-    # إرسال للـ OpenAI
-    system_prompt = """أنت مساعد ذكي لإدارة متجر دكّاني الإلكتروني في فلسطين.
-حلل البيانات بدقة وقدم إجابات مختصرة ومفيدة بالعربية. 
-إذا وجدت منتجات مكررة أو بدون صور، اقترح على المدير البدء بتنظيفها."""
-
-    try:
         resp = req.post(
             'https://api.openai.com/v1/chat/completions',
-            headers={
-                'Authorization': f'Bearer {OPENAI_KEY}',
-                'Content-Type': 'application/json'
-            },
+            headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
             json={
                 'model': 'gpt-4o-mini',
                 'messages': [
                     {'role': 'system', 'content': system_prompt},
-                    {'role': 'user', 'content': f"بيانات حية من المتجر:\n{db_context}\n\nسؤال المدير: {user_message}"}
+                    {'role': 'user', 'content': f"بيانات المتجر الفعلية:\n{db_context}\n\nسؤال المدير: {user_message}"}
                 ],
-                'max_tokens': 800,
-                'temperature': 0.3
+                'max_tokens': 600,
+                'temperature': 0.2
             },
-            timeout=35
+            timeout=40
         )
-        
-        if resp.status_code != 200:
-            return jsonify({'success': False, 'error': f'عذراً، واجهت مشكلة في الاتصال بذكاء OpenAI (كود: {resp.status_code})'})
         
         answer = resp.json()['choices'][0]['message']['content']
         return jsonify({'success': True, 'answer': answer})
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': f"خطأ تقني: {str(e)}"})
 
+    except Exception as e:
+        return jsonify({'success': False, 'error': f"خطأ في التحليل: {str(e)}"})
 if __name__ == '__main__':
     # تشغيل السيرفر
     app.run(debug=True, host='0.0.0.0')
