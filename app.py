@@ -709,6 +709,7 @@ def ai_assistant_page():
 @admin_required
 def ai_chat():
     import requests as req
+    import json
     OPENAI_KEY = os.environ.get('OPENAI_API_KEY', '')
     if not OPENAI_KEY: return jsonify({'success': False, 'error': 'مفتاح OpenAI مفقود'})
 
@@ -718,69 +719,57 @@ def ai_chat():
     # --- وظيفة التنفيذ المباشر على قاعدة البيانات ---
     def execute_ai_sql(sql):
         try:
-            # منع العمليات الخطيرة غير المقصودة (اختياري)
-            if "DROP TABLE" in sql.upper() or "TRUNCATE" in sql.upper():
+            # حماية بسيطة من الأوامر التدميرية
+            forbidden = ["DROP ", "TRUNCATE ", "ALTER TABLE"]
+            if any(word in sql.upper() for word in forbidden):
                 return "خطأ: لا يمكن تنفيذ عمليات مسح الجداول."
             
-            commit = any(keyword in sql.upper() for keyword in ["UPDATE", "DELETE", "INSERT"])
-            res = execute_query(sql, commit=commit, fetchall=True if not commit else False)
+            # تحديد هل الأمر تعديل (Update/Delete) أم جلب (Select)
+            is_write = any(keyword in sql.upper() for keyword in ["UPDATE", "DELETE", "INSERT"])
+            
+            res = execute_query(sql, commit=is_write, fetchall=not is_write)
             return res if res else "تمت العملية بنجاح"
         except Exception as e:
             return f"خطأ في SQL: {str(e)}"
 
-    # --- بناء السياق الفني للمساعد (Schema) ---
-    db_schema = """
-    الجداول المتاحة:
-    1. products (id, name, price, unit, category_id, subcategory_id, image, image_status)
-    2. categories (id, name)
-    3. subcategories (id, name, category_id)
-    4. orders (id, items, total, status, created_at)
-    """
+    # --- خريطة البيانات (Schema) ---
+    db_schema = "جداولنا: products(id, name, price, unit, category_id, subcategory_id), categories(id, name), subcategories(id, name, category_id), orders(id, total, status)"
 
     try:
-        # المرحلة 1: إرسال السؤال لـ OpenAI ليقرر ما هو الـ SQL المناسب
-        system_prompt = f"""أنت مدير تقني (Senior DBA) لمتجر دكّاني.
-        {db_schema}
-        مهمتك: تحويل طلب المدير إلى استعلام SQL دقيق. 
-        قواعدك:
-        - للبحث أو الإحصاء استخدم SELECT.
-        - للحذف استخدم DELETE.
-        - للتعديل استخدم UPDATE.
-        - عند البحث عن أسماء استخدم LIKE مع % لتجنب أخطاء الإملاء والمسافات.
-        رد فقط بصيغة JSON كالتالي: {{"sql": "هنا الكود"}}"""
-
+        # المرحلة 1: تحويل السؤال إلى SQL
+        system_prompt = f"أنت خبير SQL لمتجر دكّاني. {db_schema}. حول طلب المدير لـ SQL دقيق. رد بـ JSON فقط: {{\"sql\": \"الكود هنا\"}}"
+        
         resp1 = req.post('https://api.openai.com/v1/chat/completions',
             headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
             json={
                 'model': 'gpt-4o-mini',
-                'messages': [
-                    {'role': 'system', 'content': system_prompt},
-                    {'role': 'user', 'content': user_message}
-                ],
+                'messages': [{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': user_message}],
                 'response_format': { "type": "json_object" }
             }, timeout=30)
 
-        ai_sql = resp1.json()['choices'][0]['message']['content']
-        sql_to_run = req.json.loads(ai_sql)['sql']
+        # التصحيح هنا: استخدمنا json.loads بدلاً من req.json.loads
+        ai_data = resp1.json()
+        ai_sql_content = ai_data['choices'][0]['message']['content']
+        sql_to_run = json.loads(ai_sql_content)['sql']
 
-        # المرحلة 2: تنفيذ الـ SQL المولد على قاعدة البيانات الحقيقية
+        # المرحلة 2: تنفيذ الـ SQL المولد
         db_results = execute_ai_sql(sql_to_run)
 
-        # المرحلة 3: إرسال النتائج للمساعد ليصيغ لك الإجابة النهائية
-        final_prompt = f"المدير سأل: {user_message}\nالـ SQL المنفذ: {sql_to_run}\nنتائج القاعدة الحقيقية: {db_results}\nأجب المدير بناءً على هذه النتائج الحقيقية بدقة واحترافية."
+        # المرحلة 3: صياغة الإجابة النهائية بناءً على الأرقام الحقيقية
+        final_prompt = f"المدير سأل: {user_message}\nالـ SQL: {sql_to_run}\nالنتائج من القاعدة: {db_results}\nأجب المدير بالعربية باحترافية."
 
         resp2 = req.post('https://api.openai.com/v1/chat/completions',
             headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
             json={
                 'model': 'gpt-4o-mini',
                 'messages': [{'role': 'user', 'content': final_prompt}],
-                'max_tokens': 1000
+                'max_tokens': 800
             }, timeout=30)
 
         return jsonify({'success': True, 'answer': resp2.json()['choices'][0]['message']['content']})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': f"خطأ في المحرك المباشر: {str(e)}"})
+        return jsonify({'success': False, 'error': f"خلل في المحرك الذكي: {str(e)}"})
 
 
 # ==========================================
