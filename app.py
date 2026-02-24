@@ -713,45 +713,40 @@ def ai_chat():
     
     OPENAI_KEY = os.environ.get('OPENAI_API_KEY', '')
     if not OPENAI_KEY:
-        return jsonify({'success': False, 'error': 'مفتاح OpenAI غير موجود'})
+        return jsonify({'success': False, 'error': 'مفتاح OpenAI غير موجود في الإعدادات'})
 
     user_message = request.json.get('message', '').strip()
     if not user_message:
         return jsonify({'success': False, 'error': 'الرسالة فارغة'})
 
     try:
-        # --- الخطوة 1: جلب الإحصائيات الحقيقية (لكل المتجر) ---
+        # 1. جلب الأرقام الحقيقية لكامل المخزون (7,400+ صنف)
         total_all = execute_query('SELECT COUNT(*) as n FROM products', fetchone=True)['n']
-        total_no_img = execute_query("SELECT COUNT(*) as n FROM products WHERE (image IS NULL OR image = '' OR image = 'None')", fetchone=True)['n']
+        total_no_img = execute_query("SELECT COUNT(*) as n FROM products WHERE (image IS NULL OR image = '' OR p.image = 'None')", fetchone=True)['n']
         total_cats = execute_query('SELECT COUNT(*) as n FROM categories', fetchone=True)['n']
         
-        # --- الخطوة 2: تحليل محتوى سؤال المدير ---
-        db_context = f"إحصائيات المتجر الحالية: الإجمالي {total_all} منتج، بدون صور {total_no_img} منتج، عدد الأقسام {total_cats}.\n"
+        # 2. تجهيز تقرير البيانات الحي للمساعد
+        db_context = f"إحصائيات المتجر: {total_all} منتج، {total_no_img} بدون صور، {total_cats} قسماً.\n"
         
         if any(w in user_message for w in ['مكرر', 'تكرار']):
             dupes = execute_query("""
                 SELECT name, COUNT(*) as cnt FROM products 
-                GROUP BY name HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 20
+                GROUP BY name HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 15
             """, fetchall=True) or []
-            db_context += f"تفاصيل التكرار: يوجد {len(dupes)} مجموعة مكررة.\n"
-            for d in dupes:
-                db_context += f"- المنتج '{d['name']}' مكرر {d['cnt']} مرات.\n"
+            db_context += f"التكرار المكتشف: {len(dupes)} مجموعة.\n"
+            for d in dupes: db_context += f"- '{d['name']}' مكرر {d['cnt']} مرات.\n"
         
-        elif any(w in user_message for w in ['صور', 'صورة', 'بدون']):
+        elif any(w in user_message for w in ['صور', 'بدون']):
             no_img_samples = execute_query("""
                 SELECT p.name, c.name as cat FROM products p 
                 LEFT JOIN categories c ON c.id = p.category_id
-                WHERE (p.image IS NULL OR p.image = '' OR p.image = 'None') LIMIT 20
+                WHERE (p.image IS NULL OR p.image = '' OR p.image = 'None') LIMIT 15
             """, fetchall=True) or []
-            db_context += f"عينة من المنتجات التي تفتقد للصور (من أصل {total_no_img}):\n"
-            for p in no_img_samples:
-                db_context += f"- {p['name']} (قسم: {p['cat']})\n"
+            db_context += f"عينة لأصناف بلا صور:\n"
+            for p in no_img_samples: db_context += f"- {p['name']} ({p['cat']})\n"
 
-        # --- الخطوة 3: إرسال الحقيقة الكاملة للذكاء الاصطناعي ---
-        system_prompt = f"""أنت مدير بيانات متجر دكّاني. أمامك أرقام حقيقية وحية من قاعدة البيانات. 
-يمنع منعاً باتاً أن تقول 'لا أملك وصولاً للبيانات'. 
-إذا سألك المدير عن الأرقام، أجب بناءً على الإحصائيات المقدمة لك في سياق الرسالة.
-كن حازماً، دقيقاً، ومختصراً جداً باللغة العربية."""
+        # 3. التواصل مع OpenAI مع نظام "درع الحماية"
+        system_prompt = "أنت مدير بيانات دكّاني. أجب بدقة بناءً على الأرقام الحقيقية المقدمة لك. ممنوع قول 'لا أملك وصولاً'. كن مختصراً ومهنياً بالعربية."
 
         resp = req.post(
             'https://api.openai.com/v1/chat/completions',
@@ -760,19 +755,28 @@ def ai_chat():
                 'model': 'gpt-4o-mini',
                 'messages': [
                     {'role': 'system', 'content': system_prompt},
-                    {'role': 'user', 'content': f"بيانات المتجر الفعلية:\n{db_context}\n\nسؤال المدير: {user_message}"}
+                    {'role': 'user', 'content': f"بيانات المتجر:\n{db_context}\n\nسؤال المدير: {user_message}"}
                 ],
-                'max_tokens': 600,
-                'temperature': 0.2
+                'max_tokens': 600, 'temperature': 0.2
             },
-            timeout=40
+            timeout=35
         )
         
-        answer = resp.json()['choices'][0]['message']['content']
+        # --- [درع الحماية]: فحص استجابة OpenAI قبل القراءة ---
+        if resp.status_code != 200:
+            error_msg = "عذراً يا مدير، هناك ضغط على خدمة OpenAI حالياً أو الرصيد غير كافٍ."
+            if resp.status_code == 401: error_msg = "خطأ: مفتاح OpenAI غير صحيح."
+            return jsonify({'success': False, 'error': error_msg})
+
+        # قراءة الإجابة بأمان
+        result = resp.json()
+        answer = result['choices'][0]['message']['content']
         return jsonify({'success': True, 'answer': answer})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': f"خطأ في التحليل: {str(e)}"})
+        # معالجة أي خطأ تقني آخر لضمان عدم انهيار السيرفر
+        print(f"AI Assistant Error: {e}")
+        return jsonify({'success': False, 'error': 'حدث خطأ تقني أثناء التحليل، يرجى المحاولة لاحقاً.'})
 if __name__ == '__main__':
     # تشغيل السيرفر
     app.run(debug=True, host='0.0.0.0')
