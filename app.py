@@ -181,9 +181,7 @@ def subcategory_page(sub_id):
 def cart():
     if not is_mobile(): return redirect('/')
     return render_template('cart.html', app_name=Config.APP_NAME,
-                           delivery_short=Config.DELIVERY_PRICE_SHORT,
-                           delivery_mid=Config.DELIVERY_PRICE_MID,
-                           delivery_far=Config.DELIVERY_PRICE_FAR)
+                           delivery_min=Config.DELIVERY_PRICE_MIN)
 
 @app.route('/success')
 def success():
@@ -413,34 +411,26 @@ def api_delete_bulk_products():
     for prod_id in ids:
         delete_product(int(prod_id))
     return jsonify({'success': True, 'deleted': len(ids)})
+
 @app.route('/api/admin/products/move-bulk', methods=['POST'])
 @admin_required
 def api_move_bulk_products():
     data = request.json
     ids = data.get('ids', [])
     sub_id = data.get('sub_id')
-
     if not ids or not sub_id:
         return jsonify({'success': False, 'error': 'البيانات المرسلة ناقصة'})
-
-    # 1. جلب القسم الرئيسي المرتبط بهذا القسم الفرعي لضمان تناسق البيانات
     sub = execute_query('SELECT category_id FROM subcategories WHERE id=?', (sub_id,), fetchone=True)
     if not sub:
         return jsonify({'success': False, 'error': 'القسم الفرعي المختار غير موجود'})
-
     cat_id = sub['category_id']
-    
-    # 2. تجهيز علامات الاستفهام للاستعلام (SQL In Clause)
     placeholders = ', '.join(['?'] * len(ids))
-
-    # 3. تحديث القسم الفرعي والقسم الرئيسي معاً لجميع المنتجات المحددة
     execute_query(
         f'UPDATE products SET subcategory_id = ?, category_id = ? WHERE id IN ({placeholders})',
-        [sub_id, cat_id] + ids,
-        commit=True
+        [sub_id, cat_id] + ids, commit=True
     )
-    
     return jsonify({'success': True})
+
 
 @app.route('/api/subcategories-by-cat/<int:cat_id>')
 def api_subs_by_cat(cat_id):
@@ -650,53 +640,41 @@ def invoice(order_id):
         app_phone=Config.APP_PHONE
     )
 
+
+# ==========================================
+# صفحة مراجعة الصور
+# ==========================================
+
 @app.route('/admin/image-review')
 @admin_required
 def image_review_page():
-    # 1. جلب الفلاتر من الرابط (الرئيسي والفرعي والصفحة)
     cat_filter = request.args.get('cat', '')
     sub_filter = request.args.get('sub', '')
     page = int(request.args.get('page', 1))
     per_page = 30
     offset = (page - 1) * per_page
 
-    # 2. بناء المصفاة الصارمة
-    where_clause = """
-        WHERE (p.image_status IS NULL OR p.image_status < 2) 
-        AND (p.image IS NULL OR p.image = '' OR p.image = 'None' OR p.image = '/static/uploads/default.jpg')
-    """
+    where_clause = """WHERE (p.image_status IS NULL OR p.image_status < 2)
+        AND (p.image IS NULL OR p.image = '' OR p.image = 'None')"""
     params = []
-
-    # فلترة بالقسم الرئيسي
     if cat_filter:
         where_clause += " AND p.category_id = ?"
         params.append(cat_filter)
-    
-    # فلترة بالقسم الفرعي (الجديد)
     if sub_filter:
         where_clause += " AND p.subcategory_id = ?"
         params.append(sub_filter)
 
-    # 3. جلب المنتجات والعدد الكلي
     prods = execute_query(f'''
         SELECT p.*, c.name as cat_name FROM products p
         LEFT JOIN categories c ON c.id = p.category_id
         {where_clause}
-        ORDER BY p.id
-        LIMIT ? OFFSET ?''', params + [per_page, offset], fetchall=True)
-    
+        ORDER BY p.id LIMIT ? OFFSET ?''', params + [per_page, offset], fetchall=True)
+
     total_res = execute_query(f"SELECT COUNT(*) as n FROM products p {where_clause}", params, fetchone=True)
-
-    # 4. جلب الأقسام الرئيسية (دائماً)
     cats = execute_query('SELECT id, name FROM categories ORDER BY sort, id', fetchall=True)
-    
-    # 5. جلب الأقسام الفرعية (فقط إذا تم اختيار قسم رئيسي) لكي تظهر في الفلتر الثاني
-    subs = []
-    if cat_filter:
-        subs = execute_query('SELECT id, name FROM subcategories WHERE category_id = ? ORDER BY id', (cat_filter,), fetchall=True)
-
+    subs = execute_query('SELECT id, name FROM subcategories WHERE category_id = ? ORDER BY id', (cat_filter,), fetchall=True) if cat_filter else []
     total_no_img = total_res['n'] if total_res else 0
-    
+
     return render_template('image_review.html',
         products=prods or [],
         categories=cats or [],
