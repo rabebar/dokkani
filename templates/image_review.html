@@ -109,7 +109,12 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
   {% for p in products %}
   <div class="item-card" id="card-{{ p.id }}">
     <div class="card-header">
-      <div class="item-name">{{ p.name }}</div>
+      <div class="item-name">
+  {{ p.name }} 
+  <span style="color:var(--g4); font-weight:700; font-size:12px; margin-right:8px; background:var(--gx); padding:1px 6px; border-radius:6px;">
+    {{ p.price }}₪
+  </span>
+</div>
       {% if p.cat_name %}
       <div class="cat-badge">{{ p.cat_name }}</div>
       {% endif %}
