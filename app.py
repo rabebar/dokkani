@@ -697,7 +697,6 @@ def confirm_image():
     execute_query('UPDATE products SET image=?, image_status=2 WHERE id=?', (image_url, prod_id), commit=True)
     return jsonify({'success': True})
 
-
 # ==========================================
 # AI Assistant — مساعد الذكاء الاصطناعي
 # ==========================================
@@ -725,92 +724,79 @@ def ai_chat():
         products_count = execute_query('SELECT COUNT(*) as n FROM products', fetchone=True)['n']
         cats = execute_query('SELECT id, name FROM categories ORDER BY id', fetchall=True) or []
         
-        # جلب بيانات حسب السؤال
         db_context = ""
-        
         q_lower = user_message.lower()
         
+        # 1. تحليل التكرار (تم تحويله ليتوافق مع PostgreSQL)
         if any(w in user_message for w in ['مكرر', 'مكررة', 'تكرار']):
             dupes = execute_query("""
-                SELECT name, COUNT(*) as cnt, GROUP_CONCAT(id) as ids
-                FROM products GROUP BY name HAVING cnt > 1
+                SELECT name, COUNT(*) as cnt, string_agg(id::text, ', ') as ids
+                FROM products GROUP BY name HAVING COUNT(*) > 1
                 ORDER BY cnt DESC LIMIT 50
             """, fetchall=True) or []
-            db_context = f"المنتجات المكررة ({len(dupes)} مجموعة):
-"
+            db_context = f"المنتجات المكررة ({len(dupes)} مجموعة):\n"
             for d in dupes:
-                db_context += f"- '{d['name']}' مكرر {d['cnt']} مرات (IDs: {d['ids']})
-"
+                db_context += f"- '{d['name']}' مكرر {d['cnt']} مرات (IDs: {d['ids']})\n"
         
+        # 2. تحليل المنتجات بدون صور
         elif any(w in user_message for w in ['بدون صورة', 'بلا صورة', 'صور']):
             no_img = execute_query("""
                 SELECT p.name, c.name as cat FROM products p
                 LEFT JOIN categories c ON c.id = p.category_id
-                WHERE (p.image IS NULL OR p.image = '') LIMIT 100
+                WHERE (p.image IS NULL OR p.image = '' OR p.image = 'None') LIMIT 50
             """, fetchall=True) or []
-            db_context = f"منتجات بدون صورة ({len(no_img)}):
-"
-            for p in no_img[:50]:
-                db_context += f"- {p['name']} (قسم: {p['cat']})
-"
+            db_context = f"عينة من منتجات بدون صورة ({len(no_img)}):\n"
+            for p in no_img:
+                db_context += f"- {p['name']} (قسم: {p['cat']})\n"
         
+        # 3. إحصائيات الأقسام
         elif any(w in user_message for w in ['قسم', 'أقسام', 'تصنيف']):
             cat_stats = execute_query("""
                 SELECT c.name, COUNT(p.id) as cnt
                 FROM categories c
                 LEFT JOIN products p ON p.category_id = c.id
-                GROUP BY c.id ORDER BY cnt DESC
+                GROUP BY c.name ORDER BY cnt DESC
             """, fetchall=True) or []
-            db_context = "إحصائيات الأقسام:
-"
+            db_context = "إحصائيات الأقسام:\n"
             for c in cat_stats:
-                db_context += f"- {c['name']}: {c['cnt']} منتج
-"
+                db_context += f"- {c['name']}: {c['cnt']} منتج\n"
         
+        # 4. البحث السريع للـ AI
         elif any(w in user_message for w in ['منتج', 'منتجات', 'ابحث', 'بحث']):
-            # استخرج كلمة البحث
-            words = user_message.split()
+            words = [w for w in user_message.split() if len(w) > 2]
             search_results = []
-            for word in words:
-                if len(word) > 2:
-                    results = execute_query("""
-                        SELECT p.name, p.price, c.name as cat FROM products p
-                        LEFT JOIN categories c ON c.id = p.category_id
-                        WHERE p.name LIKE ? LIMIT 20
-                    """, (f'%{word}%',), fetchall=True) or []
-                    search_results.extend(results)
+            if words:
+                search_results = execute_query("""
+                    SELECT p.name, p.price, c.name as cat FROM products p
+                    LEFT JOIN categories c ON c.id = p.category_id
+                    WHERE p.name LIKE ? LIMIT 20
+                """, (f'%{words[0]}%',), fetchall=True) or []
+            
             if search_results:
-                db_context = f"نتائج البحث ({len(search_results)} منتج):
-"
-                for p in search_results[:30]:
-                    db_context += f"- {p['name']} | السعر: {p['price']}₪ | القسم: {p['cat']}
-"
+                db_context = f"نتائج البحث ({len(search_results)} منتج):\n"
+                for p in search_results:
+                    db_context += f"- {p['name']} | السعر: {p['price']}₪ | القسم: {p['cat']}\n"
         
+        # 5. ملخص عام
         elif any(w in user_message for w in ['إحصاء', 'إحصائيات', 'ملخص', 'كم']):
             orders_count = execute_query('SELECT COUNT(*) as n FROM orders', fetchone=True)['n']
             customers_count = execute_query('SELECT COUNT(*) as n FROM customers', fetchone=True)['n']
-            no_img_count = execute_query("SELECT COUNT(*) as n FROM products WHERE (image IS NULL OR image = '')", fetchone=True)['n']
             db_context = f"""ملخص قاعدة البيانات:
 - إجمالي المنتجات: {products_count}
 - عدد الأقسام: {len(cats)}
 - إجمالي الطلبات: {orders_count}
-- إجمالي الزبائن: {customers_count}
-- منتجات بدون صورة: {no_img_count}
-الأقسام: {', '.join([c['name'] for c in cats])}"""
+- إجمالي الزبائن: {customers_count}"""
         
         else:
-            # سياق عام
-            db_context = f"""معلومات عامة عن المتجر:
-- إجمالي المنتجات: {products_count}
-- الأقسام ({len(cats)}): {', '.join([c['name'] for c in cats])}"""
+            db_context = f"المتجر يحتوي على {products_count} منتج في {len(cats)} أقسام."
 
     except Exception as e:
-        db_context = f"تعذر جلب البيانات: {str(e)}"
+        db_context = f"تنبيه: حدثت مشكلة أثناء جلب البيانات من القاعدة: {str(e)}"
 
     # إرسال للـ OpenAI
-    system_prompt = """أنت مساعد ذكي لإدارة متجر دكّاني الإلكتروني الفلسطيني.
-مهمتك تحليل بيانات المنتجات وقاعدة البيانات وتقديم توصيات واضحة بالعربية.
-كن دقيقاً ومختصراً. إذا وجدت مشاكل اذكرها بوضوح مع الحلول المقترحة."""
+    system_prompt = """أنت مساعد ذكي لإدارة متجر دكّاني الإلكتروني في فلسطين.
+حلل البيانات بدقة وقدم إجابات مختصرة ومفيدة بالعربية. 
+إذا وجدت منتجات مكررة أو بدون صور، اقترح على المدير البدء بتنظيفها."""
 
     try:
         resp = req.post(
@@ -823,23 +809,23 @@ def ai_chat():
                 'model': 'gpt-4o-mini',
                 'messages': [
                     {'role': 'system', 'content': system_prompt},
-                    {'role': 'user', 'content': f"بيانات المتجر:\n{db_context}\n\nسؤالي: {user_message}"}
+                    {'role': 'user', 'content': f"بيانات حية من المتجر:\n{db_context}\n\nسؤال المدير: {user_message}"}
                 ],
-                'max_tokens': 1000,
+                'max_tokens': 800,
                 'temperature': 0.3
             },
-            timeout=30
+            timeout=35
         )
         
         if resp.status_code != 200:
-            return jsonify({'success': False, 'error': f'خطأ OpenAI: {resp.status_code}'})
+            return jsonify({'success': False, 'error': f'عذراً، واجهت مشكلة في الاتصال بذكاء OpenAI (كود: {resp.status_code})'})
         
         answer = resp.json()['choices'][0]['message']['content']
         return jsonify({'success': True, 'answer': answer})
     
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
+        return jsonify({'success': False, 'error': f"خطأ تقني: {str(e)}"})
 
 if __name__ == '__main__':
+    # تشغيل السيرفر
     app.run(debug=True, host='0.0.0.0')
