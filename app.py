@@ -696,7 +696,6 @@ def confirm_image():
         return jsonify({'success': False, 'error': 'الرابط فارغ'})
     execute_query('UPDATE products SET image=?, image_status=2 WHERE id=?', (image_url, prod_id), commit=True)
     return jsonify({'success': True})
-
 # ==========================================
 # AI Assistant — مساعد الذكاء الاصطناعي
 # ==========================================
@@ -720,18 +719,19 @@ def ai_chat():
         return jsonify({'success': False, 'error': 'الرسالة فارغة'})
 
     try:
-        # 1. جلب الأرقام الحقيقية لكامل المخزون (7,400+ صنف)
+        # 1. جلب الأرقام الحقيقية (تم تصحيح الاستعلام وحذف الاختصار p المسبب للخطأ)
         total_all = execute_query('SELECT COUNT(*) as n FROM products', fetchone=True)['n']
-        total_no_img = execute_query("SELECT COUNT(*) as n FROM products WHERE (image IS NULL OR image = '' OR p.image = 'None')", fetchone=True)['n']
+        total_no_img = execute_query("SELECT COUNT(*) as n FROM products WHERE (image IS NULL OR image = '' OR image = 'None')", fetchone=True)['n']
         total_cats = execute_query('SELECT COUNT(*) as n FROM categories', fetchone=True)['n']
         
         # 2. تجهيز تقرير البيانات الحي للمساعد
         db_context = f"إحصائيات المتجر: {total_all} منتج، {total_no_img} بدون صور، {total_cats} قسماً.\n"
         
         if any(w in user_message for w in ['مكرر', 'تكرار']):
+            # استخدام string_agg المتوافق مع PostgreSQL بدلاً من GROUP_CONCAT
             dupes = execute_query("""
-                SELECT name, COUNT(*) as cnt FROM products 
-                GROUP BY name HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 15
+                SELECT name, COUNT(*) as cnt, string_agg(id::text, ', ') as ids
+                FROM products GROUP BY name HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 15
             """, fetchall=True) or []
             db_context += f"التكرار المكتشف: {len(dupes)} مجموعة.\n"
             for d in dupes: db_context += f"- '{d['name']}' مكرر {d['cnt']} مرات.\n"
@@ -764,7 +764,7 @@ def ai_chat():
         
         # --- [درع الحماية]: فحص استجابة OpenAI قبل القراءة ---
         if resp.status_code != 200:
-            error_msg = "عذراً يا مدير، هناك ضغط على خدمة OpenAI حالياً أو الرصيد غير كافٍ."
+            error_msg = f"عذراً يا مدير، مشكلة في خدمة AI (كود: {resp.status_code})"
             if resp.status_code == 401: error_msg = "خطأ: مفتاح OpenAI غير صحيح."
             return jsonify({'success': False, 'error': error_msg})
 
@@ -774,9 +774,10 @@ def ai_chat():
         return jsonify({'success': True, 'answer': answer})
 
     except Exception as e:
-        # معالجة أي خطأ تقني آخر لضمان عدم انهيار السيرفر
+        # طباعة الخطأ في السجلات للتشخيص
         print(f"AI Assistant Error: {e}")
-        return jsonify({'success': False, 'error': 'حدث خطأ تقني أثناء التحليل، يرجى المحاولة لاحقاً.'})
+        return jsonify({'success': False, 'error': f'خطأ في التحليل: {str(e)}'})
+
 if __name__ == '__main__':
     # تشغيل السيرفر
     app.run(debug=True, host='0.0.0.0')
