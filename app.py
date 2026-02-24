@@ -710,97 +710,77 @@ def ai_assistant_page():
 def ai_chat():
     import requests as req
     OPENAI_KEY = os.environ.get('OPENAI_API_KEY', '')
-    if not OPENAI_KEY: 
-        return jsonify({'success': False, 'error': 'مفتاح OpenAI مفقود'})
+    if not OPENAI_KEY: return jsonify({'success': False, 'error': 'مفتاح OpenAI مفقود'})
 
     user_message = request.json.get('message', '').strip()
-    if not user_message: 
-        return jsonify({'success': False, 'error': 'الرسالة فارغة'})
+    if not user_message: return jsonify({'success': False, 'error': 'الرسالة فارغة'})
+
+    # --- وظيفة التنفيذ المباشر على قاعدة البيانات ---
+    def execute_ai_sql(sql):
+        try:
+            # منع العمليات الخطيرة غير المقصودة (اختياري)
+            if "DROP TABLE" in sql.upper() or "TRUNCATE" in sql.upper():
+                return "خطأ: لا يمكن تنفيذ عمليات مسح الجداول."
+            
+            commit = any(keyword in sql.upper() for keyword in ["UPDATE", "DELETE", "INSERT"])
+            res = execute_query(sql, commit=commit, fetchall=True if not commit else False)
+            return res if res else "تمت العملية بنجاح"
+        except Exception as e:
+            return f"خطأ في SQL: {str(e)}"
+
+    # --- بناء السياق الفني للمساعد (Schema) ---
+    db_schema = """
+    الجداول المتاحة:
+    1. products (id, name, price, unit, category_id, subcategory_id, image, image_status)
+    2. categories (id, name)
+    3. subcategories (id, name, category_id)
+    4. orders (id, items, total, status, created_at)
+    """
 
     try:
-        # 1. جلب هيكل المتجر بالكامل (للخلفية المعرفية)
-        cats = execute_query('SELECT id, name FROM categories', fetchall=True)
-        subs = execute_query('SELECT id, name, category_id FROM subcategories', fetchall=True)
-        structure = "خريطة الأقسام المتوفرة: " + ", ".join([f"{c['name']}" for c in cats]) + "\n"
+        # المرحلة 1: إرسال السؤال لـ OpenAI ليقرر ما هو الـ SQL المناسب
+        system_prompt = f"""أنت مدير تقني (Senior DBA) لمتجر دكّاني.
+        {db_schema}
+        مهمتك: تحويل طلب المدير إلى استعلام SQL دقيق. 
+        قواعدك:
+        - للبحث أو الإحصاء استخدم SELECT.
+        - للحذف استخدم DELETE.
+        - للتعديل استخدم UPDATE.
+        - عند البحث عن أسماء استخدم LIKE مع % لتجنب أخطاء الإملاء والمسافات.
+        رد فقط بصيغة JSON كالتالي: {{"sql": "هنا الكود"}}"""
 
-        db_context = ""
-        msg_query = user_message.lower()
-
-        # أ. احتمال البحث عن التكرار (بحث ذكي يتجاهل المسافات - PostgreSQL)
-        if any(w in msg_query for w in ['مكرر', 'تكرار']):
-            dupes = execute_query("""
-                SELECT TRIM(name) as clean_name, COUNT(*) as cnt, string_agg(id::text, ', ') as ids
-                FROM products GROUP BY clean_name HAVING COUNT(*) > 1 
-                ORDER BY cnt DESC LIMIT 30
-            """, fetchall=True) or []
-            db_context = f"قائمة التكرار المكتشفة ({len(dupes)} مجموعة):\n"
-            for d in dupes: 
-                db_context += f"- {d['clean_name']} (مكرر {d['cnt']} مرات) IDs: {d['ids']}\n"
-
-        # ب. احتمال البحث عن أخطاء الأسعار
-        elif any(w in msg_query for w in ['سعر', 'أسعار', 'غالي', 'رخيص', 'صفر']):
-            price_issues = execute_query("""
-                SELECT name, price, id FROM products 
-                WHERE price <= 0 OR price > 500 ORDER BY price ASC LIMIT 20
-            """, fetchall=True) or []
-            db_context = "منتجات تحتاج مراجعة السعر (صفرية أو مرتفعة جداً):\n"
-            for p in price_issues: 
-                db_context += f"- {p['name']} (السعر الحالي: {p['price']}₪) ID: {p['id']}\n"
-
-        # ج. احتمال تحليل قسم 'أخرى' أو التدقيق اللغوي
-        elif any(w in msg_query for w in ['أخرى', 'راجع', 'عينات', 'إملاء']):
-            samples = execute_query("""
-                SELECT p.id, p.name, p.price, c.name as cat 
-                FROM products p JOIN categories c ON p.category_id = c.id 
-                WHERE (c.name = 'أخرى' OR 1=1) ORDER BY RANDOM() LIMIT 50
-            """, fetchall=True)
-            db_context = "عينات عشوائية للتدقيق الإملائي والتنظيمي:\n"
-            for s in samples: 
-                db_context += f"- ID:{s['id']} | {s['name']} | قسم: {s['cat']}\n"
-
-        # د. البحث المباشر عن منتج معين
-        else:
-            words = [w for w in user_message.split() if len(w) > 2]
-            if words:
-                search = execute_query("""
-                    SELECT p.name, p.price, c.name as cat, s.name as sub 
-                    FROM products p 
-                    LEFT JOIN categories c ON c.id = p.category_id 
-                    LEFT JOIN subcategories s ON p.subcategory_id = s.id
-                    WHERE p.name LIKE ? LIMIT 30
-                """, (f'%{words[0]}%',), fetchall=True)
-                if search:
-                    db_context = "نتائج البحث الحية من قاعدة البيانات:\n"
-                    for r in search: 
-                        db_context += f"- {r['name']} | {r['price']}₪ | {r['cat']} ({r['sub']})\n"
-
-        # 3. إرسال الأوامر النهائية لـ OpenAI
-        system_prompt = f"""أنت مدير جودة بيانات متجر دكّاني في فلسطين. {structure}
-        مهمتك مساعدة المدير في تنظيف المتجر (7,400 صنف). 
-        استخدم البيانات المرفقة حصراً للإجابة. 
-        إذا طلب 'أكثر 10' أو 'قائمة'، استخرجها من البيانات المقدمة لك بذكاء.
-        كن صارماً في كشف الأخطاء الإملائية والأسعار الشاذة. أجب باختصار شديد ومهني باللغة العربية."""
-
-        resp = req.post(
-            'https://api.openai.com/v1/chat/completions',
+        resp1 = req.post('https://api.openai.com/v1/chat/completions',
             headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
             json={
                 'model': 'gpt-4o-mini',
                 'messages': [
                     {'role': 'system', 'content': system_prompt},
-                    {'role': 'user', 'content': f"البيانات الحقيقية المستخرجة حالياً:\n{db_context}\n\nسؤال المدير: {user_message}"}
+                    {'role': 'user', 'content': user_message}
                 ],
-                'max_tokens': 1000, 'temperature': 0.1
-            }, timeout=45
-        )
-        
-        if resp.status_code != 200: 
-            return jsonify({'success': False, 'error': f"مشكلة في الاتصال بـ OpenAI: {resp.status_code}"})
-            
-        return jsonify({'success': True, 'answer': resp.json()['choices'][0]['message']['content']})
+                'response_format': { "type": "json_object" }
+            }, timeout=30)
+
+        ai_sql = resp1.json()['choices'][0]['message']['content']
+        sql_to_run = req.json.loads(ai_sql)['sql']
+
+        # المرحلة 2: تنفيذ الـ SQL المولد على قاعدة البيانات الحقيقية
+        db_results = execute_ai_sql(sql_to_run)
+
+        # المرحلة 3: إرسال النتائج للمساعد ليصيغ لك الإجابة النهائية
+        final_prompt = f"المدير سأل: {user_message}\nالـ SQL المنفذ: {sql_to_run}\nنتائج القاعدة الحقيقية: {db_results}\nأجب المدير بناءً على هذه النتائج الحقيقية بدقة واحترافية."
+
+        resp2 = req.post('https://api.openai.com/v1/chat/completions',
+            headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
+            json={
+                'model': 'gpt-4o-mini',
+                'messages': [{'role': 'user', 'content': final_prompt}],
+                'max_tokens': 1000
+            }, timeout=30)
+
+        return jsonify({'success': True, 'answer': resp2.json()['choices'][0]['message']['content']})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': f"خطأ تقني في المحرك: {str(e)}"})
+        return jsonify({'success': False, 'error': f"خطأ في المحرك المباشر: {str(e)}"})
 
 
 # ==========================================
