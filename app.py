@@ -634,8 +634,19 @@ def invoice(order_id):
     for item in order['items']:
         price = float(item.get('price', 0))
         item['sell_price'] = get_selling_price(price)
+    # تجميع المنتجات حسب القسم
+    grouped_items = {}
+    for item in order['items']:
+        price = float(item.get('price', 0))
+        item['final_price'] = get_selling_price(price)
+        cat = item.get('cat_name') or 'متنوعات'
+        if cat not in grouped_items:
+            grouped_items[cat] = []
+        grouped_items[cat].append(item)
+
     return render_template('invoice.html',
         order=order,
+        grouped_items=grouped_items,
         app_whatsapp=Config.APP_WHATSAPP,
         app_phone=Config.APP_PHONE
     )
@@ -801,6 +812,8 @@ def ai_chat():
         return jsonify({'success': True, 'answer': r2.json()['choices'][0]['message']['content']})
 
     except Exception as e:
+        import traceback
+        app.logger.error(traceback.format_exc())
         return jsonify({'success': False, 'error': f"خطأ في المحرك: {str(e)}"})
 
 if __name__ == '__main__':
