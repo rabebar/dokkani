@@ -751,7 +751,8 @@ def ai_chat():
             forbidden = ['DROP ', 'TRUNCATE ', 'ALTER ', 'GRANT ', 'CREATE ']
             if any(w in sql.upper() for w in forbidden):
                 return "خطأ أمني: هذا الأمر محظور برمجياً."
-            sql = sql.replace('%', '%%').replace('%%%%', '%%')
+            if 'ILIKE' in sql.upper() or 'LIKE' in sql.upper():
+                sql = sql.replace('%', '%%').replace('%%%%', '%%')
 
             is_write = any(k in sql.upper() for k in ['UPDATE ', 'DELETE ', 'INSERT '])
             res = execute_query(sql, commit=is_write, fetchall=True)
