@@ -779,10 +779,12 @@ def ai_chat():
 
     db_schema = f"""أنت مساعد ذكي لمتجر دكّاني للبقالة في رام الله. هيكل قاعدة بيانات PostgreSQL الكاملة:
 
-    === جدول المنتجات: products ===
-    - id, name (اسم المنتج), price (سعر البيع بالشيكل), unit (وحدة القياس)
+   === جدول المنتجات: products ===
+    - الأعمدة الحقيقية الوحيدة هي: id, name, price, unit, category_id, subcategory_id, image, visible, sort
+    - ممنوع استخدام أي اسم عمود آخر مثل product_id أو product_name أو title
+    - id هو رقم المنتج، name هو اسم المنتج، price هو السعر بالشيكل
     - category_id (رقم القسم), subcategory_id (رقم القسم الفرعي)
-    - image (رابط الصورة), visible (هل المنتج ظاهر في المتجر: true/false)
+    - image (رابط الصورة), visible (هل المنتج ظاهر: true/false), sort (رقم الترتيب)
     - الأقسام المتاحة: {cats_map}
 
     === جدول الأقسام: categories ===
