@@ -764,17 +764,42 @@ def ai_chat():
     except:
         cats_map = "تعذر جلب الأقسام"
 
-    db_schema = f"""هيكل قاعدة بيانات PostgreSQL لمتجر دكّاني:
-    - الأقسام المتاحة (IDs): {cats_map}
-    - جداول النظام: 
-      1. products (id, name, price, unit, category_id, subcategory_id, image, visible)
-      2. categories (id, name)
-      3. subcategories (id, name, category_id)
-    - قواعد صارمة للمساعد:
-      1. استخدم دائماً ILIKE للبحث النصي (مثال: name ILIKE '%بندورة%').
-      2. للإحصائيات، استخدم COUNT(*) أو SUM(price).
-      3. رد بصيغة JSON فقط كالتالي: {{"sql": "الاستعلام هنا"}}."""
+    db_schema = f"""أنت مساعد ذكي لمتجر دكّاني للبقالة في رام الله. هيكل قاعدة بيانات PostgreSQL الكاملة:
 
+    === جدول المنتجات: products ===
+    - id, name (اسم المنتج), price (سعر البيع بالشيكل), unit (وحدة القياس)
+    - category_id (رقم القسم), subcategory_id (رقم القسم الفرعي)
+    - image (رابط الصورة), visible (هل المنتج ظاهر في المتجر: true/false)
+    - الأقسام المتاحة: {cats_map}
+
+    === جدول الأقسام: categories ===
+    - id, name (اسم القسم)
+
+    === جدول الأقسام الفرعية: subcategories ===
+    - id, name (اسم القسم الفرعي), category_id (رقم القسم الرئيسي)
+
+    === جدول الطلبات: orders ===
+    - id, name (اسم العميل), phone, whatsapp
+    - neighborhood (الحي), address (العنوان التفصيلي)
+    - total (إجمالي الطلب بالشيكل), delivery (رسوم التوصيل), profit (الربح الصافي)
+    - status (حالة الطلب: pending=انتظار, confirmed=مؤكد, delivered=تم التوصيل, cancelled=ملغي)
+    - payment (طريقة الدفع: cash=نقدي, online=إلكتروني)
+    - items (محتويات الطلب كـ JSON نصي), notes (ملاحظات العميل)
+    - created_at (تاريخ ووقت الطلب), lat, lng (إحداثيات الموقع)
+
+    === جدول العملاء: customers ===
+    - id, name (اسم العميل), phone, whatsapp
+    - neighborhood (الحي), address (العنوان)
+    - orders_count (عدد طلباته), total_spent (إجمالي ما أنفقه بالشيكل)
+    - created_at (تاريخ أول طلب), lat, lng (إحداثياته)
+
+    === قواعد SQL صارمة ===
+    1. استخدم ILIKE للبحث النصي (مثال: name ILIKE '%بندورة%')
+    2. للتواريخ استخدم: created_at >= NOW() - INTERVAL '30 days' للشهر الماضي
+    3. لحساب الأرباح: SUM(profit) من جدول orders
+    4. لحساب المبيعات: SUM(total) من جدول orders
+    5. فلتر الطلبات المكتملة فقط: WHERE status = 'delivered'
+    6. رد بصيغة JSON فقط: {{"sql": "الاستعلام هنا"}}"""
     try:
         # المرحلة 1: توليد SQL المنضبط
         system_prompt = f"أنت خبير PostgreSQL تقني لمتجر دكّاني. مهمتك تحويل سؤال المستخدم لاستعلام SQL دقيق. {db_schema}"
