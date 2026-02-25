@@ -751,7 +751,14 @@ def ai_chat():
             forbidden = ['DROP ', 'TRUNCATE ', 'ALTER ', 'GRANT ', 'CREATE ']
             if any(w in sql.upper() for w in forbidden):
                 return "خطأ أمني: هذا الأمر محظور برمجياً."
-            
+            # تصحيح تلقائي: إذا كان الاستعلام يحتوي JOIN مع categories استبدله بـ category_id مباشرة
+            import re
+            join_match = re.search(r"JOIN\s+categories\s+\w+\s+ON\s+\w+\.category_id\s*=\s*\w+\.id\s+WHERE\s+\w+\.name\s+(?:I?LIKE|=)\s*'([^']+)'", sql, re.IGNORECASE)
+            if join_match:
+                cat_name = join_match.group(1).strip('%')
+                cat_row = execute_query("SELECT id FROM categories WHERE name ILIKE %s", (f'%{cat_name}%',), fetchone=True)
+                if cat_row:
+                    sql = re.sub(r"JOIN\s+categories[^W]+WHERE\s+\w+\.name\s+(?:I?LIKE|=)\s*'[^']+'", f"WHERE category_id = {cat_row['id']}", sql, flags=re.IGNORECASE)
             is_write = any(k in sql.upper() for k in ['UPDATE ', 'DELETE ', 'INSERT '])
             res = execute_query(sql, commit=is_write, fetchall=True)
             
