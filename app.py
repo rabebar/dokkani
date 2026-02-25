@@ -803,7 +803,7 @@ def ai_chat():
     6. رد بصيغة JSON فقط: {{"sql": "الاستعلام هنا"}}"""
     try:
         # المرحلة 1: توليد SQL المنضبط
-        system_prompt = f"أنت خبير PostgreSQL تقني لمتجر دكّاني. مهمتك تحويل سؤال المستخدم لاستعلام SQL دقيق. {db_schema}"
+        system_prompt = f"أنت خبير PostgreSQL تقني لمتجر دكّاني. مهمتك تحويل سؤال المستخدم لاستعلام SQL دقيق. {db_schema} قواعد إضافية صارمة: 1. عند طلب الأسماء استخدم SELECT p.name, c.name as category فقط. 2. لا تستخدم أبداً cast() أو :: لتحويل الأنواع. 3. للمقارنات النصية استخدم ILIKE فقط. 4. لا تضف أي شرط إضافي لم يطلبه المستخدم صراحةً."
         r1 = req.post('https://api.openai.com/v1/chat/completions',
             headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
             json={
