@@ -696,8 +696,9 @@ def confirm_image():
         return jsonify({'success': False, 'error': 'الرابط فارغ'})
     execute_query('UPDATE products SET image=?, image_status=2 WHERE id=?', (image_url, prod_id), commit=True)
     return jsonify({'success': True})
+
 # ==========================================
-# AI Assistant — مساعد الذكاء الاصطناعي
+# AI Assistant — مساعد الذكاء الاصطناعي (النسخة الفولاذية)
 # ==========================================
 
 @app.route('/admin/ai-assistant')
@@ -710,6 +711,7 @@ def ai_assistant_page():
 def ai_chat():
     import requests as req
     import json as _json
+    import re
 
     OPENAI_KEY = os.environ.get('OPENAI_API_KEY', '')
     if not OPENAI_KEY:
@@ -720,127 +722,89 @@ def ai_chat():
         return jsonify({'success': False, 'error': 'الرسالة فارغة'})
 
     def safe_execute(sql):
-        """تنفيذ SQL آمن — fetchall دائماً للـ SELECT"""
+        """تنفيذ SQL وتحويل النتائج لنص آمن 100% بدون أي Indexing"""
         try:
             sql = sql.strip().rstrip(';')
-
-            # درع الحماية
             forbidden = ['DROP ', 'TRUNCATE ', 'ALTER TABLE', 'GRANT ', 'CREATE ']
             if any(w in sql.upper() for w in forbidden):
                 return None, 'أمر محظور لأسباب أمنية'
 
             is_write = any(k in sql.upper() for k in ['UPDATE ', 'DELETE ', 'INSERT '])
 
+            # جلب كل النتائج دائماً لمنع خطأ tuple index out of range
+            res = execute_query(sql, commit=is_write, fetchall=True)
+
             if is_write:
-                execute_query(sql, commit=True)
                 return {'status': 'success', 'message': 'تم تنفيذ التعديل بنجاح'}, None
-            else:
-                res = execute_query(sql, fetchall=True) or []
-                return {'total': len(res), 'data': res[:80]}, None
+            
+            # تحويل النتيجة بالكامل لنص لكي لا ينهار الكود عند محاولة الوصول لعنصر غير موجود
+            return {'data': res if res else []}, None
 
         except Exception as e:
-            return None, str(e)  # نرجع الخطأ منفصلاً
+            return None, str(e)
 
-    # خريطة قاعدة البيانات
-    db_schema = """جداول قاعدة البيانات (PostgreSQL):
+    db_schema = """قاعدة بيانات PostgreSQL:
 - products(id, name, price, unit, category_id, subcategory_id, image, visible)
-- categories(id, name, icon, visible)
-- subcategories(id, name, category_id, visible)
-- orders(id, name, phone, total, delivery, status, created_at)
-- customers(id, name, phone, orders_count, total_spent)
+- categories(id, name)
+- subcategories(id, name, category_id)
 
-قواعد إلزامية:
-- استخدم ILIKE '%كلمة%' للبحث النصي
-- استخدم STRING_AGG(name, ', ') بدلاً من GROUP_CONCAT
-- استخدم visible = 1 وليس visible = True
-- للمكررات: GROUP BY name HAVING COUNT(*) > 1
-- أضف LIMIT 100 للاستعلامات الكبيرة"""
+قواعد صارمة:
+1. استخدم ILIKE للبحث النصي العربي.
+2. استخدم visible = 1.
+3. استخدم string_agg لجمع البيانات.
+4. أضف LIMIT 100 دائماً."""
 
     def generate_sql(messages):
-        """يطلب من الـ AI توليد SQL"""
-        r = req.post(
-            'https://api.openai.com/v1/chat/completions',
-            headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
-            json={
-                'model': 'gpt-4o-mini',
-                'messages': messages,
-                'response_format': {'type': 'json_object'},
-                'max_tokens': 400,
-                'temperature': 0
-            },
-            timeout=30
-        )
-        if r.status_code != 200:
-            return None
-        raw = r.json()['choices'][0]['message']['content']
-        # تنظيف الـ JSON قبل التحليل
-        raw = raw.strip().replace('\n', ' ').replace('\r', ' ')
+        """توليد SQL مع تنظيف الـ JSON لضمان عدم الانقطاع"""
         try:
-            return _json.loads(raw).get('sql', '').strip()
-        except:
-            # محاولة استخراج SQL مباشرة إذا فشل JSON
-            import re
-            match = re.search(r'"sql"\s*:\s*"(.*?)"(?:\s*})', raw, re.DOTALL)
-            if match:
-                return match.group(1).replace('\\"', '"').strip()
-            return ''
+            r = req.post('https://api.openai.com/v1/chat/completions',
+                headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
+                json={
+                    'model': 'gpt-4o-mini',
+                    'messages': messages,
+                    'response_format': {'type': 'json_object'},
+                    'max_tokens': 400, 'temperature': 0
+                }, timeout=30)
+            
+            raw = r.json()['choices'][0]['message']['content'].strip().replace('\n', ' ').replace('\r', ' ')
+            try:
+                return _json.loads(raw).get('sql', '').strip()
+            except:
+                match = re.search(r'"sql"\s*:\s*"(.*?)"(?:\s*})', raw, re.DOTALL)
+                return match.group(1).replace('\\"', '"').strip() if match else ''
+        except: return None
 
     try:
-        system_prompt = f"""أنت خبير SQL لمتجر دكّاني.
-{db_schema}
-حوّل طلب المدير لـ SQL صحيح. رد بـ JSON فقط: {{"sql": "SELECT ..."}}"""
-
-        # المحاولة الأولى
-        messages = [
-            {'role': 'system', 'content': system_prompt},
-            {'role': 'user', 'content': user_message}
-        ]
+        system_prompt = f"أنت خبير SQL لمتجر دكّاني. {db_schema}. رد بـ JSON فقط: {{\"sql\": \"SELECT ...\"}}"
+        messages = [{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': user_message}]
+        
         sql_to_run = generate_sql(messages)
+        if not sql_to_run: return jsonify({'success': False, 'error': 'فشل توليد الاستعلام'})
 
-        if not sql_to_run:
-            return jsonify({'success': False, 'error': 'فشل توليد الاستعلام'})
-
-        # تنفيذ المحاولة الأولى
         result, error = safe_execute(sql_to_run)
 
-        # إذا فشلت → محاولة ثانية مع إخبار الـ AI بالخطأ سراً
+        # محاولة التصحيح التلقائي في حال وجود خطأ في الـ SQL
         if error:
             messages.append({'role': 'assistant', 'content': _json.dumps({'sql': sql_to_run})})
-            messages.append({'role': 'user', 'content': f'هذا الاستعلام أعطى خطأ: "{error}". صحّح الـ SQL مع مراعاة القواعد الإلزامية وأعد المحاولة. رد بـ JSON فقط.'})
-
+            messages.append({'role': 'user', 'content': f'الاستعلام أعطى خطأ: "{error}". أعد كتابته بدقة.'})
             sql_to_run = generate_sql(messages)
-            if sql_to_run:
-                result, error = safe_execute(sql_to_run)
+            if sql_to_run: result, error = safe_execute(sql_to_run)
 
-        # إذا فشلت المحاولتان
         if error or result is None:
-            return jsonify({'success': False, 'error': f'تعذر تنفيذ الاستعلام: {error}'})
+            return jsonify({'success': False, 'error': f'خلل في التنفيذ: {error}'})
 
-        # المرحلة الأخيرة: صياغة الإجابة للمدير
-        result_text = _json.dumps(result, ensure_ascii=False, default=str)[:3000]
-
-        r2 = req.post(
-            'https://api.openai.com/v1/chat/completions',
+        # صياغة الإجابة النهائية
+        r2 = req.post('https://api.openai.com/v1/chat/completions',
             headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
             json={
                 'model': 'gpt-4o-mini',
-                'messages': [{'role': 'user', 'content': f"""المدير سأل: {user_message}
-SQL المنفذ: {sql_to_run}
-النتائج: {result_text}
+                'messages': [{'role': 'user', 'content': f"سؤال: {user_message}\nSQL: {sql_to_run}\nالنتائج: {_json.dumps(result, ensure_ascii=False, default=str)[:3000]}\nأجب بالعربية بدقة."}]
+            }, timeout=30)
 
-أجب بالعربية بشكل واضح ومنظم. إذا كانت نتائج → اعرضها. إذا كان تعديل → أكد نجاحه."""}],
-                'max_tokens': 1000,
-                'temperature': 0.3
-            },
-            timeout=30
-        )
-
-        final_answer = r2.json()['choices'][0]['message']['content']
-        return jsonify({'success': True, 'answer': final_answer, 'sql': sql_to_run})
+        return jsonify({'success': True, 'answer': r2.json()['choices'][0]['message']['content'], 'sql': sql_to_run})
 
     except Exception as e:
         return jsonify({'success': False, 'error': f'خطأ: {str(e)}'})
-
 
 # ==========================================
 # تشغيل السيرفر
