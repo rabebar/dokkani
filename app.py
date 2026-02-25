@@ -698,7 +698,7 @@ def confirm_image():
     return jsonify({'success': True})
 
 # ==========================================
-# AI Assistant — مساعد الذكاء الاصطناعي (النسخة الفولاذية)
+# AI Assistant — مساعد الذكاء الاصطناعي (النسخة الموحدة والمحصنة)
 # ==========================================
 
 @app.route('/admin/ai-assistant')
@@ -722,48 +722,26 @@ def ai_chat():
         return jsonify({'success': False, 'error': 'الرسالة فارغة'})
 
     def safe_execute(sql):
-            """تنفيذ SQL آمن 100%"""
-    try:
-        sql = sql.strip().rstrip(';')
-        forbidden = ['DROP ', 'TRUNCATE ', 'ALTER TABLE', 'GRANT ', 'CREATE ']
-        if any(w in sql.upper() for w in forbidden):
-            return None, 'أمر محظور لأسباب أمنية'
+        """تنفيذ SQL مع جلب النتائج دائماً (تعديل المدير)"""
+        try:
+            sql = sql.strip().rstrip(';')
+            forbidden = ['DROP ', 'TRUNCATE ', 'ALTER TABLE', 'GRANT ', 'CREATE ']
+            if any(w in sql.upper() for w in forbidden):
+                return None, 'أمر محظور أمنياً'
 
-        is_write = any(k in sql.upper() for k in ['UPDATE ', 'DELETE ', 'INSERT '])
+            is_write = any(k in sql.upper() for k in ['UPDATE ', 'DELETE ', 'INSERT '])
+            
+            # تنفيذ التعديل أو القراءة مع fetchall دائماً لضمان استقرار الفهرس
+            res = execute_query(sql, commit=is_write, fetchall=True) or []
+            
+            if is_write:
+                return {'status': 'success', 'message': 'تم التنفيذ بنجاح'}, None
+            return {'data': res}, None
+        except Exception as e:
+            return None, str(e)
 
-        res = execute_query(sql, commit=is_write, fetchall=True)
-
-        if is_write:
-            return {'status': 'success', 'message': 'تم تنفيذ التعديل بنجاح'}, None
-
-        # تحويل أي نتيجة لقاموس بأمان
-        clean = []
-        for r in (res or []):
-            if isinstance(r, dict):
-                clean.append(r)
-            elif isinstance(r, (list, tuple)):
-                clean.append({'result': r[0] if len(r) == 1 else list(r)})
-            else:
-                clean.append({'result': r})
-
-        return {'total': len(clean), 'data': clean[:80]}, None
-
-    except Exception as e:
-        return None, str(e)
-
-    db_schema = """قاعدة بيانات PostgreSQL:
-- products(id, name, price, unit, category_id, subcategory_id, image, visible)
-- categories(id, name)
-- subcategories(id, name, category_id)
-
-قواعد صارمة:
-1. استخدم ILIKE للبحث النصي العربي.
-2. استخدم visible = 1.
-3. استخدم string_agg لجمع البيانات.
-4. أضف LIMIT 100 دائماً."""
-
-    def generate_sql(messages):
-        """توليد SQL مع تنظيف الـ JSON لضمان عدم الانقطاع"""
+    def generate_sql_safe(messages):
+        """توليد SQL مع تنظيف JSON (تعديل المدير)"""
         try:
             r = req.post('https://api.openai.com/v1/chat/completions',
                 headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
@@ -773,50 +751,68 @@ def ai_chat():
                     'response_format': {'type': 'json_object'},
                     'max_tokens': 400, 'temperature': 0
                 }, timeout=30)
+            if r.status_code != 200: return None
             
-            raw = r.json()['choices'][0]['message']['content'].strip().replace('\n', ' ').replace('\r', ' ')
+            raw_content = r.json()['choices'][0]['message']['content']
+            # تنظيف الـ JSON قبل التحليل (تعديل المدير)
+            clean_raw = raw_content.strip().replace('\n', ' ').replace('\r', ' ')
             try:
-                return _json.loads(raw).get('sql', '').strip()
+                return _json.loads(clean_raw).get('sql', '').strip()
             except:
-                match = re.search(r'"sql"\s*:\s*"(.*?)"(?:\s*})', raw, re.DOTALL)
+                # محاولة Regex إذا فشل JSON (تعديل المدير)
+                match = re.search(r'"sql"\s*:\s*"(.*?)"(?:\s*})', clean_raw, re.DOTALL)
                 return match.group(1).replace('\\"', '"').strip() if match else ''
         except: return None
 
+    db_schema = """جداول PostgreSQL: 
+    - products(id, name, price, unit, category_id, subcategory_id, image, visible)
+    - categories(id, name)
+    - subcategories(id, name, category_id)
+    قواعد: استخدم ILIKE للبحث، استخدم visible = 1، استخدم string_agg للجمع."""
+
     try:
-        system_prompt = f"أنت خبير SQL لمتجر دكّاني. {db_schema}. رد بـ JSON فقط: {{\"sql\": \"SELECT ...\"}}"
-        messages = [{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': user_message}]
+        # 1. المحاولة الأولى
+        system_prompt = f"أنت خبير SQL. {db_schema}. رد بـ JSON فقط: {{\"sql\": \"SELECT ...\"}}"
+        msgs = [{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': user_message}]
         
-        sql_to_run = generate_sql(messages)
-        if not sql_to_run: return jsonify({'success': False, 'error': 'فشل توليد الاستعلام'})
+        sql_to_run = generate_sql_safe(msgs)
+        if not sql_to_run:
+            return jsonify({'success': False, 'error': 'فشل توليد الاستعلام'})
 
         result, error = safe_execute(sql_to_run)
 
-        # محاولة التصحيح التلقائي في حال وجود خطأ في الـ SQL
+        # 2. نظام المحاولات (Retry) في حال وجود خطأ تقني
         if error:
-            messages.append({'role': 'assistant', 'content': _json.dumps({'sql': sql_to_run})})
-            messages.append({'role': 'user', 'content': f'الاستعلام أعطى خطأ: "{error}". أعد كتابته بدقة.'})
-            sql_to_run = generate_sql(messages)
-            if sql_to_run: result, error = safe_execute(sql_to_run)
+            msgs.append({'role': 'assistant', 'content': _json.dumps({'sql': sql_to_run})})
+            msgs.append({'role': 'user', 'content': f'الاستعلام أعطى خطأ: "{error}". صححه فوراً.'})
+            sql_to_run = generate_sql_safe(msgs)
+            if sql_to_run:
+                result, error = safe_execute(sql_to_run)
 
+        # 3. التحقق النهائي من وجود نتيجة قبل صياغة الإجابة
         if error or result is None:
-            return jsonify({'success': False, 'error': f'خلل في التنفيذ: {error}'})
+            return jsonify({'success': False, 'error': f'تعذر التنفيذ: {error}'})
 
-        # صياغة الإجابة النهائية
+        # 4. صياغة الإجابة النهائية للمدير
         r2 = req.post('https://api.openai.com/v1/chat/completions',
             headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
             json={
                 'model': 'gpt-4o-mini',
-                'messages': [{'role': 'user', 'content': f"سؤال: {user_message}\nSQL: {sql_to_run}\nالنتائج: {_json.dumps(result, ensure_ascii=False, default=str)[:3000]}\nأجب بالعربية بدقة."}]
+                'messages': [{'role': 'user', 'content': f"سؤال: {user_message}\nالنتائج: {_json.dumps(result, ensure_ascii=False, default=str)[:3000]}\nأجب بالعربية بدقة."}]
             }, timeout=30)
+        
+        if r2.status_code != 200:
+            return jsonify({'success': False, 'error': 'فشل OpenAI في صياغة الإجابة'})
 
-        return jsonify({'success': True, 'answer': r2.json()['choices'][0]['message']['content'], 'sql': sql_to_run})
+        final_answer = r2.json()['choices'][0]['message']['content']
+        return jsonify({'success': True, 'answer': final_answer, 'sql': sql_to_run})
 
     except Exception as e:
-        import traceback
-        return jsonify({'success': False, 'error': f'خطأ: {str(e)}', 'trace': traceback.format_exc()})
+        # المسار الأخير لضمان عدم عودة None أبداً
+        return jsonify({'success': False, 'error': f'خطأ غير متوقع: {str(e)}'})
 
 # ==========================================
-# تشغيل السيرفر
+# تشغيل السيرفر (نهاية الملف)
 # ==========================================
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
