@@ -812,7 +812,8 @@ def ai_chat():
         return jsonify({'success': True, 'answer': r2.json()['choices'][0]['message']['content'], 'sql': sql_to_run})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': f'خطأ: {str(e)}'})
+        import traceback
+        return jsonify({'success': False, 'error': f'خطأ: {str(e)}', 'trace': traceback.format_exc()})
 
 # ==========================================
 # تشغيل السيرفر
