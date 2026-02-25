@@ -772,7 +772,18 @@ def ai_chat():
         )
         if r.status_code != 200:
             return None
-        return _json.loads(r.json()['choices'][0]['message']['content']).get('sql', '').strip()
+        raw = r.json()['choices'][0]['message']['content']
+        # تنظيف الـ JSON قبل التحليل
+        raw = raw.strip().replace('\n', ' ').replace('\r', ' ')
+        try:
+            return _json.loads(raw).get('sql', '').strip()
+        except:
+            # محاولة استخراج SQL مباشرة إذا فشل JSON
+            import re
+            match = re.search(r'"sql"\s*:\s*"(.*?)"(?:\s*})', raw, re.DOTALL)
+            if match:
+                return match.group(1).replace('\\"', '"').strip()
+            return ''
 
     try:
         system_prompt = f"""أنت خبير SQL لمتجر دكّاني.
