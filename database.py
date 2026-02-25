@@ -22,7 +22,6 @@ def get_db():
         conn = sqlite3.connect('dokkani.db')
         conn.row_factory = sqlite3.Row
         return conn
-
 def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False):
     """المحرك الموحد: يعيد البيانات دائماً كقواميس (Dictionaries) قابلة للتعديل"""
     conn = get_db()
@@ -46,17 +45,17 @@ def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False
             raw = cur.fetchall()
             if raw:
                 res = [dict(r) for r in raw]
-        else:
-            res = None
 
         if commit:
             conn.commit()
             if "INSERT" in query.upper():
                 if is_pg:
                     cur.execute("SELECT lastval()")
-                    res = cur.fetchone()['lastval']
+                    row = cur.fetchone()
+                    res = row['lastval'] if row and 'lastval' in row else (row[0] if row else None)
                 else:
                     res = cur.lastrowid
+
         return res
     finally:
         conn.close()
