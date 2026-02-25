@@ -50,9 +50,18 @@ def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False
             conn.commit()
             if "INSERT" in query.upper():
                 if is_pg:
-                    cur.execute("SELECT lastval()")
-                    row = cur.fetchone()
-                    res = row['lastval'] if row and 'lastval' in row else (row[0] if row else None)
+                    try:
+                        cur.execute("SELECT lastval()")
+                        row = cur.fetchone()
+                        # فحص نوع النتيجة لضمان عدم حدوث خطأ Index Error
+                        if row and isinstance(row, dict):
+                            res = row.get('lastval')
+                        elif row and (isinstance(row, list) or isinstance(row, tuple)) and len(row) > 0:
+                            res = row[0]
+                        else:
+                            res = None
+                    except:
+                        res = None
                 else:
                     res = cur.lastrowid
 

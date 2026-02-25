@@ -722,26 +722,30 @@ def ai_chat():
         return jsonify({'success': False, 'error': 'الرسالة فارغة'})
 
     def safe_execute(sql):
-        """تنفيذ SQL وتحويل أي نتيجة إلى نص مفهوم لقتل أخطاء الفهرس"""
+        """تنفيذ SQL بذكاء وحماية من البيانات الضخمة وأخطاء الفهرس"""
         try:
             sql = sql.strip().rstrip(';')
             forbidden = ['DROP ', 'TRUNCATE ', 'ALTER ', 'GRANT ', 'CREATE ']
             if any(w in sql.upper() for w in forbidden):
-                return "خطأ: هذا الأمر محظور أمنياً."
+                return "خطأ أمني: هذا الأمر محظور برمجياً."
 
             is_write = any(k in sql.upper() for k in ['UPDATE ', 'DELETE ', 'INSERT '])
-            
-            # جلب النتائج كقائمة (fetchall) دائماً لضمان الثبات
             res = execute_query(sql, commit=is_write, fetchall=True)
             
-            if is_write: return "تمت العملية بنجاح."
-            if not res: return "لا يوجد نتائج حالياً."
+            if is_write: return "تم تنفيذ العملية بنجاح في قاعدة البيانات."
+            if not res or (isinstance(res, list) and len(res) == 0): 
+                return "لا توجد نتائج مطابقة لهذا الاستعلام في النظام."
 
-            # تحويل النتيجة (مهما كان شكلها) إلى نص JSON نظيف
+            # حماية الذاكرة: إرسال أول 15 نتيجة فقط إذا كان العدد ضخماً
+            if isinstance(res, list) and len(res) > 15:
+                return _json.dumps({
+                    "تنبيه_النظام": f"وجدنا {len(res)} نتيجة، إليك عينة من أول 15 صف فقط:",
+                    "النتائج": res[:15]
+                }, ensure_ascii=False, default=str)
+
             return _json.dumps(res, ensure_ascii=False, default=str)
         except Exception as e:
-            return f"Error: {str(e)}"
-
+            return f"Database Error: {str(e)}"
     # جلب أسماء الأقسام الحقيقية الآن من القاعدة لإعطائها للمساعد كـ "خارطة طريق"
     try:
         real_cats = execute_query("SELECT id, name FROM categories", fetchall=True)
@@ -749,14 +753,20 @@ def ai_chat():
     except:
         cats_map = "تعذر جلب الأقسام"
 
-    db_schema = f"""قاعدة بيانات دكّاني (PostgreSQL):
-    - الأقسام المتاحة: {cats_map}
-    - جداول: products(id, name, price, unit, category_id, subcategory_id, image, visible)
-    - قواعد: استخدم ILIKE للبحث، واستخدم COUNT(*) للعدد."""
+    db_schema = f"""هيكل قاعدة بيانات PostgreSQL لمتجر دكّاني:
+    - الأقسام المتاحة (IDs): {cats_map}
+    - جداول النظام: 
+      1. products (id, name, price, unit, category_id, subcategory_id, image, visible)
+      2. categories (id, name)
+      3. subcategories (id, name, category_id)
+    - قواعد صارمة للمساعد:
+      1. استخدم دائماً ILIKE للبحث النصي (مثال: name ILIKE '%بندورة%').
+      2. للإحصائيات، استخدم COUNT(*) أو SUM(price).
+      3. رد بصيغة JSON فقط كالتالي: {{"sql": "الاستعلام هنا"}}."""
 
     try:
-        # المرحلة 1: توليد SQL
-        system_prompt = f"أنت خبير SQL دقيق جداً لمتجر دكّاني. {db_schema}. رد بـ JSON فقط: {{\"sql\": \"SELECT ...\"}}"
+        # المرحلة 1: توليد SQL المنضبط
+        system_prompt = f"أنت خبير PostgreSQL تقني لمتجر دكّاني. مهمتك تحويل سؤال المستخدم لاستعلام SQL دقيق. {db_schema}"
         r1 = req.post('https://api.openai.com/v1/chat/completions',
             headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
             json={
@@ -771,16 +781,23 @@ def ai_chat():
         db_results = safe_execute(sql_content)
 
         # المرحلة 3: صياغة الإجابة الصادقة (بناءً على ما عاد من القاعدة فقط)
+        system_instruction = (
+            "أنت مدير بيانات صادق ودقيق لمتجر دكّاني. "
+            "أجب المستخدم بناءً على 'النتائج من القاعدة' المرفقة فقط. "
+            "1. إذا كانت النتائج تحتوي على عينة (15 صف)، أخبر المستخدم أن هناك نتائج إضافية لم تُعرض. "
+            "2. إذا كانت النتائج فارغة، قل بوضوح 'لم أجد بيانات تطابق طلبك' ولا تحاول اختراع أرقام. "
+            "3. إذا ظهر 'Database Error'، اشرح للمدير بوضوح أن هناك خطأ في صياغة الطلب التقني."
+        )
+        
         r2 = req.post('https://api.openai.com/v1/chat/completions',
             headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
             json={
                 'model': 'gpt-4o-mini',
                 'messages': [
-                    {'role': 'system', 'content': "أنت مدير بيانات صادق. أجب بناءً على النتائج المرفقة فقط. إذا كانت النتائج فارغة أو فيها خطأ أخبر المدير بصدق ولا تخمن."},
-                    {'role': 'user', 'content': f"السؤال: {user_message}\nالنتائج من القاعدة: {db_results}"}
+                    {'role': 'system', 'content': system_instruction},
+                    {'role': 'user', 'content': f"سؤال المدير: {user_message}\nالنتائج من القاعدة: {db_results}"}
                 ]
             }, timeout=30)
-
         return jsonify({'success': True, 'answer': r2.json()['choices'][0]['message']['content']})
 
     except Exception as e:
