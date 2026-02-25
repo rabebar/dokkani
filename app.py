@@ -722,26 +722,34 @@ def ai_chat():
         return jsonify({'success': False, 'error': 'الرسالة فارغة'})
 
     def safe_execute(sql):
-        """تنفيذ SQL وتحويل النتائج لنص آمن 100% بدون أي Indexing"""
-        try:
-            sql = sql.strip().rstrip(';')
-            forbidden = ['DROP ', 'TRUNCATE ', 'ALTER TABLE', 'GRANT ', 'CREATE ']
-            if any(w in sql.upper() for w in forbidden):
-                return None, 'أمر محظور لأسباب أمنية'
+            """تنفيذ SQL آمن 100%"""
+    try:
+        sql = sql.strip().rstrip(';')
+        forbidden = ['DROP ', 'TRUNCATE ', 'ALTER TABLE', 'GRANT ', 'CREATE ']
+        if any(w in sql.upper() for w in forbidden):
+            return None, 'أمر محظور لأسباب أمنية'
 
-            is_write = any(k in sql.upper() for k in ['UPDATE ', 'DELETE ', 'INSERT '])
+        is_write = any(k in sql.upper() for k in ['UPDATE ', 'DELETE ', 'INSERT '])
 
-            # جلب كل النتائج دائماً لمنع خطأ tuple index out of range
-            res = execute_query(sql, commit=is_write, fetchall=True)
+        res = execute_query(sql, commit=is_write, fetchall=True)
 
-            if is_write:
-                return {'status': 'success', 'message': 'تم تنفيذ التعديل بنجاح'}, None
-            
-            # تحويل النتيجة بالكامل لنص لكي لا ينهار الكود عند محاولة الوصول لعنصر غير موجود
-            return {'data': res if res else []}, None
+        if is_write:
+            return {'status': 'success', 'message': 'تم تنفيذ التعديل بنجاح'}, None
 
-        except Exception as e:
-            return None, str(e)
+        # تحويل أي نتيجة لقاموس بأمان
+        clean = []
+        for r in (res or []):
+            if isinstance(r, dict):
+                clean.append(r)
+            elif isinstance(r, (list, tuple)):
+                clean.append({'result': r[0] if len(r) == 1 else list(r)})
+            else:
+                clean.append({'result': r})
+
+        return {'total': len(clean), 'data': clean[:80]}, None
+
+    except Exception as e:
+        return None, str(e)
 
     db_schema = """قاعدة بيانات PostgreSQL:
 - products(id, name, price, unit, category_id, subcategory_id, image, visible)
