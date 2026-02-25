@@ -274,6 +274,8 @@ td {
 }
 tr:last-child td   { border-bottom: none; }
 tr:hover td        { background: #fafff9; }
+.drag-ghost td { background: #e8f5e9 !important; opacity: 0.7; }
+.drag-handle:active { cursor: grabbing; }
 tr.prod-hidden td  { opacity: .5; }
 
 .prod-img {
@@ -664,6 +666,7 @@ tr.prod-hidden td  { opacity: .5; }
         <table>
           <thead>
             <tr>
+              <th style="width: 30px; text-align: center;">☰</th>
               <th style="width: 40px; text-align: center;">
             <input type="checkbox" id="master-checkbox" onchange="toggleSelectAll(this)" style="width: 18px; height: 18px; cursor: pointer;">
           </th>
@@ -682,7 +685,8 @@ tr.prod-hidden td  { opacity: .5; }
             {% set sell = p.price + (0.5 if p.price <= 8 else (1.0 if p.price <= 19 else 1.5)) %}
             {% set cat_name = categories | selectattr('id','eq',p.category_id) | map(attribute='name') | first | default('—') %}
             <tr class="prod-row {% if not p.visible %}prod-hidden{% endif %}"
-                data-cat="{{ p.category_id }}" data-sub="{{ p.subcategory_id }}" data-name="{{ p.name }}">
+                data-cat="{{ p.category_id }}" data-sub="{{ p.subcategory_id }}" data-name="{{ p.name }}" data-id="{{ p.id }}">
+                <td class="drag-handle" style="text-align: center; cursor: grab; color: #9ca3af; font-size: 18px;">☰</td>
                 <td style="text-align: center;">
   <input type="checkbox" class="prod-checkbox" data-id="{{ p.id }}" onclick="updateBulkBtnVisibility()" style="width: 18px; height: 18px; cursor: pointer;">
 </td>
@@ -1436,6 +1440,37 @@ function uploadExcel() {
       document.getElementById('excel-progress').style.display   = 'none';
       document.getElementById('excel-upload-btn').style.display = '';
     });
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script>
+const tbody = document.getElementById('prod-tbody');
+if (tbody) {
+  Sortable.create(tbody, {
+    handle: '.drag-handle',
+    animation: 150,
+    ghostClass: 'drag-ghost',
+    onEnd: function() {
+      const rows = tbody.querySelectorAll('tr[data-id]');
+      const order = [];
+      rows.forEach((row, index) => {
+        order.push({ id: parseInt(row.getAttribute('data-id')), sort: index });
+      });
+      fetch('/api/admin/products/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order })
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          showToast('✅ تم حفظ الترتيب');
+        } else {
+          showToast('❌ فشل حفظ الترتيب');
+        }
+      });
+    }
+  });
 }
 </script>
 </body>

@@ -411,6 +411,18 @@ def api_delete_bulk_products():
     for prod_id in ids:
         delete_product(int(prod_id))
     return jsonify({'success': True, 'deleted': len(ids)})
+@app.route('/api/admin/products/reorder', methods=['POST'])
+@admin_required
+def api_reorder_products():
+    data = request.json.get('order', [])
+    if not data:
+        return jsonify({'success': False, 'error': 'لا توجد بيانات'})
+    try:
+        for item in data:
+            execute_query('UPDATE products SET sort=? WHERE id=?', (item['sort'], item['id']), commit=True)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/admin/products/move-bulk', methods=['POST'])
 @admin_required
