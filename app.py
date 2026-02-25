@@ -786,7 +786,9 @@ def ai_chat():
     - id هو رقم المنتج، name هو اسم المنتج، price هو السعر بالشيكل
     - category_id (رقم القسم), subcategory_id (رقم القسم الفرعي)
     - image (رابط الصورة), visible (هل المنتج ظاهر: true/false), sort (رقم الترتيب)
-    - الأقسام المتاحة: {cats_map}
+    - الأقسام المتاحة مع IDs الحقيقية (استخدم category_id مباشرة وليس اسم القسم): {cats_map}
+    - مثال صحيح: SELECT id, name, price FROM products WHERE category_id = 28
+    - مثال خاطئ: SELECT * FROM products JOIN categories ON ... WHERE categories.name ILIKE ...
 
     === جدول الأقسام: categories ===
     - id, name (اسم القسم)
