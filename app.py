@@ -761,11 +761,11 @@ def ai_chat():
                 return "لا توجد نتائج مطابقة لهذا الاستعلام في النظام."
 
             # حماية الذاكرة: إرسال أول 15 نتيجة فقط إذا كان العدد ضخماً
-            if isinstance(res, list) and len(res) > 15:
-                return _json.dumps({
-                    "تنبيه_النظام": f"وجدنا {len(res)} نتيجة، إليك عينة من أول 15 صف فقط:",
-                    "النتائج": res[:15]
-                }, ensure_ascii=False, default=str)
+            if isinstance(res, list) and len(res) > 100:
+             return _json.dumps({
+        "تنبيه_النظام": f"وجدنا {len(res)} نتيجة، إليك أول 100 صف:",
+        "النتائج": res[:100]
+    }, ensure_ascii=False, default=str)
 
             return _json.dumps(res, ensure_ascii=False, default=str)
         except Exception as e:
