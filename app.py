@@ -697,7 +697,7 @@ def confirm_image():
     execute_query('UPDATE products SET image=?, image_status=2 WHERE id=?', (image_url, prod_id), commit=True)
     return jsonify({'success': True})
 # ==========================================
-# AI Assistant — مساعد الذكاء الاصطناعي
+# AI Assistant — مساعد الذكاء الاصطناعي (النسخة الاحترافية والمحصنة)
 # ==========================================
 
 @app.route('/admin/ai-assistant')
@@ -709,76 +709,85 @@ def ai_assistant_page():
 @admin_required
 def ai_chat():
     import requests as req
-    import json
+    import json as _json
+
     OPENAI_KEY = os.environ.get('OPENAI_API_KEY', '')
-    if not OPENAI_KEY: return jsonify({'success': False, 'error': 'مفتاح OpenAI مفقود'})
+    if not OPENAI_KEY:
+        return jsonify({'success': False, 'error': 'مفتاح OpenAI مفقود'})
 
     user_message = request.json.get('message', '').strip()
-    if not user_message: return jsonify({'success': False, 'error': 'الرسالة فارغة'})
+    if not user_message:
+        return jsonify({'success': False, 'error': 'الرسالة فارغة'})
 
-    # --- وظيفة التنفيذ المباشر المحصنة ---
-    def execute_ai_sql(sql):
+    def safe_execute_sql(sql):
+        """تنفيذ SQL مع حماية الذاكرة ومعالجة النتائج الضخمة"""
         try:
-            # 1. منع الأوامر التدميرية
-            forbidden = ["DROP ", "TRUNCATE ", "ALTER TABLE", "GRANT"]
-            if any(word in sql.upper() for word in forbidden):
-                return "خطأ أمني: لا يمكن تنفيذ هذا الأمر."
-            
-            # 2. تحديد نوع العملية
-            is_write = any(k in sql.upper() for k in ["UPDATE", "DELETE", "INSERT"])
-            
-            # 3. التنفيذ مع معالجة ذكية للنتائج
-            res = execute_query(sql, commit=is_write, fetchall=not is_write)
-            
-            if is_write:
-                return "تم تنفيذ التعديل بنجاح في قاعدة البيانات."
-            
-            if not res or len(res) == 0:
-                return "لا توجد بيانات تطابق هذا البحث حالياً."
-                
-            return res # إرجاع النتائج كما هي ليحللها الـ AI
-        except Exception as e:
-            return f"خطأ أثناء التنفيذ: {str(e)}"
+            sql = sql.strip().rstrip(';')
+            # درع الحماية من الأوامر التدميرية
+            forbidden = ['DROP ', 'TRUNCATE ', 'ALTER TABLE', 'GRANT ', 'CREATE ']
+            if any(w in sql.upper() for w in forbidden):
+                return {'error': 'هذا الأمر محظور لأسباب أمنية'}
 
-    # --- خريطة البيانات (Schema) ---
-    db_schema = "جداولنا: products(id, name, price, unit, category_id, subcategory_id), categories(id, name), subcategories(id, name, category_id), orders(id, total, status)"
+            is_write = any(k in sql.upper() for k in ['UPDATE ', 'DELETE ', 'INSERT '])
+
+            # تنفيذ الاستعلام وجلب النتائج كاملة (fetchall=True) لقتل خطأ Index out of range
+            res = execute_query(sql, commit=is_write, fetchall=not is_write) or []
+
+            if is_write:
+                return {'status': 'success', 'message': 'تم تنفيذ التعديل بنجاح'}
+
+            # --- دمج مقطع "صمام الأمان" الذي اخترته ---
+            return {
+                'total_found': len(res), # إخبار الـ AI بالعدد الحقيقي (مثلاً 500)
+                'preview_data': res[:80] # إعطاء الـ AI أول 80 نتيجة فقط ليحللها (صمام أمان)
+            }
+
+        except Exception as e:
+            return {'error': str(e)}
+
+    db_schema = """قاعدة بيانات PostgreSQL (دكّاني):
+- products(id, name, price, unit, category_id, subcategory_id, image, visible)
+- categories(id, name)
+- subcategories(id, name, category_id)
+ملاحظات: استخدم ILIKE للبحث. استخدم string_agg لجمع البيانات."""
 
     try:
-        # المرحلة 1: تحويل السؤال إلى SQL
-        system_prompt = f"أنت خبير SQL لمتجر دكّاني. {db_schema}. حول طلب المدير لـ SQL دقيق. رد بـ JSON فقط: {{\"sql\": \"الكود هنا\"}}"
-        
-        resp1 = req.post('https://api.openai.com/v1/chat/completions',
+        # المرحلة 1: تحويل سؤال المدير إلى SQL
+        r1 = req.post(
+            'https://api.openai.com/v1/chat/completions',
             headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
             json={
                 'model': 'gpt-4o-mini',
-                'messages': [{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': user_message}],
-                'response_format': { "type": "json_object" }
-            }, timeout=30)
+                'messages': [
+                    {'role': 'system', 'content': f"أنت خبير SQL. {db_schema}. رد بـ JSON فقط: {{\"sql\": \"SELECT ...\"}}."},
+                    {'role': 'user', 'content': user_message}
+                ],
+                'response_format': {'type': 'json_object'}
+            }, timeout=30
+        )
 
-        # التصحيح هنا: استخدمنا json.loads بدلاً من req.json.loads
-        ai_data = resp1.json()
-        ai_sql_content = ai_data['choices'][0]['message']['content']
-        sql_to_run = json.loads(ai_sql_content)['sql']
+        sql_to_run = _json.loads(r1.json()['choices'][0]['message']['content'])['sql']
 
-        # المرحلة 2: تنفيذ الـ SQL المولد
-        db_results = execute_ai_sql(sql_to_run)
+        # المرحلة 2: تنفيذ الـ SQL عبر "المحرك المحصن"
+        db_results = safe_execute_sql(sql_to_run)
 
-        # المرحلة 3: صياغة الإجابة النهائية بناءً على الأرقام الحقيقية
-        final_prompt = f"المدير سأل: {user_message}\nالـ SQL: {sql_to_run}\nالنتائج من القاعدة: {db_results}\nأجب المدير بالعربية باحترافية."
-
-        resp2 = req.post('https://api.openai.com/v1/chat/completions',
+        # المرحلة 3: صياغة الإجابة النهائية بناءً على "النتائج الحقيقية"
+        r2 = req.post(
+            'https://api.openai.com/v1/chat/completions',
             headers={'Authorization': f'Bearer {OPENAI_KEY}', 'Content-Type': 'application/json'},
             json={
                 'model': 'gpt-4o-mini',
-                'messages': [{'role': 'user', 'content': final_prompt}],
-                'max_tokens': 800
-            }, timeout=30)
+                'messages': [
+                    {'role': 'system', 'content': "أنت مدير بيانات دكّاني. أجب بالعربية بناءً على النتائج الحقيقية. إذا كان هناك نتائج أكثر مما عرض عليك، أخبر المدير بالعدد الإجمالي."},
+                    {'role': 'user', 'content': f"سؤال المدير: {user_message}\nنتائج قاعدة البيانات: {_json.dumps(db_results, ensure_ascii=False, default=str)}"}
+                ]
+            }, timeout=30
+        )
 
-        return jsonify({'success': True, 'answer': resp2.json()['choices'][0]['message']['content']})
+        return jsonify({'success': True, 'answer': r2.json()['choices'][0]['message']['content'], 'sql': sql_to_run})
 
     except Exception as e:
         return jsonify({'success': False, 'error': f"خلل في المحرك الذكي: {str(e)}"})
-
 
 # ==========================================
 # تشغيل السيرفر
