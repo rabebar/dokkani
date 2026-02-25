@@ -825,6 +825,7 @@ def ai_chat():
             }, timeout=30)
         
         sql_content = _json.loads(r1.json()['choices'][0]['message']['content'])['sql']
+        app.logger.info(f"AI Generated SQL: {sql_content}")
 
         # المرحلة 2: التنفيذ المباشر (النسخة الفولاذية)
         db_results = safe_execute(sql_content)
