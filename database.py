@@ -287,7 +287,7 @@ def get_products(category_id=None, subcategory_id=None, visible_only=True):
 def get_products_with_sell_price(category_id=None, subcategory_id=None, visible_only=True):
     products = get_products(category_id, subcategory_id, visible_only)
     for p in products:
-        p['sell_price'] = get_selling_price(p['price'])
+        p['sell_price'] = get_selling_price(p['price'], p.get('category_id'))
     return products
 
 def add_product(name, price, unit, category_id, subcategory_id=None, image=None):
@@ -386,13 +386,14 @@ def get_daily_stats():
     }
 
 # --- دوال التسعير والمسافة ---
-def calculate_profit(price):
+def calculate_profit(price, category_id=None):
+    if category_id == 31: return 0.0  # استثناء قسم الدخان
     if price <= 8: return 1.0
     elif price <= 19: return 1.5
     else: return 2.0
 
-def get_selling_price(price):
-    return round(price + calculate_profit(price), 2)
+def get_selling_price(price, category_id=None):
+    return round(price + calculate_profit(price, category_id), 2)
 
 def get_order_profit(items):
     total = 0

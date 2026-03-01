@@ -249,7 +249,7 @@ def api_search():
         (f'%{q}%',), fetchall=True
     ) or []
     for p in results:
-        p['sell_price'] = get_selling_price(p['price'])
+        p['sell_price'] = get_selling_price(p['price'], p.get('category_id'))
     return jsonify({'products': results})
 
 
