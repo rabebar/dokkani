@@ -183,15 +183,25 @@ function hideCard(id) {
 async function deleteProduct(id, name) {
     if (!confirm(`⚠️ هل أنت متأكد من حذف منتج "${name}" نهائياً؟\nلا يمكن التراجع عن هذا الإجراء!`)) return;
     try {
-        const response = await fetch(`/api/product/${id}/delete`, { method: 'POST' });
+        const response = await fetch(`/api/product/${id}/delete`, { 
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
         const data = await response.json();
         if (data.success) {
             const card = document.getElementById(`card-${id}`);
-            card.style.background = '#ffebee';
-            card.style.opacity = '0'; 
-            setTimeout(() => card.remove(), 300);
-        } else { alert('فشل الحذف من قاعدة البيانات'); }
-    } catch (err) { alert('خطأ في الاتصال بالسيرفر'); }
+            if (card) {
+                card.style.transition = 'all 0.4s ease';
+                card.style.transform = 'scale(0.8)';
+                card.style.opacity = '0'; 
+                setTimeout(() => card.remove(), 400);
+            }
+        } else { 
+            alert('❌ فشل الحذف من قاعدة البيانات'); 
+        }
+    } catch (err) { 
+        alert('❌ خطأ في الاتصال بالسيرفر'); 
+    }
 }
 </script>
 </body>
