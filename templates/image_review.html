@@ -30,7 +30,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 /* Grid */
 .review-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:14px}
-.item-card{background:var(--w);border-radius:16px;overflow:hidden;box-shadow:var(--sh);border:1.5px solid var(--g200);padding:14px;display:flex;flex-direction:column;gap:10px}
+.item-card{background:var(--w);border-radius:16px;overflow:hidden;box-shadow:var(--sh);border:1.5px solid var(--g200);padding:14px;display:flex;flex-direction:column;gap:10px;transition: all 0.3s ease;}
 .card-header{display:flex;align-items:flex-start;gap:10px}
 .cat-badge{background:var(--gx);color:var(--g1);font-size:9px;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap}
 .item-name{font-size:14px;font-weight:900;color:var(--g1);flex:1;line-height:1.4}
@@ -50,6 +50,8 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .btn-save{flex:1;background:var(--g4);color:#fff;border:none;padding:10px;border-radius:10px;cursor:pointer;font-weight:900;font-family:'Cairo';font-size:13px;transition:.2s}
 .btn-save:disabled{background:var(--g200);cursor:not-allowed}
 .btn-skip{background:var(--g100);color:var(--g400);border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-family:'Cairo';font-size:12px}
+.btn-delete{background:#ffebee; color:var(--red); font-weight:700; border:none; padding:10px 14px; border-radius:10px; cursor:pointer; font-family:'Cairo'; font-size:12px; transition: .2s;}
+.btn-delete:hover{background:#ffcdd2}
 
 /* Pagination */
 .pagination{display:flex;align-items:center;justify-content:center;gap:10px;padding:20px}
@@ -71,7 +73,6 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     <a href="/admin/products" class="back-btn">← لوحة التحكم</a>
   </div>
 
-  <!-- فلتر الأقسام الرئيسية -->
   <div class="filter-bar">
     <a href="/admin/image-review?page=1" class="filter-btn {% if not cat_filter %}active{% endif %}">الكل</a>
     {% for cat in categories %}
@@ -82,7 +83,6 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     {% endfor %}
   </div>
 
-  <!-- فلتر الأقسام الفرعية (يظهر عند اختيار قسم رئيسي) -->
   {% if subcategories %}
   <div class="filter-bar" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; margin-top: 4px;">
     <a href="/admin/image-review?cat={{ cat_filter }}&page=1" 
@@ -110,11 +110,11 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
   <div class="item-card" id="card-{{ p.id }}">
     <div class="card-header">
       <div class="item-name">
-  {{ p.name }} 
-  <span style="color:var(--g4); font-weight:700; font-size:12px; margin-right:8px; background:var(--gx); padding:1px 6px; border-radius:6px;">
-    {{ p.price }}₪
-  </span>
-</div>
+        {{ p.name }} 
+        <span style="color:var(--g4); font-weight:700; font-size:12px; margin-right:8px; background:var(--gx); padding:1px 6px; border-radius:6px;">
+          {{ p.price }}₪
+        </span>
+      </div>
       {% if p.cat_name %}
       <div class="cat-badge">{{ p.cat_name }}</div>
       {% endif %}
@@ -131,6 +131,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     <div class="card-actions">
       <button class="btn-save" onclick="saveImage({{ p.id }}, this)">💾 حفظ</button>
       <button class="btn-skip" onclick="hideCard({{ p.id }})">تخطي</button>
+      <button class="btn-delete" onclick="deleteProduct({{ p.id }}, {{ p.name | tojson }})">🗑️ مسح</button>
     </div>
   </div>
   {% endfor %}
@@ -149,7 +150,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 {% else %}
 <div class="empty">
   <div class="empty-icon">✅</div>
-  <div style="font-size:18px;font-weight:900;color:var(--g1);margin-bottom:8px">القسم مكتمل!</div>
+  <div style="font-size:18px;font-weight:900;color:var(--g1);margin-bottom:8px">الالقسم مكتمل!</div>
   <div style="font-size:13px">لا توجد منتجات بدون صور هنا.</div>
 </div>
 {% endif %}
@@ -173,9 +174,24 @@ async function saveImage(id, btn) {
         } else { alert('فشل الحفظ'); btn.disabled = false; btn.innerText = '💾 حفظ'; }
     } catch (err) { alert('خطأ اتصال'); btn.disabled = false; btn.innerText = '💾 حفظ'; }
 }
+
 function hideCard(id) {
     const card = document.getElementById(`card-${id}`);
     card.style.opacity = '0'; setTimeout(() => card.remove(), 300);
+}
+
+async function deleteProduct(id, name) {
+    if (!confirm(`⚠️ هل أنت متأكد من حذف منتج "${name}" نهائياً؟\nلا يمكن التراجع عن هذا الإجراء!`)) return;
+    try {
+        const response = await fetch(`/api/product/${id}/delete`, { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+            const card = document.getElementById(`card-${id}`);
+            card.style.background = '#ffebee';
+            card.style.opacity = '0'; 
+            setTimeout(() => card.remove(), 300);
+        } else { alert('فشل الحذف من قاعدة البيانات'); }
+    } catch (err) { alert('خطأ في الاتصال بالسيرفر'); }
 }
 </script>
 </body>
