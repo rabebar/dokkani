@@ -177,7 +177,10 @@ async function saveImage(id, btn) {
 
 function hideCard(id) {
     const card = document.getElementById(`card-${id}`);
-    card.style.opacity = '0'; setTimeout(() => card.remove(), 300);
+    if (card) {
+        card.style.opacity = '0'; 
+        setTimeout(() => card.remove(), 300);
+    }
 }
 
 async function deleteProduct(id, name) {
