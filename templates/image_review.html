@@ -131,7 +131,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     <div class="card-actions">
       <button class="btn-save" onclick="saveImage({{ p.id }}, this)">💾 حفظ</button>
       <button class="btn-skip" onclick="hideCard({{ p.id }})">تخطي</button>
-      <button class="btn-delete" onclick="deleteProduct({{ p.id }}, {{ p.name | tojson }})">🗑️ مسح</button>
+      <button class="btn-delete" onclick='deleteProduct({{ p.id }}, {{ p.name | tojson }})'>🗑️ مسح</button>
     </div>
   </div>
   {% endfor %}
