@@ -683,7 +683,8 @@ tr.prod-hidden td  { opacity: .5; }
           <tbody id="prod-tbody">
             {% for p in products %}
             {# حساب الربح مع استثناء القسم 31 #}
-            {% set profit = 0 if p.category_id == 31 else (0.5 if p.price <= 8 else (1.0 if p.price <= 19 else 1.5)) %}
+            {# تحديث معادلة الربح لتطابق الباك إند #}
+            {% set profit = 0 if (p.category_id == 31 or p.price in [0.5, 1.0]) else (0.5 if p.price <= 8 else (1.0 if p.price <= 19 else 1.5)) %}
             {% set sell = p.price + profit %}
             {% set cat_name = categories | selectattr('id','eq',p.category_id) | map(attribute='name') | first | default('—') %}
             <tr class="prod-row {% if not p.visible %}prod-hidden{% endif %}"
@@ -977,7 +978,7 @@ function previewImg(input, previewId) {
 function calcSell() {
   const price  = parseFloat(document.getElementById('prod-price').value) || 0;
   const catId = document.getElementById('prod-cat').value;
-  const profit = (catId == "31") ? 0 : (price <= 8 ? 0.5 : price <= 19 ? 1.0 : 1.5);
+  const profit = (catId == "31" || price == 0.5 || price == 1.0) ? 0 : (price <= 8 ? 0.5 : price <= 19 ? 1.0 : 1.5);
   document.getElementById('prod-sell').value = (price + profit).toFixed(1) + '₪';
 }
 
