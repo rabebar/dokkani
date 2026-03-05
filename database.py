@@ -388,6 +388,7 @@ def get_daily_stats():
 # --- دوال التسعير والمسافة ---
 def calculate_profit(price, category_id=None):
     if category_id == 31: return 0.0  # استثناء قسم الدخان
+    if price in (0.5, 1.0): return 0.0  # إلغاء الربح عن أصناف النص شيكل والشيكل
     if price <= 8: return 1.0
     elif price <= 19: return 1.5
     else: return 2.0
