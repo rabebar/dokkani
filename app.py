@@ -23,6 +23,8 @@ from database import (
 app = Flask(__name__)
 from flask_compress import Compress
 Compress(app)
+from flask_caching import Cache
+cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 300})
 app.config.from_object(Config)
 
 # ==========================================
@@ -155,6 +157,7 @@ def profile():
     return render_template('profile.html', app_name=Config.APP_NAME, app_phone=Config.APP_PHONE)
 
 @app.route('/shop')
+@cache.cached(timeout=600)
 def shop():
     if not is_mobile():
         return render_template('landing.html', app_name=Config.APP_NAME, app_phone=Config.APP_PHONE)
@@ -162,6 +165,7 @@ def shop():
     return render_template('shop.html', categories=categories, app_name=Config.APP_NAME, app_phone=Config.APP_PHONE)
 
 @app.route('/category/<int:cat_id>')
+@cache.cached(timeout=300)
 def category_page(cat_id):
     if not is_mobile(): return redirect('/')
     cat = execute_query('SELECT * FROM categories WHERE id=?', (cat_id,), fetchone=True)
@@ -171,6 +175,7 @@ def category_page(cat_id):
     return render_template('category.html', cat=cat, subcats=subcats, products=products, app_name=Config.APP_NAME)
 
 @app.route('/subcategory/<int:sub_id>')
+@cache.cached(timeout=300)
 def subcategory_page(sub_id):
     if not is_mobile(): return redirect('/')
     sub = execute_query('SELECT * FROM subcategories WHERE id=?', (sub_id,), fetchone=True)

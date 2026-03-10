@@ -7,3 +7,4 @@ pandas
 openpyxl
 duckduckgo_search==6.3.7
 Flask-Compress==1.15
+Flask-Caching==2.1.0
