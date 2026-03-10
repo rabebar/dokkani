@@ -142,6 +142,7 @@ tr:hover td{background:#fafff9}
     </div>
     <div class="tb-right">
       <button class="tb-btn" onclick="location.reload()">🔄</button>
+      <button class="tb-btn" onclick="clearCache()" title="تنظيف الكاش">🧹</button>
       <button class="tb-btn">🔔<span class="ndot"></span></button>
     </div>
   </div>
@@ -472,6 +473,14 @@ function refreshStats(){
     });
 }
 setInterval(refreshStats, 30000);
+function clearCache() {
+  if(!confirm('هل تريد تنظيف الذاكرة المؤقتة؟ سيتم تحديث البيانات فوراً للزبائن.')) return;
+  fetch('/api/admin/clear-cache', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if(data.success) alert('✅ تم تنظيف الكاش بنجاح!');
+    });
+}
 </script>
 </body>
 </html>

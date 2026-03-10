@@ -410,6 +410,12 @@ def api_clear_products():
     from database import clear_all_products
     clear_all_products()
     return jsonify({'success': True})
+@app.route('/api/admin/clear-cache', methods=['POST'])
+@admin_required
+def api_clear_cache():
+    """تنظيف الذاكرة المؤقتة يدوياً"""
+    cache.clear()
+    return jsonify({'success': True})
 
 @app.route('/api/admin/products/delete-bulk', methods=['POST'])
 def api_delete_bulk_products():
