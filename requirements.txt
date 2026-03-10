@@ -6,3 +6,4 @@ Pillow
 pandas
 openpyxl
 duckduckgo_search==6.3.7
+Flask-Compress==1.15

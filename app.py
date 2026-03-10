@@ -21,6 +21,8 @@ from database import (
 )
 
 app = Flask(__name__)
+from flask_compress import Compress
+Compress(app)
 app.config.from_object(Config)
 
 # ==========================================
