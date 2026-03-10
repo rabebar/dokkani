@@ -208,7 +208,7 @@ tr:hover td{background:#fafff9}
             <td style="font-size: 11px;">📍 {{ o.neighborhood }}</td>
             <td>
               <div style="max-height: 80px; overflow-y: auto; font-size: 11px; line-height: 1.5;">
-                {% for item in o.items %}
+                {% for item in o['items'] %}
                 <div>• {{ item.name }} ({{ item.qty }})</div>
                 {% endfor %}
               </div>
