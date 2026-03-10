@@ -219,7 +219,7 @@ tr:hover td{background:#fafff9}
             <td><b style="font-size: 14px;">{{ o.total }}₪</b></td>
             <td>
               <span class="sp sp-{{ o.status }}">{{ o.status_text }}</span>
-              <select class="sel-status" onchange="updateStatus({{ o.id }}, this)" style="display: block; margin-top: 6px; width: 100%;">
+              <select class="sel-status" onchange="updateStatus({{ o.id }}, this)" onclick="event.stopPropagation()" style="display: block; margin-top: 6px; width: 100%;">
                 <option value="new" {% if o.status=='new' %}selected{% endif %}>🆕 جديد</option>
                 <option value="prep" {% if o.status=='prep' %}selected{% endif %}>⏳ تحضير</option>
                 <option value="delivering" {% if o.status=='delivering' %}selected{% endif %}>🚗 توصيل</option>
@@ -369,7 +369,7 @@ function closeOrderModal() {
 }
 </script>
 <!-- Modal نافذة تفاصيل الطلب -->
-<div id="order-details-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(3px);">
+<div id="order-details-modal" onclick="if(event.target===this)closeOrderModal()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; padding:15px; backdrop-filter:blur(3px);">
   <div style="background:#fff; border-radius:20px; width:100%; max-width:450px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 50px rgba(0,0,0,0.3); animation:popIn 0.3s ease;">
     <div style="padding:18px; border-bottom:1px solid #eee; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:#fff;">
       <h3 id="m-order-id" style="color:var(--g1); font-weight:900;">طلب #</h3>
