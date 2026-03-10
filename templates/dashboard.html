@@ -78,17 +78,6 @@ tr:hover td{background:#fafff9}
 .sel-status{padding:5px 9px;border-radius:8px;border:1px solid var(--g200);font-family:'Cairo',sans-serif;font-size:11px;background:var(--w);cursor:pointer;outline:none;color:var(--g800)}
 .empty-state{text-align:center;padding:40px;color:var(--g400)}
 .empty-state .ei{font-size:40px;margin-bottom:12px}
-/* تنسيقات نظام تجميع الزبائن (Accordion) */
-.customer-header-row { background: var(--gx) !important; cursor: pointer; transition: 0.2s; border-right: 4px solid var(--g4); }
-.customer-header-row:hover { background: var(--gp) !important; }
-.customer-info-cell { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
-.order-details-container { display: none; background: #fcfcfc; }
-.order-details-container.show { display: table-row; }
-.nested-orders-table { width: 100%; margin: 0; background: #fff; border: 1px solid var(--g200); box-shadow: inset 0 2px 10px rgba(0,0,0,0.02); }
-.nested-orders-table td { border-bottom: 1px dashed var(--g200); background: transparent !important; }
-.expand-icon { transition: transform 0.3s; color: var(--g4); font-weight: 900; }
-.expand-icon.open { transform: rotate(90deg); }
-.customer-badge { background: var(--g2); color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-right: 10px; }
 </style>
 </head>
 <body>
@@ -129,7 +118,7 @@ tr:hover td{background:#fafff9}
       <div class="tb-title">📦 إدارة الطلبات</div>
       <div class="tb-date" id="today-date"></div>
     </div>
-    <!-- شريط الفلترة بالتاريخ المطور -->
+    <!-- شريط الفلترة بالتاريخ -->
     <div style="display: flex; align-items: center; gap: 12px; background: var(--gx); padding: 6px 16px; border-radius: 12px; border: 1px solid var(--g200); margin-right: 20px;">
       <div style="display: flex; flex-direction: column;">
         <span style="font-size: 10px; color: var(--g400); font-weight: 700; margin-bottom: 2px;">تصفية الطلبات بحسب التاريخ:</span>
@@ -193,93 +182,58 @@ tr:hover td{background:#fafff9}
       <table id="orders-table">
         <thead>
           <tr>
-            <th>رقم</th>
-            <th>الزبون</th>
+            <th>الطلب</th>
+            <th>الزبون والهاتف</th>
             <th>المنطقة</th>
             <th>المنتجات</th>
+            <th style="color: var(--red);">الملاحظات</th>
             <th>الإجمالي</th>
-            <th>ربحي</th>
             <th>الحالة</th>
             <th>إجراءات</th>
           </tr>
         </thead>
         <tbody id="orders-list-body">
-          {% for phone, customer_orders in orders | groupby('phone') %}
-          {% set first_order = customer_orders[0] %}
-          
-          <!-- سطر رأس الزبون (المجلد الرئيسي) -->
-          <tr class="customer-header-row" onclick="toggleCustomerOrders('{{ phone }}')" data-customer-phone="{{ phone }}">
-            <td colspan="2">
-              <div class="customer-info-cell">
-                <span class="expand-icon" id="icon-{{ phone }}">▶</span>
-                <div class="adm-av" style="background: var(--g4); width: 35px; height: 35px;">👤</div>
-                <div>
-                  <b style="font-size: 14px;">{{ first_order['name'] }}</b>
-                  <div style="font-size: 11px; color: var(--g400); direction: ltr; text-align: right;">+970{{ phone }}</div>
-                </div>
-                <span class="customer-badge">{{ customer_orders | length }} طلبات</span>
+          {% for o in orders %}
+          <tr class="order-row-item" data-status="{{ o.status }}" data-full-date="{{ o.created_at }}">
+            <td>
+              <span class="oid">#{{ o.id }}</span>
+              <div style="font-size: 10px; color: var(--g400); margin-top: 4px;">{{ o.created_at }}</div>
+            </td>
+            <td>
+              <b>{{ o.name }}</b>
+              <div style="font-size: 11px; color: var(--g2); direction: ltr; text-align: right; margin-top: 2px;">
+                <a href="tel:{{ o.phone }}" style="text-decoration: none; color: inherit; font-weight: 900;">📞 {{ o.phone }}</a>
               </div>
             </td>
-            <td>📍 {{ first_order['neighborhood'] }}</td>
-            <td colspan="2" style="text-align: center;">
-              <span style="font-size: 10px; color: var(--g400);">إجمالي مشترياته:</span><br>
-              <b style="color: var(--g1); font-size: 15px;">{{ customer_orders | sum(attribute='total') | round(1) }}₪</b>
-            </td>
-            <td><b style="color: var(--g2)">{{ customer_orders | sum(attribute='profit') | round(1) }}₪</b></td>
-            <td><span class="sp sp-done">زبون مسجل</span></td>
+            <td style="font-size: 11px;">📍 {{ o.neighborhood }}</td>
             <td>
-               <button class="abt abt-wa" onclick="event.stopPropagation(); openWA('{{ phone }}', 'استفسار')">💬</button>
+              <div style="max-height: 80px; overflow-y: auto; font-size: 11px; line-height: 1.5;">
+                {% for item in o.items %}
+                <div>• {{ item.name }} ({{ item.qty }})</div>
+                {% endfor %}
+              </div>
             </td>
-          </tr>
-
-          <!-- سطر الحاوية المخفية (طلبات الزبون التفصيلية) -->
-          <tr class="order-details-container" id="details-{{ phone }}">
-            <td colspan="8" style="padding: 10px 20px; background: #fdfdfd;">
-              <table class="nested-orders-table" style="border-radius: 8px; overflow: hidden;">
-                <thead>
-                  <tr style="background: #f1f5f9;">
-                    <th>رقم الطلب</th>
-                    <th>التاريخ والوقت</th>
-                    <th>ملاحظات الزبون</th>
-                    <th>المنتجات المطلوبة</th>
-                    <th>الإجمالي</th>
-                    <th>الموقع</th>
-                    <th>الحالة الحالية</th>
-                    <th>تعديل الحالة</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for o in customer_orders %}
-                  <!-- السطر الفعلي للطلب - مجهز بـ data-date للفلترة -->
-                  <tr class="order-row-item" data-full-date="{{ o['created_at'] }}">
-                    <td><span class="oid">#{{ o['id'] }}</span></td>
-                    <td style="font-size: 11px; color: var(--g600);">{{ o['created_at'] }}</td>
-                    <td style="font-size: 11px; color: var(--red); max-width: 150px; white-space: normal;">{{ o['notes'] or '—' }}</td>
-                    <td>
-                      {% for item in o['items'] %}
-                      <div style="font-size: 11px; color: var(--g800);">• {{ item.name }} ({{ item.qty }})</div>
-                      {% endfor %}
-                    </td>
-                    <td><b>{{ o['total'] }}₪</b></td>
-                    <td>
-                      {% if o['lat'] and o['lng'] %}
-                      <button class="abt abt-map" onclick="openMap({{ o['lat'] }}, {{ o['lng'] }})">🗺️</button>
-                      {% else %}—{% endif %}
-                    </td>
-                    <td><span class="sp sp-{{ o['status'] }}">{{ o['status_text'] }}</span></td>
-                    <td>
-                      <select class="sel-status" onchange="updateStatus({{ o['id'] }}, this)">
-                        <option value="new" {% if o['status']=='new' %}selected{% endif %}>🆕 جديد</option>
-                        <option value="prep" {% if o['status']=='prep' %}selected{% endif %}>⏳ تحضير</option>
-                        <option value="delivering" {% if o['status']=='delivering' %}selected{% endif %}>🚗 توصيل</option>
-                        <option value="done" {% if o['status']=='done' %}selected{% endif %}>✅ تم</option>
-                        <option value="cancelled" {% if o['status']=='cancelled' %}selected{% endif %}>❌ ملغي</option>
-                      </select>
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+            <td style="color: var(--red); font-size: 11px; font-weight: 900; max-width: 130px; word-wrap: break-word;">
+              {{ o.notes if o.notes else '—' }}
+            </td>
+            <td><b style="font-size: 14px;">{{ o.total }}₪</b></td>
+            <td>
+              <span class="sp sp-{{ o.status }}">{{ o.status_text }}</span>
+              <select class="sel-status" onchange="updateStatus({{ o.id }}, this)" style="display: block; margin-top: 6px; width: 100%;">
+                <option value="new" {% if o.status=='new' %}selected{% endif %}>🆕 جديد</option>
+                <option value="prep" {% if o.status=='prep' %}selected{% endif %}>⏳ تحضير</option>
+                <option value="delivering" {% if o.status=='delivering' %}selected{% endif %}>🚗 توصيل</option>
+                <option value="done" {% if o.status=='done' %}selected{% endif %}>✅ تم</option>
+                <option value="cancelled" {% if o.status=='cancelled' %}selected{% endif %}>❌ ملغي</option>
+              </select>
+            </td>
+            <td>
+              <div class="act-btns">
+                <button class="abt abt-wa" onclick="openWA('{{ o.phone }}', '{{ o.id }}')">💬</button>
+                {% if o.lat %}
+                <button class="abt abt-map" onclick="openMap({{ o.lat }}, {{ o.lng }})">🗺️</button>
+                {% endif %}
+              </div>
             </td>
           </tr>
           {% endfor %}
@@ -300,145 +254,48 @@ tr:hover td{background:#fafff9}
 // التاريخ
 const d = new Date();
 document.getElementById('today-date').textContent = d.toLocaleDateString('ar-SA', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
-// 1. دالة فتح وإغلاق مجلد الزبون (Accordion)
-function toggleCustomerOrders(phone) {
-  const detailsRow = document.getElementById('details-' + phone);
-  const icon = document.getElementById('icon-' + phone);
-  
-  // إغلاق أي مجلد مفتوح حالياً (اختياري - لتركيز الرؤية)
-  // document.querySelectorAll('.order-details-container').forEach(el => {
-  //   if(el.id !== 'details-'+phone) el.classList.remove('show');
-  // });
 
-  detailsRow.classList.toggle('show');
-  icon.classList.toggle('open');
-  icon.textContent = detailsRow.classList.contains('show') ? '▼' : '▶';
-}
-
-// 2. محرك الفلترة بالتاريخ وإظهار اسم اليوم
-function handleDateFilter() {
-  const dateInput = document.getElementById('filter-date');
-  const dayLabel = document.getElementById('selected-day-label');
-  const selectedDate = dateInput.value; // الصيغة: YYYY-MM-DD
-
-  if (!selectedDate) {
-    dayLabel.style.display = 'none';
-    showAllCustomers();
-    return;
-  }
-
-  // الحصول على اسم اليوم باللغة العربية
-  const dateObj = new Date(selectedDate);
-  const dayName = dateObj.toLocaleDateString('ar-SA', { weekday: 'long' });
-  dayLabel.textContent = dayName;
-  dayLabel.style.display = 'inline-block';
-
-  // البدء بالفلترة الفورية
-  filterByExactDate(selectedDate);
-}
-
-function filterByExactDate(targetDate) {
-  // targetDate هي YYYY-MM-DD من الـ Input
-  const customerHeaders = document.querySelectorAll('.customer-header-row');
-  
-  customerHeaders.forEach(header => {
-    const phone = header.dataset.customerPhone;
-    const detailsRow = document.getElementById('details-' + phone);
-    const orderItems = detailsRow.querySelectorAll('.order-row-item');
-    
-    let hasVisibleOrder = false;
-
-    orderItems.forEach(item => {
-      // created_at تأتي بصيغة "2026-02-18 01:56:33"
-      const orderFullDate = item.dataset.fullDate; 
-      if (orderFullDate.includes(targetDate)) {
-        item.style.display = ''; // إظهار الطلب المطابق
-        hasVisibleOrder = true;
-      } else {
-        item.style.display = 'none'; // إخفاء الطلب غير المطابق
-      }
-    });
-
-    // إذا كان الزبون لديه طلب واحد على الأقل في هذا التاريخ، نُظهر رأسه، وإلا نخفيه تماماً
-    if (hasVisibleOrder) {
-      header.style.display = '';
-    } else {
-      header.style.display = 'none';
-      detailsRow.classList.remove('show'); // إغلاق المجلد إذا كان مفتوحاً ومختفياً
-    }
-  });
-}
-
-function showAllCustomers() {
-  document.querySelectorAll('.customer-header-row, .order-row-item').forEach(el => el.style.display = '');
-}
-// فلترة الجدول (محدّثة لتدعم نظام تجميع الزبائن - Accordion)
+// 1. دالة فلترة الطلبات حسب الحالة (جديد، تحضير، تم...)
 function filterTable(status, btn){
   document.querySelectorAll('.fbar .fb').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-
-  const customerHeaders = document.querySelectorAll('.customer-header-row');
-
-  customerHeaders.forEach(header => {
-    const phone = header.dataset.customerPhone;
-    const detailsRow = document.getElementById('details-' + phone);
-    const orderItems = detailsRow.querySelectorAll('.order-row-item');
-    const icon = document.getElementById('icon-' + phone);
-
-    if (status === 'all') {
-      // إظهار جميع الزبائن وجميع طلباتهم
-      header.style.display = '';
-      orderItems.forEach(item => item.style.display = '');
-      // إغلاق المجلدات التي كانت مفتوحة بسبب فلتر سابق
-      detailsRow.classList.remove('show');
-      icon.classList.remove('open');
-      icon.textContent = '▶';
-      return;
-    }
-
-    let hasMatchingOrder = false;
-
-    orderItems.forEach(item => {
-      // نقرأ قيمة الـ select الحالية لمعرفة حالة الطلب
-      const sel = item.querySelector('.sel-status');
-      const orderStatus = sel ? sel.value : '';
-
-      if (orderStatus === status) {
-        item.style.display = '';
-        hasMatchingOrder = true;
-      } else {
-        item.style.display = 'none';
-      }
-    });
-
-    if (hasMatchingOrder) {
-      // إظهار رأس الزبون وفتح مجلده تلقائياً
-      header.style.display = '';
-      detailsRow.classList.add('show');
-      icon.classList.add('open');
-      icon.textContent = '▼';
-    } else {
-      // إخفاء الزبون تماماً لأنه لا يملك طلبات بالحالة المطلوبة
-      header.style.display = 'none';
-      detailsRow.classList.remove('show');
-      icon.classList.remove('open');
-      icon.textContent = '▶';
-    }
+  document.querySelectorAll('.order-row-item').forEach(row => {
+    row.style.display = (status === 'all' || row.dataset.status === status) ? '' : 'none';
   });
 }
 
-// فتح الخريطة
+// 2. دالة فلترة الطلبات حسب التاريخ
+function handleDateFilter() {
+  const selectedDate = document.getElementById('filter-date').value; // YYYY-MM-DD
+  const dayLabel = document.getElementById('selected-day-label');
+
+  if (!selectedDate) {
+    dayLabel.style.display = 'none';
+    document.querySelectorAll('.order-row-item').forEach(row => row.style.display = '');
+    return;
+  }
+
+  const dayName = new Date(selectedDate).toLocaleDateString('ar-SA', { weekday: 'long' });
+  dayLabel.textContent = dayName;
+  dayLabel.style.display = 'inline-block';
+
+  document.querySelectorAll('.order-row-item').forEach(row => {
+    row.style.display = row.dataset.fullDate.includes(selectedDate) ? '' : 'none';
+  });
+}
+
+// 3. فتح الخريطة
 function openMap(lat, lng){
   window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
 }
 
-// فتح واتساب
+// 4. فتح واتساب
 function openWA(phone, orderId){
   const msg = encodeURIComponent(`مرحبا، طلبك ${orderId} من دكّاني 🛒`);
   window.open(`https://wa.me/970${phone.replace(/\D/g,'')}?text=${msg}`, '_blank');
 }
 
-// تحديث الحالة
+// 5. تحديث الحالة
 function updateStatus(orderId, sel){
   fetch(`/api/order/${orderId}/status`, {
     method: 'POST',
@@ -458,21 +315,28 @@ function updateStatus(orderId, sel){
         cancelled: {cls:'sp-cancel', text:'❌ ملغي'}
       };
       const badge = row.querySelector('.sp');
-      badge.className = 'sp ' + (statusMap[sel.value]?.cls || '');
-      badge.textContent = statusMap[sel.value]?.text || '';
+      if(badge){
+        badge.className = 'sp ' + (statusMap[sel.value]?.cls || '');
+        badge.textContent = statusMap[sel.value]?.text || '';
+      }
     }
   });
 }
 
-// تحديث عداد الطلبات الجديدة
+// 6. تحديث عداد الطلبات الجديدة تلقائياً
 function refreshStats(){
   fetch('/api/stats')
     .then(r=>r.json())
     .then(s=>{
-      document.getElementById('new-count').textContent = s.orders_count || 0;
+      const badge = document.getElementById('new-count');
+      if(badge) badge.textContent = s.orders_count || 0;
+      const statNew = document.getElementById('stat-new');
+      if(statNew) statNew.textContent = s.orders_count || 0;
     });
 }
 setInterval(refreshStats, 30000);
+
+// 7. تنظيف الكاش
 function clearCache() {
   if(!confirm('هل تريد تنظيف الذاكرة المؤقتة؟ سيتم تحديث البيانات فوراً للزبائن.')) return;
   fetch('/api/admin/clear-cache', { method: 'POST' })
