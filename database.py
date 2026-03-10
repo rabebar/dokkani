@@ -5,18 +5,21 @@
 import os
 import json
 import psycopg2
+from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 from config import Config
 import math
+# إعداد تجمّع الاتصالات (Connection Pool)
+db_url = os.environ.get('DATABASE_URL') or getattr(Config, 'DATABASE_URL', None)
+if db_url and db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+_pool = pool.ThreadedConnectionPool(1, 10, dsn=db_url) if db_url else None
 
 def get_db():
-    """الاتصال بقاعدة البيانات (PostgreSQL للإنتاج و SQLite للتطوير)"""
-    db_url = os.environ.get('DATABASE_URL') or getattr(Config, 'DATABASE_URL', None)
-    
-    if db_url:
-        if db_url.startswith("postgres://"):
-            db_url = db_url.replace("postgres://", "postgresql://", 1)
-        return psycopg2.connect(db_url)
+    """الاتصال بقاعدة البيانات (استخدام الـ Pool في الإنتاج و SQLite للتطوير)"""
+    if _pool:
+        return _pool.getconn()
     else:
         import sqlite3
         conn = sqlite3.connect('dokkani.db')
@@ -67,7 +70,10 @@ def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False
 
         return res
     finally:
-        conn.close()
+        if is_pg and _pool:
+            _pool.putconn(conn)
+        else:
+            conn.close()
 
 def init_db():
     """تأسيس الجداول - تعمل لمرة واحدة عند تشغيل النظام"""
