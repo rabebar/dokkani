@@ -680,12 +680,10 @@ tr.prod-hidden td  { opacity: .5; }
               <th>إجراء</th>
             </tr>
           </thead>
-          <tbody id="prod-tbody">
+         <tbody id="prod-tbody">
             {% for p in products %}
-            {# حساب الربح مع استثناء القسم 31 #}
-            {# تحديث معادلة الربح لتطابق الباك إند #}
-            {% set profit = 0 if (p.category_id == 31 or p.price in [0.5, 1.0]) else (0.5 if p.price <= 8 else (1.0 if p.price <= 19 else 1.5)) %}
-            {% set sell = p.price + profit %}
+            {# تم إلغاء الربح التلقائي ليطابق السعر في قاعدة البيانات #}
+            {% set sell = p.price %}
             {% set cat_name = categories | selectattr('id','eq',p.category_id) | map(attribute='name') | first | default('—') %}
             <tr class="prod-row {% if not p.visible %}prod-hidden{% endif %}"
                 data-cat="{{ p.category_id }}" data-sub="{{ p.subcategory_id }}" data-name="{{ p.name }}" data-id="{{ p.id }}">
