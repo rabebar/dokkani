@@ -273,12 +273,18 @@ def api_search():
 def api_admin_search_all():
     q = request.args.get('q', '').strip()
     cat_id = request.args.get('cat', 'all')
-    query = "SELECT p.id, p.name, p.price, p.image, p.visible, p.category_id, p.subcategory_id, p.unit, c.name as cat_name FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE 1=1"
+    sub_id = request.args.get('sub', 'all') # إضافة دعم القسم الفرعي
+    
+    query = "SELECT p.id AS id, p.name AS name, p.price AS price, p.image AS image, p.visible AS visible, p.category_id AS category_id, p.subcategory_id AS subcategory_id, p.unit AS unit, c.name as cat_name FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE 1=1"
     params = []
+    
     if q:
-        query += " AND p.name ILIKE %s"; params.append(f'%{q}%')
+        query += " AND p.name LIKE ?"; params.append(f'%{q}%')
     if cat_id != 'all':
-        query += " AND p.category_id = %s"; params.append(cat_id)
+        query += " AND p.category_id = ?"; params.append(cat_id)
+    if sub_id != 'all':
+        query += " AND p.subcategory_id = ?"; params.append(sub_id)
+        
     query += " ORDER BY p.id DESC LIMIT 50"
     results = execute_query(query, tuple(params), fetchall=True) or []
     return jsonify({'products': results})
