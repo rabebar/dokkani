@@ -275,11 +275,15 @@ def api_admin_search_all():
     cat_id = request.args.get('cat', 'all')
     sub_id = request.args.get('sub', 'all') # إضافة دعم القسم الفرعي
     
-    query = "SELECT p.id AS id, p.name AS name, p.price AS price, p.image AS image, p.visible AS visible, p.category_id AS category_id, p.subcategory_id AS subcategory_id, p.unit AS unit, c.name as cat_name FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE 1=1"
+    prod_id = request.args.get('id')
+    
+    query = "SELECT p.id AS id, p.name AS name, p.price AS price, p.image AS image, p.visible AS visible, p.category_id AS category_id, p.subcategory_id AS subcategory_id, p.barcode AS barcode, p.unit AS unit, c.name as cat_name FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE 1=1"
     params = []
     
+    if prod_id:
+        query += " AND p.id = ?"; params.append(prod_id)
     if q:
-        query += " AND p.name LIKE ?"; params.append(f'%{q}%')
+        query += " AND (p.name LIKE ? OR p.barcode = ?)"; params.extend([f'%{q}%', q])
     if cat_id != 'all':
         query += " AND p.category_id = ?"; params.append(cat_id)
     if sub_id != 'all':
@@ -403,7 +407,16 @@ def api_delete_subcategory(sub_id):
 @app.route('/api/product', methods=['POST'])
 def api_add_product():
     name = request.form.get('name')
-    price = float(request.form.get('price', 0))
+    price_raw = request.form.get('price')
+    
+    if not name or not price_raw:
+        return jsonify({'success': False, 'error': '⚠️ عذراً، يجب إدخال اسم المنتج وسعره'}), 400
+        
+    try:
+        price = float(price_raw)
+    except ValueError:
+        return jsonify({'success': False, 'error': '⚠️ خطأ: السعر يجب أن يكون رقماً'}), 400
+
     unit = request.form.get('unit', 'حبة')
     category_id = int(request.form.get('category_id', 1))
     subcategory_id = request.form.get('subcategory_id')
@@ -416,13 +429,23 @@ def api_add_product():
 @app.route('/api/product/<int:prod_id>', methods=['POST'])
 def api_update_product(prod_id):
     name = request.form.get('name')
-    price = float(request.form.get('price', 0))
+    price_raw = request.form.get('price')
+    
+    if not name or not price_raw:
+        return jsonify({'success': False, 'error': '⚠️ يجب وجود اسم وسعر للمنتج'}), 400
+        
+    try:
+        price = float(price_raw)
+    except ValueError:
+        return jsonify({'success': False, 'error': '⚠️ السعر يجب أن يكون رقماً'}), 400
+
     unit = request.form.get('unit', 'حبة')
     category_id = int(request.form.get('category_id', 1))
     subcategory_id = request.form.get('subcategory_id')
     subcategory_id = int(subcategory_id) if subcategory_id else None
     barcode = request.form.get('barcode')
     image = save_upload(request.files.get('image'), 'prod')
+    
     update_product(prod_id, name, price, unit, category_id, subcategory_id, image, barcode)
     return jsonify({'success': True})
 
