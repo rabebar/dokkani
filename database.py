@@ -522,40 +522,22 @@ def fetch_images_background(product_ids_names):
 
 
 # ==========================================
-# محرك استيراد Excel الذكي + جلب الصور
+# محرك استيراد الملفات الذكي (تحديث الباركود فقط)
 # ==========================================
 
 def import_excel_to_db(file_path):
     """
-    يقرأ ملف Excel ويستورد المنتجات ذكياً مع:
-    - مواءمة الأعمدة تلقائياً بالعربي والإنجليزي
-    - إنشاء الأقسام غير الموجودة تلقائياً (Auto-Provisioning)
-    - Upsert: تحديث إن وُجد، إنشاء إن كان جديداً
-    - جلب الصور في الخلفية بعد الاستيراد (لتجنب Timeout)
+    يقوم بربط أرقام الباركود بالمنتجات الموجودة مسبقاً بناءً على الاسم.
+    - يدعم ملفات Excel (.xlsx) وملفات CSV (ترميز UTF-8).
+    - لا يضيف منتجات جديدة (بناءً على طلب المدير).
+    - لا يغير الأسعار أو الأقسام الحالية.
     """
     import pandas as pd
 
+    # خريطة مواءمة الأعمدة (عربي وإنجليزي)
     COLUMN_MAP = {
-        'name': [
-            'اسم المنتج', 'المنتج', 'اسم', 'الاسم',
-            'name', 'product', 'product_name', 'item', 'title'
-        ],
-        'price': [
-            'السعر', 'سعر الشراء', 'سعر', 'التكلفة',
-            'price', 'cost', 'buy_price', 'purchase_price'
-        ],
-        'unit': [
-            'الوحدة', 'وحدة القياس', 'وحدة',
-            'unit', 'measure', 'uom'
-        ],
-        'category': [
-            'القسم الرئيسي', 'القسم', 'قسم', 'التصنيف',
-            'category', 'cat', 'section', 'department'
-        ],
-        'subcategory': [
-            'القسم الفرعي', 'الفئة الفرعية', 'فرعي',
-            'subcategory', 'sub', 'sub_category', 'subcategory_name'
-        ]
+        'name': ['اسم المنتج', 'المنتج', 'Name', 'Item Name', 'item_name', 'item name'],
+        'barcode': ['الباركود', 'باركود', 'barcode', 'Barcode', 'code', 'Item Barcode']
     }
 
     def find_column(df_columns, candidates):
@@ -565,123 +547,63 @@ def import_excel_to_db(file_path):
                 return df_cols_lower[candidate.strip().lower()]
         return None
 
-    # قراءة الملف
+    # 1. قراءة الملف حسب النوع والترميز
     try:
-        df = pd.read_excel(file_path, dtype=str)
+        if file_path.lower().endswith('.csv'):
+            # قراءة CSV مع دعم الترميز العربي (BOM)
+            df = pd.read_csv(file_path, dtype=str, encoding='utf-8-sig')
+        else:
+            df = pd.read_excel(file_path, dtype=str)
+        
         df.columns = df.columns.str.strip()
         df = df.dropna(how='all')
     except Exception as e:
-        return {'success': False, 'error': f'فشل قراءة الملف: {str(e)}',
-                'created': 0, 'updated': 0, 'errors': 0, 'images': 0}
+        return {'success': False, 'error': f'فشل قراءة الملف: {str(e)}'}
 
-    # تحديد الأعمدة
-    col_name     = find_column(df.columns, COLUMN_MAP['name'])
-    col_price    = find_column(df.columns, COLUMN_MAP['price'])
-    col_unit     = find_column(df.columns, COLUMN_MAP['unit'])
-    col_category = find_column(df.columns, COLUMN_MAP['category'])
-    col_subcat   = find_column(df.columns, COLUMN_MAP['subcategory'])
-    col_barcode  = find_column(df.columns, COLUMN_MAP['barcode'])
+    # 2. تحديد الأعمدة المطلوبة
+    col_name = find_column(df.columns, COLUMN_MAP['name'])
+    col_barcode = find_column(df.columns, COLUMN_MAP['barcode'])
 
-    if not col_name or not col_price:
-        missing = []
-        if not col_name:  missing.append('اسم المنتج')
-        if not col_price: missing.append('السعر')
+    if not col_name or not col_barcode:
         return {
-            'success': False,
-            'error': f'الأعمدة التالية غير موجودة: {", ".join(missing)}. الأعمدة الموجودة: {", ".join(df.columns.tolist())}',
-            'created': 0, 'updated': 0, 'errors': 0, 'images': 0
+            'success': False, 
+            'error': f'الأعمدة المطلوبة (الاسم أو الباركود) غير موجودة. الأعمدة المتوفرة: {list(df.columns)}'
         }
 
-    def get_or_create_category(name):
-        name = name.strip()
-        existing = execute_query('SELECT id FROM categories WHERE name=?', (name,), fetchone=True)
-        if existing:
-            return existing['id']
-        return execute_query('INSERT INTO categories (name, icon, visible) VALUES (?, ?, 1)', (name, '📦'), commit=True)
+    updated_count = 0
+    errors_count = 0
 
-    def get_or_create_subcategory(name, category_id):
-        name = name.strip()
-        existing = execute_query('SELECT id FROM subcategories WHERE name=? AND category_id=?', (name, category_id), fetchone=True)
-        if existing:
-            return existing['id']
-        return execute_query('INSERT INTO subcategories (name, icon, category_id, visible) VALUES (?, ?, ?, 1)', (name, '📦', category_id), commit=True)
-
-    created    = 0
-    updated    = 0
-    errors     = 0
-    error_rows = []
-    # قائمة المنتجات التي تحتاج صور — للجلب في الخلفية
-    needs_image = []
-
+    # 3. معالجة الصفوف (تحديث الباركود للموجود فقط)
     for idx, row in df.iterrows():
-        row_num = idx + 2
         try:
-            name      = str(row[col_name]).strip()  if pd.notna(row[col_name])  else ''
-            price_raw = str(row[col_price]).strip() if pd.notna(row[col_price]) else ''
-            barcode   = str(row[col_barcode]).strip() if col_barcode and pd.notna(row[col_barcode]) else ''
+            name_val = str(row[col_name]).strip() if pd.notna(row[col_name]) else ''
+            barcode_val = str(row[col_barcode]).strip() if pd.notna(row[col_barcode]) else ''
 
-            if not name or not price_raw or name == 'nan':
-                errors += 1
-                error_rows.append(f'صف {row_num}: اسم أو سعر فارغ')
+            # تخطي الصفوف الفارغة أو التي لا تحتوي على باركود
+            if not name_val or name_val == 'nan' or not barcode_val or barcode_val == 'nan':
                 continue
 
-            price_clean = price_raw.replace('₪','').replace('$','').replace(',','').strip()
-            try:
-                price = float(price_clean)
-            except:
-                errors += 1
-                error_rows.append(f'صف {row_num}: سعر غير صالح "{price_raw}"')
-                continue
+            # البحث عن المنتج بالاسم في قاعدة البيانات (في جميع الأقسام)
+            existing = execute_query('SELECT id FROM products WHERE name=?', (name_val,), fetchone=True)
 
-            unit = str(row[col_unit]).strip() if col_unit and pd.notna(row[col_unit]) else 'حبة'
-            if unit in ('nan', ''): unit = 'حبة'
-
-            category_id = None
-            if col_category and pd.notna(row[col_category]):
-                cat_name = str(row[col_category]).strip()
-                if cat_name and cat_name != 'nan':
-                    category_id = get_or_create_category(cat_name)
-            if not category_id:
-                default_cat = execute_query('SELECT id FROM categories ORDER BY id DESC', fetchone=True)
-                category_id = default_cat['id'] if default_cat else 1
-
-            subcategory_id = None
-            if col_subcat and pd.notna(row[col_subcat]):
-                sub_name = str(row[col_subcat]).strip()
-                if sub_name and sub_name != 'nan':
-                    subcategory_id = get_or_create_subcategory(sub_name, category_id)
-
-            # البحث عن المنتج بالاسم في القسم المحدد
-            existing_prod = execute_query(
-                'SELECT id FROM products WHERE name=?',
-                (name,), fetchone=True
-            )
-
-            if existing_prod and barcode:
-                # تحديث الباركود فقط للمنتج الموجود لعدم تخريب تعديلاتك اليدوية
+            if existing:
+                # تحديث خانة الباركود فقط لضمان عدم ضياع الأسعار المعدلة يدوياً
                 execute_query(
-                    'UPDATE products SET barcode=? WHERE id=?',
-                    (barcode, existing_prod['id']), commit=True
+                    'UPDATE products SET barcode=? WHERE id=?', 
+                    (barcode_val, existing['id']), 
+                    commit=True
                 )
-                updated += 1
-            else:
-                # إذا لم يجد المنتج أو لا يوجد باركود في الصف، نتجاهله تماماً بناءً على طلبك
-                continue
-
-        except Exception as e:
-            errors += 1
-            error_rows.append(f'صف {row_num}: خطأ غير متوقع — {str(e)}')
+                updated_count += 1
+            
+        except Exception:
+            errors_count += 1
             continue
 
-    # ابدأ جلب الصور في الخلفية بعد انتهاء الاستيراد
-    if needs_image:
-        fetch_images_background(needs_image)
-
     return {
-        'success':    True,
-        'created':    created,
-        'updated':    updated,
-        'errors':     errors,
-        'images':     len(needs_image),  # عدد المنتجات التي سيُجلب لها صور
-        'error_rows': error_rows[:10]
+        'success': True,
+        'created': 0,
+        'updated': updated_count,
+        'errors': errors_count,
+        'images': 0,
+        'message': f'✅ اكتملت العملية: تم ربط {updated_count} منتج بالباركود الدولي.'
     }

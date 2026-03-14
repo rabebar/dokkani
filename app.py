@@ -641,10 +641,10 @@ def api_import_excel():
     if file.filename == '':
         return jsonify({'success': False, 'error': 'لم يتم اختيار ملف'})
 
-    allowed = {'xlsx', 'xls'}
+    allowed = {'xlsx', 'xls', 'csv'}
     ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
     if ext not in allowed:
-        return jsonify({'success': False, 'error': 'صيغة الملف غير مدعومة. يُرجى رفع ملف Excel بصيغة .xlsx أو .xls'})
+            return jsonify({'success': False, 'error': 'صيغة الملف غير مدعومة. يُرجى رفع ملف Excel أو CSV'})
 
     temp_path = os.path.join('static', 'uploads', f'excel_import_{os.urandom(4).hex()}.{ext}')
     file.save(temp_path)
