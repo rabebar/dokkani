@@ -236,7 +236,16 @@ def admin_accounting():
 @admin_required
 def admin_customers():
     return render_template('customers.html', customers=get_customers(), app_name=Config.APP_NAME)
-
+@app.route('/admin/mobile')
+@admin_required
+def admin_mobile():
+    return render_template('admin_mobile.html',
+                           orders=get_orders(),
+                           stats=get_daily_stats(),
+                           categories=get_categories(visible_only=False),
+                           subcategories=get_subcategories(visible_only=False),
+                           products=get_products(visible_only=False),
+                           app_name=Config.APP_NAME)
 
 # ==========================================
 # API — الطلبات (المنطق المطور)

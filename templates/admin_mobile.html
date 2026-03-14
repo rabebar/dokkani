@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>دكّاني — إدارة الموبايل</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;
+  --gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;
+  --w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;
+  --g400:#9ca3af;--g600:#4b5563;--g800:#1f2937;
+  --red:#e53935;--orange:#fb8c00;--blue:#1e88e5;
+  --sh:0 2px 8px rgba(0,0,0,.08);--r:14px;--nav:62px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);min-height:100vh;padding-bottom:calc(var(--nav)+8px)}
+
+/* ===== HEADER ===== */
+.hdr{
+  background:linear-gradient(135deg,#1a4a1e,var(--g2));
+  position:sticky;top:0;z-index:100;
+  padding:11px 14px;
+  box-shadow:0 2px 16px rgba(0,0,0,.25);
+}
+.hdr-row{display:flex;align-items:center;gap:10px}
+.hdr-logo{width:34px;height:34px;background:var(--acc);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.hdr-title{color:#fff;font-size:15px;font-weight:900;font-family:'Tajawal',sans-serif;flex:1}
+.hdr-sub{color:rgba(255,255,255,.5);font-size:9.5px}
+.hdr-refresh{width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:9px;display:flex;align-items:center;justify-content:center;border:none;color:#fff;font-size:16px;cursor:pointer;flex-shrink:0}
+
+/* ===== TABS ===== */
+.tabs{display:flex;background:var(--w);border-bottom:1px solid var(--g200);position:sticky;top:57px;z-index:99}
+.tab{flex:1;padding:11px 6px;border:none;background:none;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;color:var(--g400);cursor:pointer;border-bottom:2.5px solid transparent;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tab-ico{font-size:18px}
+.tab.active{color:var(--g2);border-bottom-color:var(--g2)}
+.panel{display:none;padding:12px}
+.panel.active{display:block}
+
+/* ===== STATS BAR ===== */
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat-card{background:var(--w);border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh);border:1px solid var(--g200);position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;top:0;right:0;width:3px;height:100%}
+.stat-card.g::after{background:var(--g4)}
+.stat-card.o::after{background:var(--orange)}
+.stat-card.b::after{background:var(--blue)}
+.stat-card.r::after{background:var(--red)}
+.stat-ico{font-size:20px;margin-bottom:4px}
+.stat-val{font-size:20px;font-weight:900;font-family:'Tajawal',sans-serif;line-height:1}
+.stat-lbl{font-size:10px;color:var(--g400);margin-top:2px}
+
+/* ===== ORDER CARDS ===== */
+.order-card{
+  background:var(--w);border-radius:var(--r);
+  border:1.5px solid var(--g200);
+  margin-bottom:9px;overflow:hidden;
+  box-shadow:var(--sh);
+}
+.order-head{display:flex;align-items:center;gap:9px;padding:11px 13px}
+.order-id{font-size:13px;font-weight:900;color:var(--blue)}
+.order-name{font-size:13px;font-weight:700;flex:1}
+.order-total{font-size:14px;font-weight:900;color:var(--g2)}
+.order-meta{display:flex;align-items:center;gap:8px;padding:0 13px 9px;flex-wrap:wrap}
+.order-phone{font-size:11px;color:var(--g400);direction:ltr}
+.order-area{font-size:11px;color:var(--g600);background:var(--g100);padding:2px 8px;border-radius:10px}
+.order-time{font-size:10px;color:var(--g400)}
+.order-items{padding:8px 13px;background:var(--gx);font-size:11px;color:var(--g600);line-height:1.7;border-top:1px solid var(--g200);border-bottom:1px solid var(--g200)}
+.order-notes{padding:7px 13px;background:#fff8e1;font-size:11px;color:var(--orange);font-weight:700;border-bottom:1px solid var(--g200)}
+.order-foot{display:flex;align-items:center;gap:8px;padding:9px 13px}
+.sp{padding:3px 10px;border-radius:18px;font-size:10.5px;font-weight:700}
+.sp-new{background:#e3f2fd;color:#1565c0}
+.sp-prep{background:#fff8e1;color:#e65100}
+.sp-del{background:#f3e5f5;color:#6a1b9a}
+.sp-done{background:var(--gp);color:var(--g1)}
+.sp-cancel{background:#ffebee;color:var(--red)}
+.sel-status{
+  flex:1;padding:7px 10px;border-radius:9px;
+  border:1.5px solid var(--g200);
+  font-family:'Cairo',sans-serif;font-size:11px;
+  background:var(--w);outline:none;color:var(--g800);
+}
+.o-btn{width:34px;height:34px;border-radius:9px;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.o-btn-wa{background:#e8f5e9}
+.o-btn-map{background:#e3f2fd}
+.o-btn-expand{background:var(--g100);font-size:12px;font-weight:700;color:var(--g600)}
+
+/* فلتر الطلبات */
+.order-filters{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:10px}
+.order-filters::-webkit-scrollbar{display:none}
+.of{padding:5px 13px;border-radius:18px;border:1.5px solid var(--g200);background:var(--w);font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;color:var(--g600);white-space:nowrap;flex-shrink:0;transition:all .2s}
+.of.active{background:var(--g2);color:#fff;border-color:var(--g2)}
+
+/* تاريخ الفلترة */
+.date-filter{display:flex;align-items:center;gap:8px;background:var(--w);border:1.5px solid var(--g200);border-radius:var(--r);padding:8px 12px;margin-bottom:10px}
+.date-filter input{border:none;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;color:var(--g1);outline:none;flex:1;background:transparent}
+.date-filter label{font-size:10px;color:var(--g400);font-weight:700}
+
+/* ===== PRODUCTS PANEL ===== */
+.prod-toolbar{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap}
+.act-btn{
+  padding:8px 14px;border-radius:10px;border:none;
+  font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;gap:5px;
+  transition:all .2s;
+}
+.act-btn:active{transform:scale(.96)}
+.act-btn-green{background:var(--g4);color:#fff}
+.act-btn-blue{background:var(--blue);color:#fff}
+.act-btn-orange{background:var(--orange);color:#fff}
+
+.prod-search{
+  width:100%;padding:10px 14px;
+  border:1.5px solid var(--g200);border-radius:var(--r);
+  font-family:'Cairo',sans-serif;font-size:13px;
+  outline:none;background:var(--w);margin-bottom:10px;
+  transition:border-color .2s;
+}
+.prod-search:focus{border-color:var(--g4)}
+
+/* فلتر الأقسام */
+.cat-filters{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-bottom:10px}
+.cat-filters::-webkit-scrollbar{display:none}
+.cf{padding:5px 12px;border-radius:18px;border:1.5px solid var(--g200);background:var(--w);font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;color:var(--g600);white-space:nowrap;flex-shrink:0;transition:all .2s}
+.cf.active{background:var(--g2);color:#fff;border-color:var(--g2)}
+
+/* بطاقة المنتج */
+.prod-card{
+  background:var(--w);border-radius:var(--r);
+  border:1.5px solid var(--g200);
+  margin-bottom:8px;overflow:hidden;
+  box-shadow:var(--sh);display:flex;
+  align-items:stretch;
+}
+.prod-card.hidden-prod{opacity:.4}
+.prod-img{
+  width:70px;height:70px;background:var(--gx);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;flex-shrink:0;overflow:hidden;
+}
+.prod-img img{width:100%;height:100%;object-fit:cover}
+.prod-info{flex:1;padding:9px 11px;min-width:0}
+.prod-name{font-size:12.5px;font-weight:700;margin-bottom:5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prod-price-row{display:flex;align-items:center;gap:8px}
+.prod-price{font-size:14px;font-weight:900;color:var(--g2)}
+.prod-cat{font-size:9.5px;color:var(--g600);background:var(--g100);padding:2px 7px;border-radius:10px;font-weight:700}
+.prod-status{font-size:10px;font-weight:700}
+.prod-status.show{color:var(--g4)}
+.prod-status.hide{color:var(--g400)}
+.prod-actions{display:flex;flex-direction:column;border-right:1px solid var(--g200);flex-shrink:0}
+.pa{
+  flex:1;width:42px;border:none;background:var(--w);
+  cursor:pointer;font-size:15px;
+  border-bottom:1px solid var(--g200);
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+.pa:last-child{border-bottom:none}
+.pa:active{background:var(--g100)}
+
+/* ===== MODAL ===== */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);
+  z-index:400;display:none;align-items:flex-end;
+  backdrop-filter:blur(3px);
+}
+.modal-bg.show{display:flex}
+.modal{
+  background:var(--w);border-radius:22px 22px 0 0;
+  width:100%;max-height:92vh;overflow-y:auto;
+  box-shadow:0 -8px 40px rgba(0,0,0,.2);
+  animation:slideup .25s ease;
+}
+@keyframes slideup{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-pill{width:36px;height:4px;background:var(--g200);border-radius:2px;margin:10px auto 0}
+.modal-hdr{padding:14px 16px;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--w);z-index:2}
+.modal-title{font-size:15px;font-weight:900;color:var(--g1)}
+.modal-close{width:30px;height:30px;border-radius:8px;border:none;background:var(--g100);cursor:pointer;font-size:14px}
+.modal-body{padding:16px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--g2);margin-bottom:5px}
+.field input,.field select,.field textarea{
+  width:100%;padding:11px 13px;
+  border:1.5px solid var(--g200);border-radius:10px;
+  font-family:'Cairo',sans-serif;font-size:14px;
+  outline:none;transition:border-color .2s;background:#f9fafb;
+}
+.field input:focus,.field select:focus{border-color:var(--g4);background:var(--w)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.img-preview{
+  width:72px;height:72px;border-radius:12px;background:var(--gx);
+  display:flex;align-items:center;justify-content:center;
+  font-size:30px;margin-bottom:8px;overflow:hidden;
+  border:1.5px dashed var(--g4);cursor:pointer;
+}
+.img-preview img{width:100%;height:100%;object-fit:cover}
+.img-url-input{direction:ltr;font-family:sans-serif;font-size:12px}
+.modal-foot{padding:12px 16px;border-top:1px solid var(--g200);display:flex;gap:8px;position:sticky;bottom:0;background:var(--w)}
+.btn-save{flex:1;padding:13px;background:var(--g2);color:#fff;border:none;border-radius:10px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
+.btn-save:active{opacity:.85}
+.btn-save.blue{background:var(--blue)}
+.btn-cancel{padding:13px 16px;background:var(--g100);color:var(--g600);border:none;border-radius:10px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
+
+/* ===== TOAST ===== */
+.toast{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+  background:var(--g1);color:#fff;
+  padding:10px 20px;border-radius:20px;
+  font-size:13px;font-weight:700;
+  display:none;z-index:999;
+  box-shadow:0 4px 20px rgba(0,0,0,.2);
+  white-space:nowrap;
+}
+
+/* ===== BOTTOM NAV ===== */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--w);height:var(--nav);
+  display:flex;align-items:center;
+  border-top:1px solid var(--g200);
+  box-shadow:0 -4px 20px rgba(0,0,0,.08);
+  z-index:200;
+}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;text-decoration:none;padding:5px 0;border:none;background:none;font-family:'Cairo',sans-serif}
+.bni-ico{font-size:21px;line-height:1}
+.bni-lbl{font-size:9px;font-weight:700;color:var(--g400)}
+.bni.active .bni-lbl{color:var(--g2)}
+.bni-badge{background:var(--red);color:#fff;font-size:9px;font-weight:900;padding:1px 5px;border-radius:8px;margin-top:1px}
+
+/* empty */
+.empty{text-align:center;padding:40px 20px;color:var(--g400)}
+.empty-ico{font-size:44px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<div class="hdr">
+  <div class="hdr-row">
+    <div class="hdr-logo">🛒</div>
+    <div style="flex:1">
+      <div class="hdr-title">دكّاني — الإدارة</div>
+      <div class="hdr-sub">رام الله 🇵🇸</div>
+    </div>
+    <button class="hdr-refresh" onclick="location.reload()">🔄</button>
+  </div>
+</div>
+
+<!-- ===== TABS ===== -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('orders',this)">
+    <span class="tab-ico">📦</span>الطلبات
+  </button>
+  <button class="tab" onclick="switchTab('products',this)">
+    <span class="tab-ico">🛍️</span>المنتجات
+  </button>
+  <button class="tab" onclick="switchTab('cats',this)">
+    <span class="tab-ico">📂</span>الأقسام
+  </button>
+</div>
+
+<!-- ===== PANEL: ORDERS ===== -->
+<div class="panel active" id="panel-orders">
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card g">
+      <div class="stat-ico">📦</div>
+      <div class="stat-val">{{ stats.orders_count }}</div>
+      <div class="stat-lbl">طلبات اليوم</div>
+    </div>
+    <div class="stat-card o">
+      <div class="stat-ico">🆕</div>
+      <div class="stat-val" id="stat-new">{{ orders | selectattr('status','eq','new') | list | length }}</div>
+      <div class="stat-lbl">جديدة</div>
+    </div>
+    <div class="stat-card b">
+      <div class="stat-ico">✅</div>
+      <div class="stat-val">{{ stats.completed_count }}</div>
+      <div class="stat-lbl">مكتملة</div>
+    </div>
+    <div class="stat-card r">
+      <div class="stat-ico">💰</div>
+      <div class="stat-val">{{ stats.daily_profit }}₪</div>
+      <div class="stat-lbl">ربح اليوم</div>
+    </div>
+  </div>
+
+  <!-- Date filter -->
+  <div class="date-filter">
+    <label>📅</label>
+    <input type="date" id="filter-date" onchange="handleDateFilter()">
+    <span id="day-label" style="font-size:11px;font-weight:700;color:var(--orange)"></span>
+  </div>
+
+  <!-- Order filters -->
+  <div class="order-filters">
+    <button class="of active" onclick="filterOrders('all',this)">الكل</button>
+    <button class="of" onclick="filterOrders('new',this)">🆕 جديد</button>
+    <button class="of" onclick="filterOrders('prep',this)">⏳ تحضير</button>
+    <button class="of" onclick="filterOrders('delivering',this)">🚗 توصيل</button>
+    <button class="of" onclick="filterOrders('done',this)">✅ تم</button>
+    <button class="of" onclick="filterOrders('cancelled',this)">❌ ملغي</button>
+  </div>
+
+  <!-- Orders list -->
+  <div id="orders-list">
+    {% if orders %}
+    {% for o in orders %}
+    <div class="order-card order-row" data-status="{{ o.status }}" data-date="{{ o.created_at }}">
+      <div class="order-head">
+        <span class="order-id">#{{ o.id }}</span>
+        <span class="order-name">{{ o.name }}</span>
+        <span class="order-total">{{ o.total }}₪</span>
+      </div>
+      <div class="order-meta">
+        <span class="order-phone">📞 {{ o.phone }}</span>
+        <span class="order-area">📍 {{ o.neighborhood }}</span>
+        <span class="order-time">{{ o.created_at }}</span>
+      </div>
+      <div class="order-items">
+        {% for item in o['items'] %}• {{ item.name }} ({{ item.qty }})<br>{% endfor %}
+      </div>
+      {% if o.notes %}
+      <div class="order-notes">📝 {{ o.notes }}</div>
+      {% endif %}
+      <div class="order-foot">
+        <span class="sp sp-{{ o.status }}">{{ o.status_text }}</span>
+        <select class="sel-status" onchange="updateStatus({{ o.id }},this)">
+          <option value="new" {% if o.status=='new' %}selected{% endif %}>🆕 جديد</option>
+          <option value="prep" {% if o.status=='prep' %}selected{% endif %}>⏳ تحضير</option>
+          <option value="delivering" {% if o.status=='delivering' %}selected{% endif %}>🚗 توصيل</option>
+          <option value="done" {% if o.status=='done' %}selected{% endif %}>✅ تم</option>
+          <option value="cancelled" {% if o.status=='cancelled' %}selected{% endif %}>❌ ملغي</option>
+        </select>
+        <button class="o-btn o-btn-wa" onclick="openWA('{{ o.phone }}','{{ o.id }}')">💬</button>
+        {% if o.lat %}
+        <button class="o-btn o-btn-map" onclick="openMap({{ o.lat }},{{ o.lng }})">🗺️</button>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty"><div class="empty-ico">📭</div><div>لا توجد طلبات بعد</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ===== PANEL: PRODUCTS ===== -->
+<div class="panel" id="panel-products">
+
+  <div class="prod-toolbar">
+    <button class="act-btn act-btn-green" onclick="openProdModal()">➕ منتج جديد</button>
+    <button class="act-btn act-btn-blue" onclick="openSubModal()">📁 قسم فرعي</button>
+  </div>
+
+  <input class="prod-search" type="text" placeholder="🔍 ابحث عن منتج..." oninput="searchProds(this.value)">
+
+  <div class="cat-filters" id="cat-filters">
+    <button class="cf active" onclick="filterProds('all',this)">الكل</button>
+    {% for cat in categories %}
+    <button class="cf" onclick="filterProds('{{ cat.id }}',this)">{{ cat.icon }} {{ cat.name }}</button>
+    {% endfor %}
+  </div>
+
+  <div id="prod-list">
+    {% for p in products %}
+    {% set cat_name = categories | selectattr('id','eq',p.category_id) | map(attribute='name') | first | default('—') %}
+    <div class="prod-card {% if not p.visible %}hidden-prod{% endif %}"
+         data-cat="{{ p.category_id }}" data-name="{{ p.name }}" id="pm-{{ p.id }}">
+      <div class="prod-actions">
+        <button class="pa" onclick="openProdModal({{ p.id }},'{{ p.name }}',{{ p.price }},'{{ p.unit }}',{{ p.category_id }},{{ p.subcategory_id or 'null' }})">✏️</button>
+        <button class="pa" onclick="openImgModal({{ p.id }},'{{ p.name }}')">🖼️</button>
+        <button class="pa" onclick="toggleProd({{ p.id }})">👁️</button>
+        <button class="pa" onclick="deleteProd({{ p.id }},'{{ p.name }}')">🗑️</button>
+      </div>
+      <div class="prod-img">
+        {% if p.image %}<img src="{{ p.image }}" alt="">
+        {% else %}🛍️{% endif %}
+      </div>
+      <div class="prod-info">
+        <div class="prod-name">{{ p.name }}</div>
+        <div class="prod-price-row">
+          <span class="prod-price">{{ p.price }}₪</span>
+          <span class="prod-cat">{{ cat_name }}</span>
+          <span class="prod-status {% if p.visible %}show{% else %}hide{% endif %}">
+            {% if p.visible %}✅{% else %}🙈{% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% if not products %}
+    <div class="empty"><div class="empty-ico">🛍️</div><div>لا توجد منتجات</div></div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ===== PANEL: CATEGORIES ===== -->
+<div class="panel" id="panel-cats">
+
+  <div class="prod-toolbar">
+    <button class="act-btn act-btn-green" onclick="openCatModal()">➕ قسم رئيسي</button>
+    <button class="act-btn act-btn-blue" onclick="openSubModal()">📁 قسم فرعي</button>
+  </div>
+
+  <!-- الأقسام الرئيسية -->
+  <div style="font-size:12px;font-weight:900;color:var(--g600);margin-bottom:8px;padding-right:2px">📂 الأقسام الرئيسية</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+    {% for cat in categories %}
+    <div style="background:var(--w);border-radius:12px;border:1.5px solid var(--g200);padding:12px;display:flex;align-items:center;gap:9px;box-shadow:var(--sh)" id="cat-{{ cat.id }}">
+      <div style="width:40px;height:40px;background:var(--gx);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">{{ cat.icon }}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ cat.name }}</div>
+        <div style="display:flex;gap:4px;margin-top:5px">
+          <button style="width:26px;height:26px;border-radius:7px;border:none;cursor:pointer;font-size:12px;background:#e3f2fd"
+            onclick="openCatModal({{ cat.id }},'{{ cat.name }}','{{ cat.icon }}')">✏️</button>
+          <button style="width:26px;height:26px;border-radius:7px;border:none;cursor:pointer;font-size:12px;background:var(--gp)"
+            onclick="toggleCat({{ cat.id }})">👁️</button>
+          <button style="width:26px;height:26px;border-radius:7px;border:none;cursor:pointer;font-size:12px;background:#ffebee"
+            onclick="deleteCat({{ cat.id }},'{{ cat.name }}')">🗑️</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- الأقسام الفرعية -->
+  <div style="font-size:12px;font-weight:900;color:var(--g600);margin-bottom:8px;padding-right:2px">📁 الأقسام الفرعية</div>
+  <div>
+    {% for sub in subcategories %}
+    {% set cat_name = categories | selectattr('id','eq',sub.category_id) | map(attribute='name') | first | default('—') %}
+    <div style="background:var(--w);border-radius:10px;border:1.5px solid var(--g200);padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;gap:9px;box-shadow:var(--sh)" id="sub-{{ sub.id }}">
+      <div style="width:34px;height:34px;background:var(--gp);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">{{ sub.icon }}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700">{{ sub.name }}</div>
+        <div style="font-size:9.5px;color:var(--g4);background:var(--gp);padding:1px 6px;border-radius:8px;display:inline-block;margin-top:2px">{{ cat_name }}</div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button style="width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;font-size:13px;background:#e3f2fd"
+          onclick="openSubModal({{ sub.id }},'{{ sub.name }}','{{ sub.icon }}',{{ sub.category_id }})">✏️</button>
+        <button style="width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;font-size:13px;background:#ffebee"
+          onclick="deleteSub({{ sub.id }},'{{ sub.name }}')">🗑️</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ===== MODAL: منتج ===== -->
+<div class="modal-bg" id="prod-modal">
+  <div class="modal">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr">
+      <div class="modal-title" id="prod-modal-title">➕ منتج جديد</div>
+      <button class="modal-close" onclick="closeProdModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prod-id">
+      <div class="field">
+        <label>📝 اسم المنتج *</label>
+        <input type="text" id="prod-name" placeholder="مثال: حليب تنوره 1 لتر">
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>💰 السعر (₪) *</label>
+          <input type="number" id="prod-price" placeholder="0.00" step="0.5" min="0">
+        </div>
+        <div class="field">
+          <label>⚖️ الوحدة</label>
+          <select id="prod-unit">
+            <option>حبة</option><option>كيلو</option><option>نص كيلو</option>
+            <option>ربع كيلو</option><option>علبة</option><option>كيس</option>
+            <option>زجاجة</option><option>كرتون</option><option>لتر</option>
+            <option>برطمان</option><option>قطعة</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>📂 القسم الرئيسي</label>
+          <select id="prod-cat" onchange="loadSubcats(this.value)">
+            {% for cat in categories %}
+            <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>📁 القسم الفرعي</label>
+          <select id="prod-subcat">
+            <option value="">— بدون —</option>
+            {% for sub in subcategories %}
+            <option value="{{ sub.id }}" data-cat="{{ sub.category_id }}">{{ sub.icon }} {{ sub.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>🖼️ صورة المنتج (اختياري)</label>
+        <div class="img-preview" id="prod-img-preview">🛍️</div>
+        <input type="file" id="prod-image" accept="image/*" onchange="previewImg(this,'prod-img-preview')">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeProdModal()">إلغاء</button>
+      <button class="btn-save" onclick="saveProd()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: صورة ===== -->
+<div class="modal-bg" id="img-modal">
+  <div class="modal">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr">
+      <div class="modal-title">🖼️ تغيير الصورة</div>
+      <button class="modal-close" onclick="closeImgModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;font-weight:900;color:var(--g1);margin-bottom:10px" id="img-prod-name"></div>
+      <a id="img-google-link" href="#" target="_blank"
+         style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:11px;background:#4285f4;color:#fff;font-weight:700;font-size:13px;text-decoration:none;margin-bottom:12px">
+        🔍 ابحث في جوجل
+      </a>
+      <div class="field">
+        <label>الصق رابط الصورة:</label>
+        <input type="text" id="img-url" class="img-url-input" placeholder="https://..."
+               oninput="document.getElementById('img-preview-thumb').src=this.value">
+      </div>
+      <img id="img-preview-thumb" src="" alt=""
+           style="width:100%;max-height:130px;object-fit:contain;border-radius:10px;border:1px solid var(--g200);margin-top:6px;display:none"
+           onerror="this.style.display='none'" onload="this.style.display='block'">
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeImgModal()">إلغاء</button>
+      <button class="btn-save" onclick="saveImg()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: قسم رئيسي ===== -->
+<div class="modal-bg" id="cat-modal">
+  <div class="modal">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr">
+      <div class="modal-title" id="cat-modal-title">➕ قسم جديد</div>
+      <button class="modal-close" onclick="closeCatModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cat-id">
+      <div class="grid-2">
+        <div class="field"><label>😀 إيموجي</label><input type="text" id="cat-icon" placeholder="🛒" value="🛒"></div>
+        <div class="field"><label>📝 الاسم *</label><input type="text" id="cat-name" placeholder="مثال: ألبان"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeCatModal()">إلغاء</button>
+      <button class="btn-save" onclick="saveCat()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: قسم فرعي ===== -->
+<div class="modal-bg" id="sub-modal">
+  <div class="modal">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr">
+      <div class="modal-title" id="sub-modal-title">📁 قسم فرعي جديد</div>
+      <button class="modal-close" onclick="closeSubModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sub-id">
+      <div class="grid-2">
+        <div class="field"><label>😀 إيموجي</label><input type="text" id="sub-icon" placeholder="📦" value="📦"></div>
+        <div class="field"><label>📝 الاسم *</label><input type="text" id="sub-name" placeholder="مثال: أجبان"></div>
+      </div>
+      <div class="field">
+        <label>📂 القسم الرئيسي *</label>
+        <select id="sub-cat">
+          {% for cat in categories %}
+          <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeSubModal()">إلغاء</button>
+      <button class="btn-save" onclick="saveSub()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== BOTTOM NAV ===== -->
+<nav class="bnav">
+  <a class="bni" href="/admin"><span class="bni-ico">📦</span><span class="bni-lbl">الطلبات</span></a>
+  <a class="bni active" href="/admin/mobile"><span class="bni-ico">📱</span><span class="bni-lbl">موبايل</span></a>
+  <a class="bni" href="/admin/products"><span class="bni-ico">🏪</span><span class="bni-lbl">المنتجات</span></a>
+  <a class="bni" href="/admin/customers"><span class="bni-ico">👥</span><span class="bni-lbl">الزبائن</span></a>
+  <a class="bni" href="/shop"><span class="bni-ico">🛒</span><span class="bni-lbl">المتجر</span></a>
+</nav>
+
+<script>
+const categories    = {{ categories | tojson }};
+const subcategories = {{ subcategories | tojson }};
+
+// ===== TABS =====
+function switchTab(tab, btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+// ===== TOAST =====
+function showToast(msg, color){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.background=color||'var(--g1)'; t.style.display='block';
+  setTimeout(()=>t.style.display='none', 2500);
+}
+
+// ===== ORDERS =====
+function filterOrders(status, btn){
+  document.querySelectorAll('.of').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.order-row').forEach(row=>{
+    row.style.display=(status==='all'||row.dataset.status===status)?'':'none';
+  });
+}
+function handleDateFilter(){
+  const val=document.getElementById('filter-date').value;
+  const lbl=document.getElementById('day-label');
+  if(!val){ lbl.textContent=''; document.querySelectorAll('.order-row').forEach(r=>r.style.display=''); return; }
+  lbl.textContent=new Date(val).toLocaleDateString('ar-SA',{weekday:'long'});
+  document.querySelectorAll('.order-row').forEach(r=>{
+    r.style.display=r.dataset.date.includes(val)?'':'none';
+  });
+}
+function updateStatus(orderId, sel){
+  fetch(`/api/order/${orderId}/status`,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({status:sel.value})
+  }).then(r=>r.json()).then(d=>{
+    if(d.success){
+      const row=sel.closest('.order-card');
+      row.dataset.status=sel.value;
+      const statusMap={
+        new:{cls:'sp-new',text:'🆕 جديد'},
+        prep:{cls:'sp-prep',text:'⏳ تحضير'},
+        delivering:{cls:'sp-del',text:'🚗 توصيل'},
+        done:{cls:'sp-done',text:'✅ تم'},
+        cancelled:{cls:'sp-cancel',text:'❌ ملغي'}
+      };
+      const badge=row.querySelector('.sp');
+      if(badge){ badge.className='sp '+(statusMap[sel.value]?.cls||''); badge.textContent=statusMap[sel.value]?.text||''; }
+      showToast('✅ تم تحديث الحالة');
+    }
+  });
+}
+function openWA(phone, orderId){
+  const msg=encodeURIComponent(`مرحبا، طلبك #${orderId} من دكّاني 🛒`);
+  window.open(`https://wa.me/970${phone.replace(/\D/g,'')}?text=${msg}`,'_blank');
+}
+function openMap(lat,lng){
+  window.open(`https://www.google.com/maps?q=${lat},${lng}`,'_blank');
+}
+// تحديث تلقائي كل 30 ثانية
+setInterval(()=>{
+  fetch('/api/stats').then(r=>r.json()).then(s=>{
+    const el=document.getElementById('stat-new');
+    if(el)el.textContent=s.orders_count||0;
+  });
+},30000);
+
+// ===== PRODUCTS =====
+function searchProds(q){
+  q=q.toLowerCase();
+  document.querySelectorAll('.prod-card').forEach(c=>{
+    c.style.display=(!q||c.dataset.name.toLowerCase().includes(q))?'':'none';
+  });
+}
+function filterProds(catId, btn){
+  document.querySelectorAll('.cf').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.prod-card').forEach(c=>{
+    c.style.display=(catId==='all'||c.dataset.cat==catId)?'':'none';
+  });
+}
+function toggleProd(id){
+  fetch(`/api/product/${id}/toggle`,{method:'POST'}).then(r=>r.json())
+    .then(()=>{ showToast('✅ تم التغيير'); setTimeout(()=>location.reload(),600); });
+}
+function deleteProd(id, name){
+  if(!confirm(`⚠️ هل تريد حذف "${name}"؟`))return;
+  fetch(`/api/product/${id}/delete`,{method:'POST'}).then(r=>r.json())
+    .then(d=>{
+      if(d.success){
+        const c=document.getElementById('pm-'+id);
+        if(c){c.style.opacity='0';setTimeout(()=>c.remove(),300);}
+        showToast('🗑️ تم الحذف');
+      }
+    });
+}
+
+// ===== PRODUCT MODAL =====
+function openProdModal(id=null,name='',price=0,unit='حبة',catId=null,subId=null){
+  document.getElementById('prod-id').value=id||'';
+  document.getElementById('prod-name').value=name;
+  document.getElementById('prod-price').value=price||'';
+  document.getElementById('prod-img-preview').innerHTML='🛍️';
+  document.getElementById('prod-image').value='';
+  if(unit){const s=document.getElementById('prod-unit');for(let o of s.options)if(o.value===unit){o.selected=true;break;}}
+  if(catId){document.getElementById('prod-cat').value=catId;loadSubcats(catId,subId);}
+  document.getElementById('prod-modal-title').textContent=id?'✏️ تعديل المنتج':'➕ منتج جديد';
+  document.getElementById('prod-modal').classList.add('show');
+}
+function closeProdModal(){document.getElementById('prod-modal').classList.remove('show')}
+function saveProd(){
+  const id=document.getElementById('prod-id').value;
+  const name=document.getElementById('prod-name').value.trim();
+  const price=document.getElementById('prod-price').value;
+  const unit=document.getElementById('prod-unit').value;
+  const catId=document.getElementById('prod-cat').value;
+  const subId=document.getElementById('prod-subcat').value;
+  const file=document.getElementById('prod-image').files[0];
+  if(!name||!price){alert('⚠️ أدخل الاسم والسعر');return;}
+  const fd=new FormData();
+  fd.append('name',name);fd.append('price',price);fd.append('unit',unit);
+  fd.append('category_id',catId);if(subId)fd.append('subcategory_id',subId);
+  if(file)fd.append('image',file);
+  fetch(id?`/api/product/${id}`:'/api/product',{method:'POST',body:fd})
+    .then(r=>r.json()).then(d=>{
+      if(d.success){closeProdModal();showToast('✅ تم حفظ المنتج');setTimeout(()=>location.reload(),800);}
+      else{alert('❌ '+(d.error||'خطأ'));}
+    });
+}
+function previewImg(input,previewId){
+  const p=document.getElementById(previewId);
+  if(input.files&&input.files[0]){
+    const r=new FileReader();
+    r.onload=e=>p.innerHTML=`<img src="${e.target.result}" alt="">`;
+    r.readAsDataURL(input.files[0]);
+  }
+}
+function loadSubcats(catId,selectedSubId){
+  const sel=document.getElementById('prod-subcat');
+  sel.innerHTML='<option value="">— بدون —</option>';
+  subcategories.filter(s=>s.category_id==catId).forEach(s=>{
+    const o=document.createElement('option');
+    o.value=s.id;o.textContent=s.icon+' '+s.name;
+    if(selectedSubId&&s.id==selectedSubId)o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+// ===== IMAGE MODAL =====
+let _imgProdId=null;
+function openImgModal(id,name){
+  _imgProdId=id;
+  document.getElementById('img-prod-name').textContent=name;
+  document.getElementById('img-google-link').href='https://www.google.com/search?q='+encodeURIComponent(name+' product white background')+'&tbm=isch';
+  document.getElementById('img-url').value='';
+  document.getElementById('img-preview-thumb').style.display='none';
+  document.getElementById('img-modal').classList.add('show');
+}
+function closeImgModal(){document.getElementById('img-modal').classList.remove('show');_imgProdId=null;}
+async function saveImg(){
+  const url=document.getElementById('img-url').value.trim();
+  if(!url||!url.startsWith('http')){alert('يرجى لصق رابط صحيح');return;}
+  const btn=event.target;btn.textContent='⏳';btn.disabled=true;
+  try{
+    const r=await fetch('/api/admin/confirm-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prod_id:_imgProdId,image_url:url})});
+    const d=await r.json();
+    if(d.success){showToast('✅ تم حفظ الصورة');closeImgModal();setTimeout(()=>location.reload(),800);}
+    else{alert('❌ فشل الحفظ');}
+  }catch(e){alert('❌ خطأ في الاتصال');}
+  btn.textContent='💾 حفظ';btn.disabled=false;
+}
+
+// ===== CATEGORIES =====
+function openCatModal(id=null,name='',icon='🛒'){
+  document.getElementById('cat-id').value=id||'';
+  document.getElementById('cat-name').value=name;
+  document.getElementById('cat-icon').value=icon;
+  document.getElementById('cat-modal-title').textContent=id?'✏️ تعديل القسم':'➕ قسم جديد';
+  document.getElementById('cat-modal').classList.add('show');
+}
+function closeCatModal(){document.getElementById('cat-modal').classList.remove('show')}
+function saveCat(){
+  const id=document.getElementById('cat-id').value;
+  const name=document.getElementById('cat-name').value.trim();
+  const icon=document.getElementById('cat-icon').value.trim();
+  if(!name){alert('⚠️ أدخل اسم القسم');return;}
+  const fd=new FormData();fd.append('name',name);fd.append('icon',icon);
+  fetch(id?`/api/category/${id}`:'/api/category',{method:'POST',body:fd})
+    .then(r=>r.json()).then(d=>{if(d.success){closeCatModal();showToast('✅ تم حفظ القسم');setTimeout(()=>location.reload(),800);}});
+}
+function toggleCat(id){
+  fetch(`/api/category/${id}/toggle`,{method:'POST'}).then(r=>r.json())
+    .then(()=>{document.getElementById('cat-'+id)?.classList.toggle('hidden');showToast('✅ تم التغيير');});
+}
+function deleteCat(id,name){
+  if(!confirm(`⚠️ هل تريد حذف قسم "${name}"؟\nسيتم حذف جميع منتجاته أيضاً!`))return;
+  fetch(`/api/category/${id}/delete`,{method:'POST'}).then(r=>r.json())
+    .then(()=>{showToast('🗑️ تم الحذف');setTimeout(()=>location.reload(),800);});
+}
+
+// ===== SUBCATEGORIES =====
+function openSubModal(id=null,name='',icon='📦',catId=null){
+  document.getElementById('sub-id').value=id||'';
+  document.getElementById('sub-name').value=name;
+  document.getElementById('sub-icon').value=icon;
+  if(catId)document.getElementById('sub-cat').value=catId;
+  document.getElementById('sub-modal-title').textContent=id?'✏️ تعديل القسم الفرعي':'📁 قسم فرعي جديد';
+  document.getElementById('sub-modal').classList.add('show');
+}
+function closeSubModal(){document.getElementById('sub-modal').classList.remove('show')}
+function saveSub(){
+  const id=document.getElementById('sub-id').value;
+  const name=document.getElementById('sub-name').value.trim();
+  const icon=document.getElementById('sub-icon').value.trim();
+  const catId=document.getElementById('sub-cat').value;
+  if(!name){alert('⚠️ أدخل اسم القسم الفرعي');return;}
+  const fd=new FormData();fd.append('name',name);fd.append('icon',icon);fd.append('category_id',catId);
+  fetch(id?`/api/subcategory/${id}`:'/api/subcategory',{method:'POST',body:fd})
+    .then(r=>r.json()).then(d=>{if(d.success){closeSubModal();showToast('✅ تم حفظ القسم الفرعي');setTimeout(()=>location.reload(),800);}});
+}
+function deleteSub(id,name){
+  if(!confirm(`⚠️ هل تريد حذف "${name}"؟`))return;
+  fetch(`/api/subcategory/${id}/delete`,{method:'POST'}).then(r=>r.json())
+    .then(()=>{showToast('🗑️ تم الحذف');setTimeout(()=>location.reload(),800);});
+}
+
+// إغلاق الـ modal بالضغط خارجه
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('show');});
+});
+</script>
+</body>
+</html>
