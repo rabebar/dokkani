@@ -712,7 +712,7 @@ tr.prod-hidden td  { opacity: .5; }
               <td>
                 <div class="act-btns">
                   <button class="abt" style="background:#e3f2fd" title="تعديل"
-                    onclick="openProdModal({{ p.id }}, '{{ p.name }}', {{ p.price }}, '{{ p.unit }}', {{ p.category_id }}, {{ p.subcategory_id or 'null' }})">✏️</button>
+                    onclick="openProdModal({{ p.id }}, '{{ p.name }}', {{ p.price }}, '{{ p.unit }}', {{ p.category_id }}, {{ p.subcategory_id or 'null' }}, '{{ p.barcode or '' }}')">✏️</button>
                   <button class="abt" style="background:#fff8e1" title="جلب صورة من Unsplash"
                     id="img-btn-{{ p.id }}"
                     onclick="fetchImage({{ p.id }}, '{{ p.name }}', this)">🖼️</button>
@@ -868,6 +868,15 @@ tr.prod-hidden td  { opacity: .5; }
           <option value="{{ sub.id }}" data-cat="{{ sub.category_id }}">{{ sub.icon }} {{ sub.name }}</option>
           {% endfor %}
         </select>
+      </div>
+      <div class="field">
+        <label>🔢 الباركود الدولي (Barcode)</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="prod-barcode" placeholder="أدخل الباركود أو ابحث عنه بالاسم" style="flex: 1;">
+          <button type="button" class="add-btn blue" onclick="searchBarcodeByName()" style="flex-shrink: 0; padding: 0 12px; font-size: 11px; height: 38px;">🔍 بحث بالاسم</button>
+        </div>
+        <!-- منطقة عرض نتائج البحث الدولي -->
+        <div id="barcode-results" style="margin-top: 8px; max-height: 150px; overflow-y: auto; border: 1px solid var(--g200); border-radius: 8px; display: none; background: #f9fafb; padding: 5px;"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1137,11 +1146,13 @@ function deleteSub(id, name) {
 }
 
 // ==================== PRODUCTS ====================
-function openProdModal(id=null, name='', price=0, unit='حبة', catId=null, subId=null) {
+  function openProdModal(id=null, name='', price=0, unit='حبة', catId=null, subId=null, barcode='') {
   document.getElementById('prod-id').value = id || '';
   document.getElementById('prod-name').value = name;
   document.getElementById('prod-price').value = price || '';
   document.getElementById('prod-unit').value = unit;
+  document.getElementById('prod-barcode').value = barcode || '';
+  document.getElementById('barcode-results').style.display = 'none';
   document.getElementById('prod-img-preview').innerHTML = '🛍️';
   document.getElementById('prod-image').value = '';
   const firstCat = catId || (categories[0] ? categories[0].id : null);
@@ -1154,6 +1165,40 @@ function openProdModal(id=null, name='', price=0, unit='حبة', catId=null, sub
   document.getElementById('prod-modal').classList.add('show');
 }
 function closeProdModal() { document.getElementById('prod-modal').classList.remove('show'); }
+async function searchBarcodeByName() {
+  const name = document.getElementById('prod-name').value.trim();
+  if (!name) { alert('⚠️ يرجى كتابة اسم المنتج في خانة الاسم أولاً للبحث عنه'); return; }
+  
+  const resDiv = document.getElementById('barcode-results');
+  resDiv.innerHTML = '<div style="text-align:center; padding:10px;">⏳ جاري البحث عالمياً...</div>';
+  resDiv.style.display = 'block';
+
+  try {
+    const resp = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(name)}&search_simple=1&action=process&json=1&page_size=8`);
+    const data = await resp.json();
+    
+    if (data.products && data.products.length > 0) {
+      resDiv.innerHTML = data.products.map(p => `
+        <div style="padding:10px; border-bottom:1px solid #eee; cursor:pointer; transition:0.2s;" 
+             onclick="selectBarcode('${p.code}')" 
+             onmouseover="this.style.background='#f0fdf4'" 
+             onmouseout="this.style.background='transparent'">
+          <span style="color:var(--g2); font-weight:bold;">${p.code}</span>
+          <div style="font-size:10px; color:#666;">${p.product_name || 'منتج غير مسمى'}</div>
+        </div>
+      `).join('');
+    } else {
+      resDiv.innerHTML = '<div style="padding:10px; color:var(--red); font-size:11px;">❌ لم يتم العثور على باركود مطابق لهذا الاسم</div>';
+    }
+  } catch (e) {
+    resDiv.innerHTML = '<div style="padding:10px; color:var(--red);">❌ خطأ في الاتصال بقاعدة البيانات الدولية</div>';
+  }
+}
+
+function selectBarcode(code) {
+  document.getElementById('prod-barcode').value = code;
+  document.getElementById('barcode-results').style.display = 'none';
+}
 
 function saveProd() {
   const id    = document.getElementById('prod-id').value;
@@ -1162,6 +1207,7 @@ function saveProd() {
   const unit  = document.getElementById('prod-unit').value;
   const catId = document.getElementById('prod-cat').value;
   const subId = document.getElementById('prod-subcat').value;
+  const barcode = document.getElementById('prod-barcode').value;
   const file  = document.getElementById('prod-image').files[0];
   if (!name || !price) { alert('⚠️ أدخل اسم المنتج والسعر'); return; }
   const fd = new FormData();
@@ -1170,6 +1216,7 @@ function saveProd() {
   fd.append('unit', unit);
   fd.append('category_id', catId);
   if (subId) fd.append('subcategory_id', subId);
+  fd.append('barcode', barcode);
   if (file)  fd.append('image', file);
   fetch(id ? `/api/product/${id}` : '/api/product', { method: 'POST', body: fd })
     .then(r => r.json())
