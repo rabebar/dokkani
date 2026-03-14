@@ -1165,36 +1165,53 @@ function deleteSub(id, name) {
   document.getElementById('prod-modal').classList.add('show');
 }
 function closeProdModal() { document.getElementById('prod-modal').classList.remove('show'); }
-async function searchBarcodeByName() {
-  const name = document.getElementById('prod-name').value.trim();
-  if (!name) { alert('⚠️ يرجى كتابة اسم المنتج في خانة الاسم أولاً للبحث عنه'); return; }
+async function searchBarcodeByName(customTerm = null) {
+  const nameInput = document.getElementById('prod-name');
+  // استخدام الاسم المعدل إذا وُجد، وإلا خذ الاسم الأصلي من الخانة
+  let term = customTerm !== null ? customTerm : nameInput.value.trim();
+
+  if (!term) { alert('⚠️ يرجى كتابة اسم المنتج أولاً'); return; }
   
   const resDiv = document.getElementById('barcode-results');
-  resDiv.innerHTML = '<div style="text-align:center; padding:10px;">⏳ جاري البحث عالمياً...</div>';
+  // إظهار شريط تعديل البحث فوراً فوق النتائج لسرعة التحكم
+  resDiv.innerHTML = `
+    <div style="display:flex; gap:5px; padding:8px; background:#fff; border-bottom:1px solid #ddd; position:sticky; top:0; z-index:10;">
+      <input type="text" id="refine-search-input" value="${term}" 
+             style="flex:1; padding:6px; font-size:12px; border:1.5px solid var(--g4); border-radius:5px; outline:none;">
+      <button type="button" onclick="searchBarcodeByName(document.getElementById('refine-search-input').value)" 
+              style="background:var(--g2); color:#fff; border:none; padding:5px 12px; border-radius:5px; font-size:11px; font-weight:bold; cursor:pointer;">تحديث</button>
+    </div>
+    <div id="actual-results-list" style="text-align:center; padding:15px;">⏳ جاري البحث عالمياً...</div>
+  `;
   resDiv.style.display = 'block';
 
   try {
-    const resp = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(name)}&search_simple=1&action=process&json=1&page_size=8`);
+    // نستخدم الرابط المباشر للبحث المتقدم لزيادة دقة النتائج
+    const resp = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(term)}&search_simple=1&action=process&json=1&page_size=12`);
     const data = await resp.json();
+    const listArea = document.getElementById('actual-results-list');
     
     if (data.products && data.products.length > 0) {
-      resDiv.innerHTML = data.products.map(p => `
-        <div style="padding:10px; border-bottom:1px solid #eee; cursor:pointer; transition:0.2s;" 
+      listArea.innerHTML = data.products.map(p => `
+        <div style="padding:10px; border-bottom:1px solid #eee; cursor:pointer; transition:0.2s; text-align:right;" 
              onclick="selectBarcode('${p.code}')" 
              onmouseover="this.style.background='#f0fdf4'" 
              onmouseout="this.style.background='transparent'">
-          <span style="color:var(--g2); font-weight:bold;">${p.code}</span>
-          <div style="font-size:10px; color:#666;">${p.product_name || 'منتج غير مسمى'}</div>
+          <span style="color:var(--g2); font-weight:bold; font-size:14px;">${p.code}</span>
+          <div style="font-size:11px; color:#555; margin-top:2px;">${p.product_name || 'بدون اسم'} ${p.brands ? '- ' + p.brands : ''}</div>
         </div>
       `).join('');
     } else {
-      resDiv.innerHTML = '<div style="padding:10px; color:var(--red); font-size:11px;">❌ لم يتم العثور على باركود مطابق لهذا الاسم</div>';
+      listArea.innerHTML = `
+        <div style="padding:15px; color:var(--red); font-size:11px; line-height:1.6;">
+          ❌ لم نجد نتائج دقيقة لـ "${term}"<br>
+          <b>💡 نصيحة:</b> امسح بعض الكلمات (مثل الوزن أو الحجم) من المربع في الأعلى واضغط "تحديث".
+        </div>`;
     }
   } catch (e) {
-    resDiv.innerHTML = '<div style="padding:10px; color:var(--red);">❌ خطأ في الاتصال بقاعدة البيانات الدولية</div>';
+    document.getElementById('actual-results-list').innerHTML = '<div style="padding:10px; color:var(--red);">❌ خطأ في الاتصال بالسحابة العالمية</div>';
   }
 }
-
 function selectBarcode(code) {
   document.getElementById('prod-barcode').value = code;
   document.getElementById('barcode-results').style.display = 'none';
