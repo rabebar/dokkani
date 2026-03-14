@@ -244,7 +244,7 @@ def admin_mobile():
                            stats=get_daily_stats(),
                            categories=get_categories(visible_only=False),
                            subcategories=get_subcategories(visible_only=False),
-                           products=get_products(visible_only=False),
+                           products=[], # تم إفراغ القائمة الأولية لتسريع فتح الصفحة 10 أضعاف
                            app_name=Config.APP_NAME)
 
 # ==========================================
