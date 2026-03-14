@@ -485,6 +485,245 @@ tr.prod-hidden td  { opacity: .5; }
   th:nth-child(3), td:nth-child(3),
   th:nth-child(4), td:nth-child(4) { display: none; }
 }
+
+/* ===== MOBILE FULL RESPONSIVE ===== */
+@media (max-width: 768px) {
+
+  /* Body */
+  body { display: block; padding-bottom: 70px; }
+
+  /* Top bar */
+  .topbar { padding: 10px 14px; position: sticky; top: 0; z-index: 100; }
+  .tb-title { font-size: 15px; }
+
+  /* Hamburger menu button — يظهر فقط موبايل */
+  .mob-menu-btn {
+    display: flex !important;
+    width: 36px; height: 36px;
+    background: var(--gx); border: 1.5px solid var(--g200);
+    border-radius: 9px; align-items: center; justify-content: center;
+    font-size: 18px; cursor: pointer; flex-shrink: 0;
+  }
+
+  /* Content */
+  .content { padding: 12px 10px; }
+
+  /* Tabs — أفقي قابل للتمرير */
+  .tabs { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; padding-bottom: 4px; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { white-space: nowrap; flex-shrink: 0; font-size: 12px; padding: 7px 14px; }
+
+  /* Card header */
+  .chd { padding: 10px 12px; }
+  .ctl { font-size: 13px; }
+  .add-btn { font-size: 11px; padding: 7px 11px; }
+
+  /* Categories grid */
+  .cat-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; }
+  .cat-img { width: 44px; height: 44px; font-size: 22px; }
+  .cat-name { font-size: 10.5px; }
+  .ca { width: 26px; height: 26px; font-size: 12px; }
+
+  /* Subcategories grid */
+  .sub-grid { grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
+  .sub-card { padding: 9px; }
+  .sub-ico { width: 34px; height: 34px; font-size: 17px; }
+  .sub-name { font-size: 11px; }
+
+  /* Products filters */
+  .prod-filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 8px 10px; }
+  .prod-filters::-webkit-scrollbar { display: none; }
+  .pf { white-space: nowrap; flex-shrink: 0; font-size: 10.5px; padding: 4px 10px; }
+
+  /* Search bar */
+  .search-bar { padding: 8px 10px; }
+  .search-bar input { font-size: 13px; padding: 9px 13px; }
+
+  /* TABLE → CARDS on mobile */
+  table, thead, tbody, th, td, tr { display: block; }
+  thead { display: none; }
+
+  tr.prod-row {
+    background: var(--w);
+    border-radius: 10px;
+    border: 1.5px solid var(--g200);
+    margin: 0 10px 8px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: var(--sh);
+  }
+  tr.prod-row.prod-hidden { opacity: .45; }
+
+  /* صف داخلي للصورة والمعلومات */
+  tr.prod-row td { border: none; padding: 0; }
+
+  /* خلية الترتيب والتحديد */
+  td:nth-child(1) { /* drag handle */
+    display: inline-flex !important;
+    width: 32px; height: 100%;
+    align-items: center; justify-content: center;
+    background: var(--g100); border-left: 1px solid var(--g200);
+    float: right; font-size: 16px; color: var(--g400);
+    padding: 12px 0 !important;
+  }
+  td:nth-child(2) { /* checkbox */
+    display: inline-flex !important;
+    width: 36px;
+    align-items: center; justify-content: center;
+    float: right; padding: 12px 0 !important;
+  }
+
+  /* خلية الصورة */
+  td:nth-child(3) {
+    display: inline-flex !important;
+    width: 64px; height: 64px;
+    float: right;
+    align-items: center; justify-content: center;
+    background: var(--gx);
+  }
+  .prod-img { width: 64px; height: 64px; border-radius: 0; font-size: 26px; }
+
+  /* خلية الاسم */
+  td:nth-child(4) {
+    display: block !important;
+    overflow: hidden;
+    margin-right: 132px; /* drag+checkbox+img */
+    padding: 8px 10px 0 !important;
+    font-size: 12.5px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* خلية القسم — تظهر كـ badge صغير */
+  td:nth-child(5) {
+    display: inline-block !important;
+    margin-right: 132px;
+    padding: 2px 10px 0 !important;
+    font-size: 10px; color: var(--g400);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: calc(100% - 132px);
+  }
+
+  /* سعر الشراء */
+  td:nth-child(6) {
+    display: inline-block !important;
+    padding: 2px 10px !important;
+    font-size: 11px;
+  }
+
+  /* سعر البيع */
+  td:nth-child(7) {
+    display: inline-block !important;
+    padding: 2px 4px !important;
+    font-size: 13px; font-weight: 900;
+  }
+
+  /* الوحدة */
+  td:nth-child(8) {
+    display: inline-block !important;
+    padding: 2px 4px !important;
+  }
+  .unit-badge { font-size: 9.5px; padding: 1px 7px; }
+
+  /* الحالة */
+  td:nth-child(9) {
+    display: inline-block !important;
+    padding: 2px 10px !important;
+    font-size: 10.5px;
+  }
+
+  /* أزرار الإجراءات — شريط كامل في الأسفل */
+  td:nth-child(10) {
+    display: flex !important;
+    clear: both;
+    border-top: 1px solid var(--g200);
+    padding: 0 !important;
+  }
+  .act-btns { display: flex; width: 100%; }
+  .abt {
+    flex: 1; height: 36px; border-radius: 0;
+    border-left: 1px solid var(--g200);
+    font-size: 15px;
+  }
+  .abt:first-child { border-left: none; }
+
+  /* Bulk action bar */
+  #bulk-action-bar {
+    flex-wrap: wrap; gap: 6px;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+  #bulk-action-bar select { font-size: 11px; padding: 5px 8px; }
+  #bulk-action-bar button { font-size: 11px; padding: 5px 10px; }
+
+  /* Modals — bottom sheet */
+  .modal-bg { align-items: flex-end; padding: 0; }
+  .modal {
+    border-radius: 20px 20px 0 0;
+    max-height: 90vh;
+    animation: slideUpModal .25s ease;
+  }
+  @keyframes slideUpModal {
+    from { transform: translateY(40px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  /* شريط pill فوق الـ modal */
+  .modal::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    background: var(--g200);
+    border-radius: 2px;
+    margin: 10px auto 0;
+  }
+  .modal-hdr { padding: 12px 16px; }
+  .modal-body { padding: 14px 16px; }
+  .modal-footer { padding: 10px 16px; }
+
+  /* Bottom nav — يظهر فقط موبايل */
+  .mob-bnav {
+    display: flex !important;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--w); height: 60px;
+    border-top: 1px solid var(--g200);
+    box-shadow: 0 -4px 20px rgba(0,0,0,.08);
+    z-index: 200;
+    align-items: center;
+  }
+  .mob-bni {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px; text-decoration: none; padding: 5px 0;
+    border: none; background: none; font-family: 'Cairo', sans-serif;
+    cursor: pointer;
+  }
+  .mob-bni-ico { font-size: 20px; line-height: 1; }
+  .mob-bni-lbl { font-size: 9px; font-weight: 700; color: var(--g400); }
+  .mob-bni.active .mob-bni-lbl { color: var(--g2); }
+
+  /* Drawer — قائمة جانبية موبايل */
+  .mob-drawer-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 300; backdrop-filter: blur(2px);
+  }
+  .mob-drawer-overlay.show { display: block; }
+  .mob-drawer {
+    position: fixed; top: 0; right: -260px; width: 260px; height: 100vh;
+    background: linear-gradient(170deg, var(--g1), var(--g2));
+    z-index: 301; transition: right .3s ease;
+    display: flex; flex-direction: column;
+    box-shadow: -4px 0 24px rgba(0,0,0,.3);
+  }
+  .mob-drawer.open { right: 0; }
+}
+
+/* هذه العناصر مخفية على الديسكتوب */
+.mob-menu-btn { display: none; }
+.mob-bnav { display: none; }
+.mob-drawer-overlay { display: none; }
+.mob-drawer { display: none; }
 </style>
 </head>
 <body>
@@ -524,7 +763,10 @@ tr.prod-hidden td  { opacity: .5; }
 <!-- ===== MAIN ===== -->
 <div class="main">
   <div class="topbar">
-    <div class="tb-title">🏪 إدارة الأقسام والمنتجات</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="mob-menu-btn" onclick="openMobDrawer()">☰</button>
+      <div class="tb-title">🏪 إدارة الأقسام والمنتجات</div>
+    </div>
   </div>
 
   <div class="content">
@@ -946,6 +1188,16 @@ const categories    = {{ categories | tojson }};
 const subcategories = {{ subcategories | tojson }};
 let currentCatFilter = 'all';
 let currentSubFilter = null;
+
+// ===== MOBILE DRAWER =====
+function openMobDrawer(){
+  document.getElementById('mob-drawer').classList.add('open');
+  document.getElementById('mob-drawer-overlay').classList.add('show');
+}
+function closeMobDrawer(){
+  document.getElementById('mob-drawer').classList.remove('open');
+  document.getElementById('mob-drawer-overlay').classList.remove('show');
+}
 
 // ===== TABS =====
 function switchTab(tab, btn) {
@@ -1474,6 +1726,39 @@ function uploadExcel() {
     </div>
   </div>
 </div>
+
+<!-- ===== MOBILE DRAWER ===== -->
+<div class="mob-drawer-overlay" id="mob-drawer-overlay" onclick="closeMobDrawer()"></div>
+<nav class="mob-drawer" id="mob-drawer">
+  <div class="sb-logo">
+    <div class="sb-ico">🛒</div>
+    <div><div class="sb-title">دكّاني</div><div class="sb-sub">رام الله 🇵🇸</div></div>
+  </div>
+  <div class="sb-nav">
+    <div class="nl">الإدارة</div>
+    <a class="ni" href="/admin" onclick="closeMobDrawer()"><span class="ico">📦</span> الطلبات</a>
+    <a class="ni" href="/admin/accounting" onclick="closeMobDrawer()"><span class="ico">💰</span> المحاسبة</a>
+    <a class="ni active" href="/admin/products"><span class="ico">🏪</span> المنتجات</a>
+    <a class="ni" href="/admin/customers" onclick="closeMobDrawer()"><span class="ico">👥</span> الزبائن</a>
+    <a class="ni" href="/admin/image-review" onclick="closeMobDrawer()"><span class="ico">🖼️</span> مراجعة الصور</a>
+    <a class="ni" href="/admin/ai-assistant" onclick="closeMobDrawer()"><span class="ico">🤖</span> المساعد الذكي</a>
+    <div class="nl">المتجر</div>
+    <a class="ni" href="/shop" onclick="closeMobDrawer()"><span class="ico">🛒</span> المتجر</a>
+    <a class="ni" href="/" onclick="closeMobDrawer()"><span class="ico">👤</span> الزبون</a>
+  </div>
+  <div class="sb-foot">
+    <div class="adm"><div class="adm-av">👨</div><div><div class="adm-n">المدير</div><div class="adm-r">دكّاني</div></div></div>
+  </div>
+</nav>
+
+<!-- ===== MOBILE BOTTOM NAV ===== -->
+<nav class="mob-bnav">
+  <a class="mob-bni" href="/admin"><span class="mob-bni-ico">📦</span><span class="mob-bni-lbl">الطلبات</span></a>
+  <a class="mob-bni" href="/admin/accounting"><span class="mob-bni-ico">💰</span><span class="mob-bni-lbl">المحاسبة</span></a>
+  <a class="mob-bni active" href="/admin/products"><span class="mob-bni-ico">🏪</span><span class="mob-bni-lbl">المنتجات</span></a>
+  <a class="mob-bni" href="/admin/customers"><span class="mob-bni-ico">👥</span><span class="mob-bni-lbl">الزبائن</span></a>
+  <a class="mob-bni" href="/admin/image-review"><span class="mob-bni-ico">🖼️</span><span class="mob-bni-lbl">الصور</span></a>
+</nav>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <script>
