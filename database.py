@@ -420,7 +420,7 @@ def calculate_delivery_fee(lat, lng):
     distance_km = 6371 * c
     # المعادلة المحدثة: 10 شيكل كحد أدنى + 2.5 شيكل لكل كيلومتر، بحد أقصى 20
     delivery = 10 + (distance_km * 2.5)
-    return round(max(10, min(20, delivery)), 1)
+    return round(max(10, min(25, delivery)), 1)
 
 
 # ==========================================
