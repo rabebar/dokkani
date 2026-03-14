@@ -580,6 +580,7 @@ def import_excel_to_db(file_path):
     col_unit     = find_column(df.columns, COLUMN_MAP['unit'])
     col_category = find_column(df.columns, COLUMN_MAP['category'])
     col_subcat   = find_column(df.columns, COLUMN_MAP['subcategory'])
+    col_barcode  = find_column(df.columns, COLUMN_MAP['barcode'])
 
     if not col_name or not col_price:
         missing = []
@@ -617,6 +618,7 @@ def import_excel_to_db(file_path):
         try:
             name      = str(row[col_name]).strip()  if pd.notna(row[col_name])  else ''
             price_raw = str(row[col_price]).strip() if pd.notna(row[col_price]) else ''
+            barcode   = str(row[col_barcode]).strip() if col_barcode and pd.notna(row[col_barcode]) else ''
 
             if not name or not price_raw or name == 'nan':
                 errors += 1
@@ -649,28 +651,22 @@ def import_excel_to_db(file_path):
                 if sub_name and sub_name != 'nan':
                     subcategory_id = get_or_create_subcategory(sub_name, category_id)
 
+            # البحث عن المنتج بالاسم في القسم المحدد
             existing_prod = execute_query(
-                'SELECT id, image FROM products WHERE name=? AND category_id=?',
-                (name, category_id), fetchone=True
+                'SELECT id FROM products WHERE name=?',
+                (name,), fetchone=True
             )
 
-            if existing_prod:
+            if existing_prod and barcode:
+                # تحديث الباركود فقط للمنتج الموجود لعدم تخريب تعديلاتك اليدوية
                 execute_query(
-                    'UPDATE products SET price=?, unit=?, subcategory_id=? WHERE id=?',
-                    (price, unit, subcategory_id, existing_prod['id']), commit=True
+                    'UPDATE products SET barcode=? WHERE id=?',
+                    (barcode, existing_prod['id']), commit=True
                 )
-                # أضف للخلفية فقط إن لم تكن له صورة
-                if not existing_prod.get('image'):
-                    needs_image.append((existing_prod['id'], name))
                 updated += 1
             else:
-                new_id = execute_query(
-                    'INSERT INTO products (name, price, unit, category_id, subcategory_id, visible) VALUES (?, ?, ?, ?, ?, 1)',
-                    (name, price, unit, category_id, subcategory_id), commit=True
-                )
-                # كل منتج جديد يحتاج صورة
-                needs_image.append((new_id, name))
-                created += 1
+                # إذا لم يجد المنتج أو لا يوجد باركود في الصف، نتجاهله تماماً بناءً على طلبك
+                continue
 
         except Exception as e:
             errors += 1
