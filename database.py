@@ -108,6 +108,7 @@ def init_db():
         unit           TEXT DEFAULT 'حبة',
         category_id    INTEGER,
         subcategory_id INTEGER,
+        barcode        TEXT,
         image_status   INTEGER DEFAULT 0,
         temp_images    TEXT,
         visible        INTEGER DEFAULT 1,
@@ -118,6 +119,7 @@ def init_db():
     try:
         execute_query('ALTER TABLE products ADD COLUMN image_status INTEGER DEFAULT 0', commit=True)
         execute_query('ALTER TABLE products ADD COLUMN temp_images TEXT', commit=True)
+        execute_query('ALTER TABLE products ADD COLUMN barcode TEXT', commit=True)
     except: pass
 
     execute_query(f'''CREATE TABLE IF NOT EXISTS orders (
@@ -296,14 +298,14 @@ def get_products_with_sell_price(category_id=None, subcategory_id=None, visible_
         p['sell_price'] = get_selling_price(p['price'], p.get('category_id'))
     return products
 
-def add_product(name, price, unit, category_id, subcategory_id=None, image=None):
-    execute_query('INSERT INTO products (name, price, unit, category_id, subcategory_id, image) VALUES (?, ?, ?, ?, ?, ?)', (name, price, unit, category_id, subcategory_id, image), commit=True)
+def add_product(name, price, unit, category_id, subcategory_id=None, image=None, barcode=None):
+    execute_query('INSERT INTO products (name, price, unit, category_id, subcategory_id, image, barcode) VALUES (?, ?, ?, ?, ?, ?, ?)', (name, price, unit, category_id, subcategory_id, image, barcode), commit=True)
 
-def update_product(prod_id, name, price, unit, category_id, subcategory_id=None, image=None):
+def update_product(prod_id, name, price, unit, category_id, subcategory_id=None, image=None, barcode=None):
     if image:
-        execute_query('UPDATE products SET name=?, price=?, unit=?, category_id=?, subcategory_id=?, image=? WHERE id=?', (name, price, unit, category_id, subcategory_id, image, prod_id), commit=True)
+        execute_query('UPDATE products SET name=?, price=?, unit=?, category_id=?, subcategory_id=?, image=?, barcode=? WHERE id=?', (name, price, unit, category_id, subcategory_id, image, barcode, prod_id), commit=True)
     else:
-        execute_query('UPDATE products SET name=?, price=?, unit=?, category_id=?, subcategory_id=? WHERE id=?', (name, price, unit, category_id, subcategory_id, prod_id), commit=True)
+        execute_query('UPDATE products SET name=?, price=?, unit=?, category_id=?, subcategory_id=?, barcode=? WHERE id=?', (name, price, unit, category_id, subcategory_id, barcode, prod_id), commit=True)
 
 def toggle_product(prod_id):
     execute_query('UPDATE products SET visible=1-visible WHERE id=?', (prod_id,), commit=True)

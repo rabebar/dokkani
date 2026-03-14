@@ -408,8 +408,9 @@ def api_add_product():
     category_id = int(request.form.get('category_id', 1))
     subcategory_id = request.form.get('subcategory_id')
     subcategory_id = int(subcategory_id) if subcategory_id else None
+    barcode = request.form.get('barcode')
     image = save_upload(request.files.get('image'), 'prod')
-    add_product(name, price, unit, category_id, subcategory_id, image)
+    add_product(name, price, unit, category_id, subcategory_id, image, barcode)
     return jsonify({'success': True})
 
 @app.route('/api/product/<int:prod_id>', methods=['POST'])
@@ -420,8 +421,9 @@ def api_update_product(prod_id):
     category_id = int(request.form.get('category_id', 1))
     subcategory_id = request.form.get('subcategory_id')
     subcategory_id = int(subcategory_id) if subcategory_id else None
+    barcode = request.form.get('barcode')
     image = save_upload(request.files.get('image'), 'prod')
-    update_product(prod_id, name, price, unit, category_id, subcategory_id, image)
+    update_product(prod_id, name, price, unit, category_id, subcategory_id, image, barcode)
     return jsonify({'success': True})
 
 @app.route('/api/product/<int:prod_id>/toggle', methods=['POST'])
