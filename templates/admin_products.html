@@ -1226,7 +1226,9 @@ function saveProd() {
   const subId = document.getElementById('prod-subcat').value;
   const barcode = document.getElementById('prod-barcode').value;
   const file  = document.getElementById('prod-image').files[0];
+
   if (!name || !price) { alert('⚠️ أدخل اسم المنتج والسعر'); return; }
+
   const fd = new FormData();
   fd.append('name', name);
   fd.append('price', price);
@@ -1235,10 +1237,36 @@ function saveProd() {
   if (subId) fd.append('subcategory_id', subId);
   fd.append('barcode', barcode);
   if (file)  fd.append('image', file);
+
   fetch(id ? `/api/product/${id}` : '/api/product', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(d => {
-      if (d.success) { closeProdModal(); showToast('✅ تم الحفظ بنجاح!'); setTimeout(() => location.reload(), 800); }
+      if (d.success) {
+        closeProdModal();
+        showToast(id ? '✅ تم تحديث المنتج بنجاح' : '✅ تم إضافة المنتج بنجاح');
+        
+        // التحديث الحي داخل الجدول (دون ريلود) إذا كان تعديلاً لمنتج موجود
+        if (id) {
+          const row = document.querySelector(`tr[data-id="${id}"]`);
+          if (row) {
+            // 1. تحديث الاسم (العمود الرابع)
+            row.cells[3].querySelector('b').innerText = name;
+            // 2. تحديث سعر الشراء (العمود السادس)
+            row.cells[5].querySelector('.price-orig').innerText = price + '₪';
+            // 3. تحديث سعر البيع (العمود السابع) من الخانة المخفية
+            row.cells[6].querySelector('.price-sell').innerText = document.getElementById('prod-sell').value;
+            // 4. تحديث وظيفة زر التعديل لكي يحمل الباركود والبيانات الجديدة في الضغطة القادمة
+            const editBtn = row.querySelector('.abt');
+            const safeName = name.replace(/'/g, "\\'");
+            editBtn.setAttribute('onclick', `openProdModal(${id}, '${safeName}', ${price}, '${unit}', ${catId}, ${subId || 'null'}, '${barcode}')`);
+          }
+        } else {
+          // إذا كان منتج جديد تماماً، نحتاج ريلود ليظهر في القائمة في مكانه الصحيح
+          setTimeout(() => location.reload(), 800);
+        }
+      } else {
+        alert('❌ فشل الحفظ: ' + (d.error || 'خطأ غير معروف'));
+      }
     });
 }
 
