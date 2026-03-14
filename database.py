@@ -584,7 +584,7 @@ def import_excel_to_db(file_path):
                 continue
 
             # البحث عن المنتج بالاسم في قاعدة البيانات (في جميع الأقسام)
-            existing = execute_query('SELECT id FROM products WHERE name=?', (name_val,), fetchone=True)
+            existing = execute_query('SELECT id FROM products WHERE TRIM(name) = TRIM(?)', (name_val,), fetchone=True)
 
             if existing:
                 # تحديث خانة الباركود فقط لضمان عدم ضياع الأسعار المعدلة يدوياً
