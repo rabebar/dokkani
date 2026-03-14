@@ -674,18 +674,55 @@ setInterval(()=>{
 },30000);
 
 // ===== PRODUCTS =====
-function searchProds(q){
-  q=q.toLowerCase();
-  document.querySelectorAll('.prod-card').forEach(c=>{
-    c.style.display=(!q||c.dataset.name.toLowerCase().includes(q))?'':'none';
-  });
+let currentAdminCat = 'all';
+let currentAdminSearch = '';
+
+async function loadProductsDynamic() {
+  const list = document.getElementById('prod-list');
+  list.innerHTML = '<div class="empty">⏳ جاري التحميل...</div>';
+  
+  try {
+    const resp = await fetch(`/api/admin/search-all?q=${encodeURIComponent(currentAdminSearch)}&cat=${currentAdminCat}`);
+    const data = await resp.json();
+    
+    if(!data.products || data.products.length === 0) {
+      list.innerHTML = '<div class="empty"><div class="empty-ico">🔍</div><div>لا توجد نتائج</div></div>';
+      return;
+    }
+
+    list.innerHTML = data.products.map(p => `
+      <div class="prod-card ${p.visible ? '' : 'hidden-prod'}" id="pm-${p.id}">
+        <div class="prod-actions">
+          <button class="pa" onclick="openProdModal(${p.id},'${p.name.replace(/'/g, "\\'")}',${p.price},'${p.unit}',${p.category_id},${p.subcategory_id || 'null'})">✏️</button>
+          <button class="pa" onclick="openImgModal(${p.id},'${p.name.replace(/'/g, "\\'")}')">🖼️</button>
+          <button class="pa" onclick="toggleProd(${p.id})">👁️</button>
+          <button class="pa" onclick="deleteProd(${p.id},'${p.name.replace(/'/g, "\\'")}')">🗑️</button>
+        </div>
+        <div class="prod-img">${p.image ? `<img src="${p.image}">` : '🛍️'}</div>
+        <div class="prod-info">
+          <div class="prod-name">${p.name}</div>
+          <div class="prod-price-row">
+            <span class="prod-price">${p.price}₪</span>
+            <span class="prod-cat">${p.cat_name || '—'}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty">❌ خطأ في تحميل البيانات</div>';
+  }
 }
-function filterProds(catId, btn){
-  document.querySelectorAll('.cf').forEach(b=>b.classList.remove('active'));
+
+function searchProds(q) {
+  currentAdminSearch = q;
+  if(q.length > 1 || q.length === 0) loadProductsDynamic();
+}
+
+function filterProds(catId, btn) {
+  document.querySelectorAll('.cf').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.querySelectorAll('.prod-card').forEach(c=>{
-    c.style.display=(catId==='all'||c.dataset.cat==catId)?'':'none';
-  });
+  currentAdminCat = catId;
+  loadProductsDynamic();
 }
 function toggleProd(id){
   fetch(`/api/product/${id}/toggle`,{method:'POST'}).then(r=>r.json())

@@ -268,6 +268,21 @@ def api_search():
         p['sell_price'] = get_selling_price(p['price'], p.get('category_id'))
     return jsonify({'products': results})
 
+@app.route('/api/admin/search-all')
+@admin_required
+def api_admin_search_all():
+    q = request.args.get('q', '').strip()
+    cat_id = request.args.get('cat', 'all')
+    query = "SELECT p.id, p.name, p.price, p.image, p.visible, p.category_id, p.subcategory_id, p.unit, c.name as cat_name FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE 1=1"
+    params = []
+    if q:
+        query += " AND p.name ILIKE %s"; params.append(f'%{q}%')
+    if cat_id != 'all':
+        query += " AND p.category_id = %s"; params.append(cat_id)
+    query += " ORDER BY p.id DESC LIMIT 50"
+    results = execute_query(query, tuple(params), fetchall=True) or []
+    return jsonify({'products': results})
+
 
 @app.route('/api/order', methods=['POST'])
 @rate_limit(max_calls=10, window=60)
