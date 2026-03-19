@@ -78,6 +78,8 @@ tr:hover td{background:#fafff9}
 .sel-status{padding:5px 9px;border-radius:8px;border:1px solid var(--g200);font-family:'Cairo',sans-serif;font-size:11px;background:var(--w);cursor:pointer;outline:none;color:var(--g800)}
 .empty-state{text-align:center;padding:40px;color:var(--g400)}
 .empty-state .ei{font-size:40px;margin-bottom:12px}
+.sb-nav{padding:16px 10px;flex:1;overflow-y:auto}
+.sb-foot{padding:12px 10px 20px;border-top:1px solid rgba(255,255,255,.1);flex-shrink:0}
 </style>
 </head>
 <body>
@@ -103,12 +105,12 @@ tr:hover td{background:#fafff9}
     <a class="ni" href="/shop"><span class="ico">🏪</span> المتجر</a>
     <a class="ni" href="/"><span class="ico">👤</span> صفحة الزبون</a>
   </div>
-    <div class="sb-foot">
+  <div class="sb-foot">
     <div class="adm">
       <div class="adm-av">👨</div>
       <div><div class="adm-n">المدير</div><div class="adm-r">دكّاني رام الله</div></div>
     </div>
-    <a href="/admin/logout" class="ni" style="margin-top: 10px; justify-content: center; background: rgba(231,76,60,0.15);">
+    <a href="/admin/logout" class="ni" style="margin-top:10px;justify-content:center;background:rgba(231,76,60,0.25);color:#fff">
       <span class="ico">🚪</span> تسجيل الخروج
     </a>
   </div>
@@ -422,3 +424,4 @@ function closeOrderModal() {
 </style>
 </body>
 </html>
+
