@@ -27,6 +27,7 @@ Compress(app)
 from flask_caching import Cache
 cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 300})
 app.config.from_object(Config)
+app.secret_key = os.environ.get('SECRET_KEY', 'dokkani-secret-key-2024-fallback')
 
 # ==========================================
 # الحماية والأمان
