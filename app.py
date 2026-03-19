@@ -4,6 +4,7 @@
 
 import os
 import time
+import secrets
 from flask import Flask, render_template, request, jsonify, redirect
 from config import Config
 from telegram_notify import notify_new_order, notify_order_status
@@ -35,6 +36,22 @@ from flask import session, request, jsonify, redirect
 from datetime import timedelta
 
 app.permanent_session_lifetime = timedelta(hours=8)
+
+# CSRF Token Generation
+def generate_csrf_token():
+    """توليد رمز CSRF جديد"""
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = secrets.token_hex(32)
+    return session['_csrf_token']
+
+def validate_csrf_token(token):
+    """التحقق من رمز CSRF"""
+    return token and session.get('_csrf_token') == token
+
+@app.context_processor
+def inject_csrf_token():
+    """توفير CSRF token لجميع القوالب"""
+    return dict(csrf_token=generate_csrf_token)
 
 # Rate limiting بسيط في الذاكرة
 import time as _time
@@ -256,8 +273,23 @@ def api_search():
     q = request.args.get('q', '').strip()
     if not q or len(q) < 2:
         return jsonify({'products': []})
+    # دعم البحث بالباركود (أرقام فقط)
+    if q.isdigit():
+        results = execute_query(
+            """SELECT p.id, p.name, p.price, p.image, p.unit, p.barcode, c.name as cat_name, p.category_id
+               FROM products p
+               LEFT JOIN categories c ON c.id = p.category_id
+               WHERE p.visible=1 AND p.barcode = ?
+               LIMIT 30""",
+            (q,), fetchall=True
+        ) or []
+        if results:
+            for p in results:
+                p['sell_price'] = get_selling_price(p['price'], p.get('category_id'))
+            return jsonify({'products': results, 'barcode_match': True})
+    # البحث العادي بالاسم
     results = execute_query(
-        """SELECT p.id, p.name, p.price, p.image, p.unit, c.name as cat_name, p.category_id
+        """SELECT p.id, p.name, p.price, p.image, p.unit, p.barcode, c.name as cat_name, p.category_id
            FROM products p
            LEFT JOIN categories c ON c.id = p.category_id
            WHERE p.visible=1 AND p.name LIKE ?
@@ -351,7 +383,10 @@ def api_orders_by_phone():
 # ==========================================
 
 @app.route('/api/category', methods=['POST'])
+@admin_required
 def api_add_category():
+    if not validate_csrf_token(request.form.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     name  = request.form.get('name')
     icon  = request.form.get('icon', '🛒')
     image = save_upload(request.files.get('image'), 'cat')
@@ -359,7 +394,10 @@ def api_add_category():
     return jsonify({'success': True})
 
 @app.route('/api/category/<int:cat_id>', methods=['POST'])
+@admin_required
 def api_update_category(cat_id):
+    if not validate_csrf_token(request.form.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     name  = request.form.get('name')
     icon  = request.form.get('icon', '🛒')
     image = save_upload(request.files.get('image'), 'cat')
@@ -367,17 +405,26 @@ def api_update_category(cat_id):
     return jsonify({'success': True})
 
 @app.route('/api/category/<int:cat_id>/toggle', methods=['POST'])
+@admin_required
 def api_toggle_category(cat_id):
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     toggle_category(cat_id)
     return jsonify({'success': True})
 
 @app.route('/api/category/<int:cat_id>/delete', methods=['POST'])
+@admin_required
 def api_delete_category(cat_id):
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     delete_category(cat_id)
     return jsonify({'success': True})
 
 @app.route('/api/subcategory', methods=['POST'])
+@admin_required
 def api_add_subcategory():
+    if not validate_csrf_token(request.form.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     name = request.form.get('name')
     icon = request.form.get('icon', '📦')
     category_id = int(request.form.get('category_id', 1))
@@ -386,7 +433,10 @@ def api_add_subcategory():
     return jsonify({'success': True})
 
 @app.route('/api/subcategory/<int:sub_id>', methods=['POST'])
+@admin_required
 def api_update_subcategory(sub_id):
+    if not validate_csrf_token(request.form.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     name = request.form.get('name')
     icon = request.form.get('icon', '📦')
     category_id = int(request.form.get('category_id', 1))
@@ -395,17 +445,26 @@ def api_update_subcategory(sub_id):
     return jsonify({'success': True})
 
 @app.route('/api/subcategory/<int:sub_id>/toggle', methods=['POST'])
+@admin_required
 def api_toggle_subcategory(sub_id):
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     toggle_subcategory(sub_id)
     return jsonify({'success': True})
 
 @app.route('/api/subcategory/<int:sub_id>/delete', methods=['POST'])
+@admin_required
 def api_delete_subcategory(sub_id):
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     delete_subcategory(sub_id)
     return jsonify({'success': True})
 
 @app.route('/api/product', methods=['POST'])
+@admin_required
 def api_add_product():
+    if not validate_csrf_token(request.form.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     name = request.form.get('name')
     price_raw = request.form.get('price')
     
@@ -427,7 +486,10 @@ def api_add_product():
     return jsonify({'success': True})
 
 @app.route('/api/product/<int:prod_id>', methods=['POST'])
+@admin_required
 def api_update_product(prod_id):
+    if not validate_csrf_token(request.form.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     name = request.form.get('name')
     price_raw = request.form.get('price')
     
@@ -450,38 +512,56 @@ def api_update_product(prod_id):
     return jsonify({'success': True})
 
 @app.route('/api/product/<int:prod_id>/toggle', methods=['POST'])
+@admin_required
 def api_toggle_product(prod_id):
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     toggle_product(prod_id)
     return jsonify({'success': True})
 
 @app.route('/api/product/<int:prod_id>/delete', methods=['POST'])
+@admin_required
 def api_delete_product(prod_id):
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     delete_product(prod_id)
     return jsonify({'success': True})
 
 @app.route('/api/admin/clear-products', methods=['POST'])
+@admin_required
 def api_clear_products():
     """مسح كافة المنتجات من السيرفر"""
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     from database import clear_all_products
     clear_all_products()
     return jsonify({'success': True})
+
 @app.route('/api/admin/clear-cache', methods=['POST'])
 @admin_required
 def api_clear_cache():
     """تنظيف الذاكرة المؤقتة يدوياً"""
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     cache.clear()
     return jsonify({'success': True})
 
 @app.route('/api/admin/products/delete-bulk', methods=['POST'])
+@admin_required
 def api_delete_bulk_products():
     """مسح منتجات محددة دفعة واحدة"""
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     ids = request.json.get('ids', [])
     for prod_id in ids:
         delete_product(int(prod_id))
     return jsonify({'success': True, 'deleted': len(ids)})
+
 @app.route('/api/admin/products/reorder', methods=['POST'])
 @admin_required
 def api_reorder_products():
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     data = request.json.get('order', [])
     if not data:
         return jsonify({'success': False, 'error': 'لا توجد بيانات'})
@@ -495,6 +575,8 @@ def api_reorder_products():
 @app.route('/api/admin/products/move-bulk', methods=['POST'])
 @admin_required
 def api_move_bulk_products():
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     data = request.json
     ids = data.get('ids', [])
     sub_id = data.get('sub_id')
@@ -518,7 +600,10 @@ def api_subs_by_cat(cat_id):
     return jsonify(subs)
 
 @app.route('/api/customer/delete', methods=['POST'])
+@admin_required
 def api_delete_customer():
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     phone = request.json.get('phone')
     if phone: delete_customer(phone)
     return jsonify({'success': True})
@@ -546,6 +631,7 @@ def api_get_customer(phone):
 # ==========================================
 
 @app.route('/api/admin/fetch-image/<int:prod_id>', methods=['POST'])
+@admin_required
 def api_fetch_product_image(prod_id):
     import requests as req
 
@@ -630,6 +716,7 @@ def service_worker():
 # ==========================================
 
 @app.route('/api/admin/import-excel', methods=['POST'])
+@admin_required
 def api_import_excel():
     import threading
 
@@ -680,13 +767,17 @@ def api_import_excel():
 def admin_login():
     error = None
     if request.method == 'POST':
-        password = request.form.get('password', '')
-        if password == app.config.get('ADMIN_PASSWORD', 'dokkani-admin-2024'):
-            session.permanent = True
-            session['admin_logged_in'] = True
-            return redirect('/admin')
+        # التحقق من CSRF token
+        if not validate_csrf_token(request.form.get('csrf_token')):
+            error = 'طلب غير صالح، حاول مرة أخرى'
         else:
-            error = 'كلمة السر غلط، حاول مرة أخرى'
+            password = request.form.get('password', '')
+            if password == app.config.get('ADMIN_PASSWORD', 'dokkani-admin-2024'):
+                session.permanent = True
+                session['admin_logged_in'] = True
+                return redirect('/admin')
+            else:
+                error = 'كلمة السر غلط، حاول مرة أخرى'
     return render_template('admin_login.html', error=error, app_name=Config.APP_NAME)
 
 @app.route('/admin/logout')
@@ -780,6 +871,8 @@ def image_review_page():
 @app.route('/api/admin/confirm-image', methods=['POST'])
 @admin_required
 def confirm_image():
+    if not validate_csrf_token(request.json.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     data = request.json
     prod_id = data.get('prod_id')
     image_url = data.get('image_url')

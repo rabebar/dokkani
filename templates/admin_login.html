@@ -34,6 +34,7 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(135deg,#1a4a1e,#2
   {% endif %}
 
   <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="field">
       <label>كلمة السر</label>
       <input type="password" name="password" placeholder="••••••••" autofocus required>
