@@ -294,6 +294,14 @@ tr.prod-hidden td  { opacity: .5; }
 .price-sell { color: var(--g2); font-weight: 900; }
 .price-orig { color: var(--g400); font-size: 11px; }
 
+.barcode-badge {
+  background: #f3e5f5; color: #7b1fa2;
+  padding: 2px 8px; border-radius: 8px;
+  font-size: 10px; font-weight: 700;
+  font-family: monospace;
+  direction: ltr;
+}
+
 .act-btns { display: flex; gap: 5px; }
 .abt {
   width: 28px; height: 28px; border-radius: 7px;
@@ -482,7 +490,6 @@ tr.prod-hidden td  { opacity: .5; }
   .cat-grid { grid-template-columns: repeat(2, 1fr); }
   .grid-2 { grid-template-columns: 1fr; }
   .result-stats { grid-template-columns: 1fr 1fr; }
-  th:nth-child(3), td:nth-child(3),
   th:nth-child(4), td:nth-child(4) { display: none; }
 }
 </style>
@@ -661,7 +668,7 @@ tr.prod-hidden td  { opacity: .5; }
           {% endfor %}
         </div>
         <div class="search-bar">
-          <input type="text" id="prod-search" placeholder="🔍 ابحث عن منتج..." oninput="searchProds(this.value)">
+          <input type="text" id="prod-search" placeholder="🔍 ابحث بالاسم أو الباركود..." oninput="searchProds(this.value)">
         </div>
         <table>
           <thead>
@@ -672,7 +679,7 @@ tr.prod-hidden td  { opacity: .5; }
           </th>
               <th>الصورة</th>
               <th>اسم المنتج</th>
-              <th>القسم</th>
+              <th>الباركود</th>
               <th>سعر الشراء</th>
               <th>سعر البيع</th>
               <th>الوحدة</th>
@@ -682,11 +689,10 @@ tr.prod-hidden td  { opacity: .5; }
           </thead>
          <tbody id="prod-tbody">
             {% for p in products %}
-            {# تم إلغاء الربح التلقائي ليطابق السعر في قاعدة البيانات #}
             {% set sell = p.price %}
             {% set cat_name = categories | selectattr('id','eq',p.category_id) | map(attribute='name') | first | default('—') %}
             <tr class="prod-row {% if not p.visible %}prod-hidden{% endif %}"
-                data-cat="{{ p.category_id }}" data-sub="{{ p.subcategory_id }}" data-name="{{ p.name }}" data-id="{{ p.id }}">
+                data-cat="{{ p.category_id }}" data-sub="{{ p.subcategory_id }}" data-name="{{ p.name }}" data-barcode="{{ p.barcode or '' }}" data-id="{{ p.id }}">
                 <td class="drag-handle" style="text-align: center; cursor: grab; color: #9ca3af; font-size: 18px;">☰</td>
                 <td style="text-align: center;">
   <input type="checkbox" class="prod-checkbox" data-id="{{ p.id }}" onclick="updateBulkBtnVisibility()" style="width: 18px; height: 18px; cursor: pointer;">
@@ -698,7 +704,13 @@ tr.prod-hidden td  { opacity: .5; }
                 </div>
               </td>
               <td><b>{{ p.name }}</b></td>
-              <td style="color:var(--g600);font-size:12px">{{ cat_name }}</td>
+              <td>
+                {% if p.barcode %}
+                  <span class="barcode-badge">{{ p.barcode }}</span>
+                {% else %}
+                  <span style="color: var(--g400); font-size: 10px;">—</span>
+                {% endif %}
+              </td>
               <td><span class="price-orig">{{ p.price }}₪</span></td>
               <td><span class="price-sell">{{ "%.1f"|format(sell) }}₪</span></td>
               <td><span class="unit-badge">{{ p.unit }}</span></td>
@@ -875,7 +887,6 @@ tr.prod-hidden td  { opacity: .5; }
           <input type="text" id="prod-barcode" placeholder="أدخل الباركود أو ابحث عنه بالاسم" style="flex: 1;">
           <button type="button" class="add-btn blue" onclick="searchBarcodeByName()" style="flex-shrink: 0; padding: 0 12px; font-size: 11px; height: 38px;">🔍 بحث بالاسم</button>
         </div>
-        <!-- منطقة عرض نتائج البحث الدولي -->
         <div id="barcode-results" style="margin-top: 8px; max-height: 150px; overflow-y: auto; border: 1px solid var(--g200); border-radius: 8px; display: none; background: #f9fafb; padding: 5px;"></div>
       </div>
     </div>
@@ -896,7 +907,7 @@ tr.prod-hidden td  { opacity: .5; }
     <div class="modal-body">
       <div class="excel-info">
         <b>📋 الأعمدة المدعومة في ملف Excel:</b><br>
-        اسم المنتج &nbsp;·&nbsp; السعر &nbsp;·&nbsp; الوحدة &nbsp;·&nbsp; القسم الرئيسي &nbsp;·&nbsp; القسم الفرعي
+        اسم المنتج &nbsp;·&nbsp; السعر &nbsp;·&nbsp; الوحدة &nbsp;·&nbsp; القسم الرئيسي &nbsp;·&nbsp; القسم الفرعي &nbsp;·&nbsp; الباركود
         <br>
         <b>💡 ملاحظة:</b> النظام يتعرف على أسماء الأعمدة تلقائياً بالعربي والإنجليزي — الأقسام الجديدة تُنشأ تلقائياً — الصور تُجلب تلقائياً
       </div>
@@ -1006,17 +1017,18 @@ function loadSubcats(catId, selectedSubId) {
     });
 }
 
-// ===== SEARCH =====
-// دالة الفلترة الشاملة (المحرك الذكي الذي يربط البحث بالأقسام)
+// ===== SEARCH (محدث للبحث بالباركود أيضاً) =====
 function applyFilters() {
   const query = document.getElementById('prod-search').value.trim().toLowerCase();
   
   document.querySelectorAll('.prod-row').forEach(row => {
     const name = row.dataset.name.toLowerCase();
+    const barcode = (row.dataset.barcode || '').toLowerCase();
     const catId = row.dataset.cat;
     const subId = row.dataset.sub;
 
-    const matchesSearch = !query || name.includes(query);
+    // البحث بالاسم أو الباركود
+    const matchesSearch = !query || name.includes(query) || barcode.includes(query);
     const matchesCat = currentCatFilter === 'all' || catId == currentCatFilter;
     const matchesSub = !currentSubFilter || subId == currentSubFilter;
 
@@ -1024,7 +1036,6 @@ function applyFilters() {
       row.style.display = '';
     } else {
       row.style.display = 'none';
-      // أمان: إلغاء تحديد أي منتج يختفي لكي لا يُنقل بالخطأ
       const cb = row.querySelector('.prod-checkbox');
       if (cb) cb.checked = false;
     }
@@ -1032,24 +1043,21 @@ function applyFilters() {
   updateBulkBtnVisibility();
 }
 
-// تحديث دالة البحث لتستخدم المحرك الجديد
 function searchProds(q) {
   applyFilters();
 }
 
-// تحديث دالة فلترة الأقسام الرئيسية لتستخدم المحرك الجديد
 function filterProds(catId, btn) {
   document.querySelectorAll('.pf').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   
   currentCatFilter = catId;
-  currentSubFilter = null; // تصفير الفرعي عند اختيار قسم رئيسي جديد
-  document.getElementById('prod-search').value = ''; // تصفير البحث لسهولة التنقل
+  currentSubFilter = null;
+  document.getElementById('prod-search').value = '';
   
   applyFilters();
 }
 
-// فلترة بطاقات الأقسام الفرعية (للعرض البصري فقط)
 function filterSubs(catId, btn) {
   document.querySelectorAll('.pf').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -1079,6 +1087,7 @@ function saveCat() {
   const fd = new FormData();
   fd.append('name', name);
   fd.append('icon', icon);
+  fd.append('csrf_token', '{{ csrf_token() }}');
   if (file) fd.append('image', file);
   fetch(id ? `/api/category/${id}` : '/api/category', { method: 'POST', body: fd })
     .then(r => r.json())
@@ -1088,14 +1097,22 @@ function saveCat() {
 }
 
 function toggleCat(id) {
-  fetch(`/api/category/${id}/toggle`, { method: 'POST' })
+  fetch(`/api/category/${id}/toggle`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csrf_token: '{{ csrf_token() }}' })
+  })
     .then(r => r.json())
     .then(() => { document.getElementById('cat-' + id).classList.toggle('hidden'); showToast('✅ تم التغيير'); });
 }
 
 function deleteCat(id, name) {
   if (!confirm(`⚠️ هل تريد حذف قسم "${name}"؟\nسيتم حذف جميع منتجاته أيضاً!`)) return;
-  fetch(`/api/category/${id}/delete`, { method: 'POST' })
+  fetch(`/api/category/${id}/delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csrf_token: '{{ csrf_token() }}' })
+  })
     .then(r => r.json())
     .then(() => { showToast('🗑️ تم الحذف'); setTimeout(() => location.reload(), 800); });
 }
@@ -1124,6 +1141,7 @@ function saveSub() {
   fd.append('name', name);
   fd.append('icon', icon);
   fd.append('category_id', catId);
+  fd.append('csrf_token', '{{ csrf_token() }}');
   if (file) fd.append('image', file);
   fetch(id ? `/api/subcategory/${id}` : '/api/subcategory', { method: 'POST', body: fd })
     .then(r => r.json())
@@ -1133,20 +1151,28 @@ function saveSub() {
 }
 
 function toggleSub(id) {
-  fetch(`/api/subcategory/${id}/toggle`, { method: 'POST' })
+  fetch(`/api/subcategory/${id}/toggle`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csrf_token: '{{ csrf_token() }}' })
+  })
     .then(r => r.json())
     .then(() => { document.getElementById('sub-' + id).classList.toggle('hidden'); showToast('✅ تم التغيير'); });
 }
 
 function deleteSub(id, name) {
   if (!confirm(`⚠️ هل تريد حذف القسم الفرعي "${name}"؟`)) return;
-  fetch(`/api/subcategory/${id}/delete`, { method: 'POST' })
+  fetch(`/api/subcategory/${id}/delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csrf_token: '{{ csrf_token() }}' })
+  })
     .then(r => r.json())
     .then(() => { showToast('🗑️ تم الحذف'); setTimeout(() => location.reload(), 800); });
 }
 
 // ==================== PRODUCTS ====================
-  function openProdModal(id=null, name='', price=0, unit='حبة', catId=null, subId=null, barcode='') {
+function openProdModal(id=null, name='', price=0, unit='حبة', catId=null, subId=null, barcode='') {
   document.getElementById('prod-id').value = id || '';
   document.getElementById('prod-name').value = name;
   document.getElementById('prod-price').value = price || '';
@@ -1165,15 +1191,14 @@ function deleteSub(id, name) {
   document.getElementById('prod-modal').classList.add('show');
 }
 function closeProdModal() { document.getElementById('prod-modal').classList.remove('show'); }
+
 async function searchBarcodeByName(customTerm = null) {
   const nameInput = document.getElementById('prod-name');
-  // استخدام الاسم المعدل إذا وُجد، وإلا خذ الاسم الأصلي من الخانة
   let term = customTerm !== null ? customTerm : nameInput.value.trim();
 
   if (!term) { alert('⚠️ يرجى كتابة اسم المنتج أولاً'); return; }
   
   const resDiv = document.getElementById('barcode-results');
-  // إظهار شريط تعديل البحث فوراً فوق النتائج لسرعة التحكم
   resDiv.innerHTML = `
     <div style="display:flex; gap:5px; padding:8px; background:#fff; border-bottom:1px solid #ddd; position:sticky; top:0; z-index:10;">
       <input type="text" id="refine-search-input" value="${term}" 
@@ -1186,7 +1211,6 @@ async function searchBarcodeByName(customTerm = null) {
   resDiv.style.display = 'block';
 
   try {
-    // نستخدم الرابط المباشر للبحث المتقدم لزيادة دقة النتائج
     const resp = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(term)}&search_simple=1&action=process&json=1&page_size=12`);
     const data = await resp.json();
     const listArea = document.getElementById('actual-results-list');
@@ -1212,6 +1236,7 @@ async function searchBarcodeByName(customTerm = null) {
     document.getElementById('actual-results-list').innerHTML = '<div style="padding:10px; color:var(--red);">❌ خطأ في الاتصال بالسحابة العالمية</div>';
   }
 }
+
 function selectBarcode(code) {
   document.getElementById('prod-barcode').value = code;
   document.getElementById('barcode-results').style.display = 'none';
@@ -1234,6 +1259,7 @@ function saveProd() {
   fd.append('price', price);
   fd.append('unit', unit);
   fd.append('category_id', catId);
+  fd.append('csrf_token', '{{ csrf_token() }}');
   if (subId) fd.append('subcategory_id', subId);
   fd.append('barcode', barcode);
   if (file)  fd.append('image', file);
@@ -1245,23 +1271,21 @@ function saveProd() {
         closeProdModal();
         showToast(id ? '✅ تم تحديث المنتج بنجاح' : '✅ تم إضافة المنتج بنجاح');
         
-        // التحديث الحي داخل الجدول (دون ريلود) إذا كان تعديلاً لمنتج موجود
         if (id) {
           const row = document.querySelector(`tr[data-id="${id}"]`);
           if (row) {
-            // 1. تحديث الاسم (العمود الرابع)
             row.cells[3].querySelector('b').innerText = name;
-            // 2. تحديث سعر الشراء (العمود السادس)
             row.cells[5].querySelector('.price-orig').innerText = price + '₪';
-            // 3. تحديث سعر البيع (العمود السابع) من الخانة المخفية
             row.cells[6].querySelector('.price-sell').innerText = document.getElementById('prod-sell').value;
-            // 4. تحديث وظيفة زر التعديل لكي يحمل الباركود والبيانات الجديدة في الضغطة القادمة
+            // تحديث الباركود
+            if (barcode) {
+              row.cells[4].innerHTML = `<span class="barcode-badge">${barcode}</span>`;
+            }
             const editBtn = row.querySelector('.abt');
             const safeName = name.replace(/'/g, "\\'");
             editBtn.setAttribute('onclick', `openProdModal(${id}, '${safeName}', ${price}, '${unit}', ${catId}, ${subId || 'null'}, '${barcode}')`);
           }
         } else {
-          // إذا كان منتج جديد تماماً، نحتاج ريلود ليظهر في القائمة في مكانه الصحيح
           setTimeout(() => location.reload(), 800);
         }
       } else {
@@ -1271,14 +1295,22 @@ function saveProd() {
 }
 
 function toggleProd(id) {
-  fetch(`/api/product/${id}/toggle`, { method: 'POST' })
+  fetch(`/api/product/${id}/toggle`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csrf_token: '{{ csrf_token() }}' })
+  })
     .then(r => r.json())
     .then(() => { showToast('✅ تم التغيير'); setTimeout(() => location.reload(), 600); });
 }
 
 function deleteProd(id, name) {
   if (!confirm(`⚠️ هل تريد حذف منتج "${name}"؟`)) return;
-  fetch(`/api/product/${id}/delete`, { method: 'POST' })
+  fetch(`/api/product/${id}/delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csrf_token: '{{ csrf_token() }}' })
+  })
     .then(r => r.json())
     .then(() => { showToast('🗑️ تم الحذف'); setTimeout(() => location.reload(), 800); });
 }
@@ -1287,7 +1319,11 @@ function clearAllProducts() {
   if (!confirm('⚠️ تحذير: سيتم مسح كافة المنتجات في المتجر نهائياً!\nهل أنت متأكد؟')) return;
   if (!confirm('تأكيد أخير: لا يمكن التراجع عن هذا الإجراء!')) return;
   
-  fetch('/api/admin/clear-products', { method: 'POST' })
+  fetch('/api/admin/clear-products', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csrf_token: '{{ csrf_token() }}' })
+  })
     .then(r => r.json())
     .then(d => {
         if(d.success) {
@@ -1296,8 +1332,7 @@ function clearAllProducts() {
         }
     });
 }
-// 1. دالة تحديد الكل (الذكية): تختار فقط المنتجات الظاهرة بعد البحث
-// 1. دالة تحديد الكل (الذكية): لا تختار إلا المنتجات الظاهرة أمامك فقط
+
 function toggleSelectAll(master) {
   document.querySelectorAll('.prod-row').forEach(row => {
     if (row.style.display !== 'none') {
@@ -1308,7 +1343,6 @@ function toggleSelectAll(master) {
   updateBulkBtnVisibility();
 }
 
-// 2. دالة تحديث الزر: تحسب فقط المربعات المحددة والظاهرة
 function updateBulkBtnVisibility() {
   let count = 0;
   document.querySelectorAll('.prod-row').forEach(row => {
@@ -1331,22 +1365,17 @@ function updateBulkBtnVisibility() {
   }
 }
 
-// 2.5 دالة فلترة المنتجات بالقسم الفرعي (المطورة لتعمل مع المحرك الذكي)
 function filterBySub(subId) {
-  // 1. تحديث الذاكرة بالقسم الفرعي المختار وتصفير البحث
   currentSubFilter = subId;
   currentCatFilter = 'all'; 
   document.getElementById('prod-search').value = ''; 
   
-  // 2. تشغيل المحرك الشامل للفلترة
   applyFilters();
   
-  // 3. إشعار بجمالية والانتقال آلياً لتبويب المنتجات
   showToast('🔍 تم عرض منتجات القسم الفرعي');
   switchTab('prods', document.querySelectorAll('.tab')[2]);
 }
 
-// 3. دالة النقل الجماعي (الجديدة)
 function bulkMoveSelected() {
   const selected = document.querySelectorAll('.prod-checkbox:checked');
   const ids = Array.from(selected).map(cb => cb.getAttribute('data-id'));
@@ -1362,7 +1391,7 @@ function bulkMoveSelected() {
   fetch('/api/admin/products/move-bulk', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids: ids, sub_id: subId })
+    body: JSON.stringify({ ids: ids, sub_id: subId, csrf_token: '{{ csrf_token() }}' })
   })
   .then(r => r.json())
   .then(data => {
@@ -1375,7 +1404,6 @@ function bulkMoveSelected() {
   }).catch(err => alert('فشل الاتصال بالسيرفر'));
 }
 
-// 4. إعادة دالة الحذف الجماعي (المفقودة)
 function bulkDeleteSelected() {
   const selected = document.querySelectorAll('.prod-checkbox:checked');
   const ids = Array.from(selected).map(cb => cb.getAttribute('data-id'));
@@ -1387,7 +1415,7 @@ function bulkDeleteSelected() {
   fetch('/api/admin/products/delete-bulk', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids: ids })
+    body: JSON.stringify({ ids: ids, csrf_token: '{{ csrf_token() }}' })
   })
   .then(r => r.json())
   .then(data => {
@@ -1500,7 +1528,6 @@ function uploadExcel() {
         const box    = document.getElementById('excel-result');
         const errBox = document.getElementById('res-error-rows');
 
-        // إعادة تهيئة
         errBox.style.display = 'none';
         errBox.innerHTML     = '';
 
@@ -1538,6 +1565,7 @@ function uploadExcel() {
     });
 }
 </script>
+
 <!-- ===== MODAL: إضافة صورة يدوياً ===== -->
 <div class="modal-bg" id="img-modal" onclick="if(event.target===this)closeImgModal()">
   <div class="modal" style="max-width:420px">
@@ -1555,10 +1583,10 @@ function uploadExcel() {
       <input type="text" id="img-url-input" placeholder="https://..."
              style="width:100%;padding:10px;border:2px solid var(--g200);border-radius:8px;font-size:12px;outline:none;direction:ltr;font-family:sans-serif;transition:.2s"
              oninput="document.getElementById('img-preview').src=this.value"
-             onfocus="this.style.borderColor=\'var(--g4)\'" onblur="this.style.borderColor=\'var(--g200)\'">
+             onfocus="this.style.borderColor='var(--g4)'" onblur="this.style.borderColor='var(--g200)'">
       <img id="img-preview" src="" alt=""
            style="width:100%;max-height:160px;object-fit:contain;border-radius:10px;border:1px solid var(--g200);margin-top:10px;display:none"
-           onerror="this.style.display=\'none\'" onload="this.style.display=\'block\'">
+           onerror="this.style.display='none'" onload="this.style.display='block'">
     </div>
     <div class="modal-foot">
       <button class="btn-cancel" onclick="closeImgModal()">إلغاء</button>
@@ -1584,7 +1612,7 @@ if (tbody) {
       fetch('/api/admin/products/reorder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order })
+        body: JSON.stringify({ order, csrf_token: '{{ csrf_token() }}' })
       })
       .then(r => r.json())
       .then(d => {
@@ -1598,7 +1626,6 @@ if (tbody) {
   });
 }
 
-// ===== IMAGE MODAL =====
 let _imgModalProdId = null;
 
 function openImgModal(id, name) {
@@ -1626,11 +1653,10 @@ async function saveImgFromModal() {
     const r = await fetch('/api/admin/confirm-image', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ prod_id: _imgModalProdId, image_url: url })
+      body: JSON.stringify({ prod_id: _imgModalProdId, image_url: url, csrf_token: '{{ csrf_token() }}' })
     });
     const data = await r.json();
     if (data.success) {
-      // تحديث الصورة في الجدول مباشرة
       const row = document.querySelector('tr[data-id="' + _imgModalProdId + '"]');
       if (row) {
         const imgDiv = row.querySelector('.prod-img');
@@ -1646,7 +1672,6 @@ async function saveImgFromModal() {
   }
   btn.textContent = '💾 حفظ الصورة'; btn.disabled = false;
 }
-
 </script>
 </body>
 </html>

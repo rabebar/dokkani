@@ -52,6 +52,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
 .p-card-small { background: var(--w); padding: 12px; border-radius: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; border: 1px solid #eee; }
 .p-img-small { width: 45px; height: 45px; border-radius: 8px; background: #f9f9f9; object-fit: cover; }
+.barcode-small { font-size: 9px; color: #7b1fa2; background: #f3e5f5; padding: 2px 6px; border-radius: 4px; font-family: monospace; direction: ltr; }
 
 /* Bottom Nav */
 .bnav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--w); height: var(--nav); display: flex; align-items: center; border-top: 1px solid #e5e7eb; box-shadow: 0 -4px 20px rgba(0,0,0,0.05); z-index: 1001; }
@@ -228,7 +229,11 @@ function renderProducts(prods) {
   list.innerHTML = prods.map(p => `
     <div class="p-card-small">
       <img src="${p.image || ''}" class="p-img-small" onerror="this.src='https://via.placeholder.com/50?text=📦'">
-      <div style="flex:1;"><span style="font-size:12px; font-weight:700;">${p.name}</span><br><span style="color:var(--g2); font-weight:900;">${p.price}₪</span></div>
+      <div style="flex:1;">
+        <span style="font-size:12px; font-weight:700;">${p.name}</span><br>
+        ${p.barcode ? `<span class="barcode-small">🔢 ${p.barcode}</span><br>` : ''}
+        <span style="color:var(--g2); font-weight:900;">${p.price}₪</span>
+      </div>
       <button onclick="editProduct(${p.id})" style="border:none; background:#f0f7f0; color:var(--g2); padding:10px; border-radius:10px;">✏️</button>
     </div>
   `).join('');
@@ -243,6 +248,20 @@ async function openScanner() {
 function closeScanner() { if(html5QrCode) html5QrCode.stop(); document.getElementById('scanner-modal').style.display = 'none'; }
 
 async function fetchGlobal(code) {
+  // أولاً ابحث في قاعدة البيانات المحلية
+  try {
+    const localR = await fetch(`/api/search?q=${encodeURIComponent(code)}`);
+    const localD = await localR.json();
+    if(localD.products && localD.products.length > 0) {
+      // وجد المنتج محلياً
+      const p = localD.products[0];
+      openAddModal(p.name, p.unit, code, p.id);
+      document.getElementById('p-price').value = p.price;
+      return;
+    }
+  } catch(e) {}
+  
+  // إذا لم يجده محلياً، ابحث عالمياً
   try {
     const r = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
     const d = await r.json();
@@ -262,10 +281,9 @@ function openAddModal(name="", unit="", code="", id="") {
   updateModalSubcats(document.getElementById('p-cat').value);
 }
 
-// دالة التعديل الجديدة التي كانت مفقودة
 async function editProduct(id) {
   try {
-    const r = await fetch(`/api/admin/search-all?id=${id}`); // أو جلبها من قائمة البحث الحالية
+    const r = await fetch(`/api/admin/search-all?id=${id}`);
     const d = await r.json();
     const p = d.products.find(x => x.id == id);
     if(p) {
@@ -298,6 +316,7 @@ async function saveProduct() {
   fd.append('category_id', document.getElementById('p-cat').value);
   fd.append('subcategory_id', document.getElementById('p-subcat').value);
   fd.append('barcode', document.getElementById('p-barcode').value);
+  fd.append('csrf_token', '{{ csrf_token() }}');
   const img = document.getElementById('p-image').files[0];
   if(img) fd.append('image', img);
 
