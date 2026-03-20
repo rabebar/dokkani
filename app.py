@@ -344,6 +344,16 @@ def place_order():
     data['delivery'] = calculate_delivery_fee(data.get('lat'), data.get('lng'))
     data['profit'] = get_order_profit(data.get('items', []))
 
+    # جلب الباركود لكل منتج من قاعدة البيانات
+    items_with_barcode = []
+    for item in data.get('items', []):
+        prod_id = item.get('id')
+        if prod_id:
+            prod = execute_query('SELECT barcode FROM products WHERE id=?', (prod_id,), fetchone=True)
+            item['barcode'] = prod.get('barcode') if prod else None
+        items_with_barcode.append(item)
+    data['items'] = items_with_barcode
+
     order_display_id = add_order(data)
 
     order_data_for_notify = data.copy()

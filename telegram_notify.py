@@ -43,10 +43,11 @@ def notify_new_order(order):
     """تنبيه طلب جديد — صوت + رسالة"""
     items = order.get('items', [])
 
-    # قائمة المنتجات
+    # قائمة المنتجات مع الباركود
     items_text = ''
     for item in items:
-        items_text += f"  • {item.get('name')} × {item.get('qty')} — {item.get('price')}₪\n"
+        barcode_str = f" 🔢[{item.get('barcode')}]" if item.get('barcode') else ""
+        items_text += f"  • {item.get('name')} × {item.get('qty')} — {item.get('price')}₪{barcode_str}\n"
 
     # رابط واتساب
     phone = (order.get('whatsapp') or order.get('phone') or '')

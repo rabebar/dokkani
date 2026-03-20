@@ -219,12 +219,12 @@ tr:hover td{background:#fafff9}
             </td>
             <td style="font-size: 11px;">📍 {{ o.neighborhood }}</td>
             <td>
-              <div style="max-height: 80px; overflow-y: auto; font-size: 11px; line-height: 1.5;">
-                {% for item in o['items'] %}
-                <div>• {{ item.name }} ({{ item.qty }})</div>
-                {% endfor %}
-              </div>
-            </td>
+  <div style="max-height: 80px; overflow-y: auto; font-size: 11px; line-height: 1.5;">
+    {% for item in o['items'] %}
+    <div>• {{ item.name }} ({{ item.qty }}){% if item.barcode %} <span style="color:#7b1fa2;font-family:monospace;">🔢{{ item.barcode }}</span>{% endif %}</div>
+    {% endfor %}
+  </div>
+</td>
             <td style="color: var(--red); font-size: 11px; font-weight: 900; max-width: 130px; word-wrap: break-word;">
               {{ o.notes if o.notes else '—' }}
             </td>
@@ -370,7 +370,10 @@ function openOrderModal(id, name, phone, addr, total, notes, items) {
   document.getElementById('m-cust-addr').textContent = '📍 ' + addr;
   document.getElementById('m-total').textContent = total + '₪';
   const list = document.getElementById('m-items-list');
-  list.innerHTML = items.map(i => `<div>• <b>${i.qty}</b> × ${i.name}</div>`).join('');
+list.innerHTML = items.map(i => {
+  const barcodeStr = i.barcode ? ` <span style="color:#7b1fa2;font-family:monospace;">🔢${i.barcode}</span>` : '';
+  return `<div>• <b>${i.qty}</b> × ${i.name}${barcodeStr}</div>`;
+}).join('');
   const nBox = document.getElementById('m-notes-box');
   if(notes && notes !== 'None' && notes !== '') {
     document.getElementById('m-cust-notes').textContent = notes;
