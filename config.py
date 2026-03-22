@@ -9,6 +9,13 @@ class Config:
     # ← مهم: SECRET_KEY من environment variable، مش hardcoded
     SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
     DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+    
+    # ==========================================
+    # إعدادات أمان الجلسة (Session Security)
+    # ==========================================
+    SESSION_COOKIE_SECURE = True       # الكوكيز تُرسل عبر HTTPS فقط
+    SESSION_COOKIE_HTTPONLY = True     # منع JavaScript من الوصول للكوكيز
+    SESSION_COOKIE_SAMESITE = 'Lax'    # حماية من هجمات CSRF
 
     # معلومات التطبيق
     APP_NAME = 'دكّاني'

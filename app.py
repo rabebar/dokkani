@@ -36,7 +36,7 @@ from functools import wraps
 from flask import session, request, jsonify, redirect
 from datetime import timedelta
 
-app.permanent_session_lifetime = timedelta(hours=8)
+app.permanent_session_lifetime = timedelta(days=7)
 
 # CSRF Token Generation
 def generate_csrf_token():
@@ -784,6 +784,7 @@ def admin_login():
         else:
             password = request.form.get('password', '')
             if password == app.config.get('ADMIN_PASSWORD', 'dokkani-admin-2024'):
+                session.clear()  # مسح الجلسة القديمة
                 session.permanent = True
                 session['admin_logged_in'] = True
                 return redirect('/admin')
