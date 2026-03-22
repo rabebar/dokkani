@@ -1,8 +1,18 @@
-const CACHE = 'dokkani-v1';
-const ASSETS = ['/', '/shop', '/cart', '/static/manifest.json'];
+const CACHE = 'dokkani-v2';
+const STATIC_ASSETS = ['/', '/shop', '/cart', '/static/manifest.json'];
+
+const CACHE_PATTERNS = [
+  /\/static\//,
+  /fonts\.googleapis\.com/,
+  /fonts\.gstatic\.com/,
+  /\/category\//,
+  /\/subcategory\//
+];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(STATIC_ASSETS))
+  );
   self.skipWaiting();
 });
 
@@ -17,13 +27,23 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if(e.request.method !== 'GET') return;
+  
+  const url = new URL(e.request.url);
+  const shouldCache = CACHE_PATTERNS.some(p => p.test(url.href));
+  
   e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
+    caches.match(e.request).then(cached => {
+      if(cached) return cached;
+      
+      return fetch(e.request).then(res => {
+        if(!res || res.status !== 200) return res;
+        
+        if(shouldCache) {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
         return res;
-      })
-      .catch(() => caches.match(e.request))
+      }).catch(() => cached);
+    })
   );
 });

@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>دكّاني — {{ sub.name }}</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 :root{--g1:#1b5e20;--g2:#2e7d32;--g4:#43a047;--gp:#e8f5e9;--gx:#f1f8e9;--acc:#00c853;--w:#fff;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g800:#1f2937;--sh:0 2px 8px rgba(0,0,0,.08);--r:14px;--nav:60px;--cart-bar:0px}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -100,7 +102,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
   {% for p in products %}
   <div class="pcard" data-price="{{ p.sell_price }}" data-name="{{ p.name }}">
     <div class="p-img">
-      {% if p.image %}<img src="{{ p.image }}" alt="{{ p.name }}">
+      {% if p.image %}<img loading="lazy" src="{{ p.image }}" alt="{{ p.name }}">
       {% else %}🛍️{% endif %}
     </div>
     <div class="p-info">

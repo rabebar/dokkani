@@ -787,6 +787,8 @@ def admin_login():
                 session.clear()  # مسح الجلسة القديمة
                 session.permanent = True
                 session['admin_logged_in'] = True
+                session['login_time'] = int(time.time())
+                session['session_id'] = secrets.token_hex(16)
                 return redirect('/admin')
             else:
                 error = 'كلمة السر غلط، حاول مرة أخرى'

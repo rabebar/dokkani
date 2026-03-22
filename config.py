@@ -9,13 +9,19 @@ class Config:
     # ← مهم: SECRET_KEY من environment variable، مش hardcoded
     SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
     DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
-    
+
     # ==========================================
     # إعدادات أمان الجلسة (Session Security)
     # ==========================================
-    SESSION_COOKIE_SECURE = True       # الكوكيز تُرسل عبر HTTPS فقط
+    # تحقق إذا كنا في بيئة إنتاج (HTTPS) أو تطوير (localhost)
+    _is_production = os.environ.get('DYNO') is not None or os.environ.get('RENDER') is not None
+    
+    SESSION_COOKIE_SECURE = _is_production  # True في الإنتاج (HTTPS)، False في التطوير
     SESSION_COOKIE_HTTPONLY = True     # منع JavaScript من الوصول للكوكيز
     SESSION_COOKIE_SAMESITE = 'Lax'    # حماية من هجمات CSRF
+    
+    # إعدادات إضافية للأمان
+    PERMANENT_SESSION_LIFETIME = 604800  # 7 أيام بالثواني
 
     # معلومات التطبيق
     APP_NAME = 'دكّاني'
