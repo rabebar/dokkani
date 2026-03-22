@@ -27,12 +27,12 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .sub-lbl{font-size:10.5px;font-weight:700;color:var(--g800);line-height:1.3}
 .sub-count{font-size:9.5px;color:var(--g400);margin-top:2px}
 
-/* ALL PRODUCTS in this category */
+/* ALL PRODUCTS */
 .divider{margin:16px 16px 0;background:var(--w);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
 .div-hdr{padding:12px 16px;background:var(--gx);border-bottom:1px solid var(--g200);font-size:13px;font-weight:900;color:var(--g1);display:flex;align-items:center;justify-content:space-between}
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:12px}
 .pcard:last-child:nth-child(odd){max-width:100%;grid-column:1}
-.pcard{background:var(--w);border-radius:12px;overflow:hidden;box-shadow:var(--sh);border:1.5px solid var(--g200);transition:all .2s}
+.pcard{background:var(--w);border-radius:12px;overflow:hidden;box-shadow:var(--sh);border:1.5px solid var(--g200);transition:all .2s;cursor:pointer}
 .pcard:active{transform:scale(.98)}
 .p-img{height:82px;background:var(--gx);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden}
 .p-img img{width:100%;height:100%;object-fit:contain;background:#fff;padding:6px}
@@ -59,6 +59,32 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .bni-lbl{font-size:9.5px;font-weight:700;color:var(--g400)}
 .bni.active .bni-lbl{color:var(--g2)}
 .bni-badge{position:absolute;top:4px;right:calc(50% - 18px);background:var(--acc);color:var(--g1);font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px solid var(--w)}
+
+/* MODAL - النافذة المنبثقة */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:999;opacity:0;visibility:hidden;transition:all .3s}
+.modal-overlay.show{opacity:1;visibility:visible}
+.modal{position:fixed;bottom:0;left:0;right:0;background:var(--w);border-radius:20px 20px 0 0;z-index:1000;transform:translateY(100%);transition:transform .3s ease;max-height:85vh;overflow-y:auto}
+.modal.show{transform:translateY(0)}
+.modal-close{position:absolute;top:12px;left:12px;width:32px;height:32px;background:var(--g100);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;border:none;color:var(--g800);z-index:10}
+.modal-img{width:100%;height:180px;background:var(--gx);display:flex;align-items:center;justify-content:center;font-size:60px;overflow:hidden}
+.modal-img img{width:100%;height:100%;object-fit:contain;background:#fff;padding:10px}
+.modal-content{padding:20px}
+.modal-name{font-size:18px;font-weight:900;color:var(--g800);margin-bottom:8px}
+.modal-price{font-size:24px;font-weight:900;color:var(--g2);margin-bottom:6px}
+.modal-unit{font-size:13px;color:var(--g400);margin-bottom:16px}
+.modal-note-section{background:var(--g100);border-radius:12px;padding:14px;margin-bottom:16px}
+.modal-note-label{font-size:13px;font-weight:700;color:var(--g800);margin-bottom:8px}
+.modal-note-input{width:100%;border:2px solid var(--g200);border-radius:10px;padding:12px;font-family:'Cairo',sans-serif;font-size:14px;resize:none;transition:border-color .2s}
+.modal-note-input:focus{outline:none;border-color:var(--g4)}
+.modal-note-input::placeholder{color:var(--g400)}
+.modal-qty-section{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:20px}
+.qty-btn{width:44px;height:44px;background:var(--g100);border:2px solid var(--g200);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;cursor:pointer;color:var(--g800);transition:all .2s}
+.qty-btn:active{transform:scale(.9)}
+.qty-btn.minus{color:#e53935}
+.qty-btn.plus{background:var(--g4);border-color:var(--g4);color:#fff}
+.modal-qty{font-size:28px;font-weight:900;color:var(--g800);min-width:40px;text-align:center}
+.modal-add-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--g4),var(--g2));color:#fff;border:none;border-radius:14px;font-family:'Cairo',sans-serif;font-size:16px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s}
+.modal-add-btn:active{transform:scale(.98)}
 </style>
 </head>
 <body>
@@ -101,7 +127,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
   </div>
   <div class="pgrid">
     {% for p in products %}
-    <div class="pcard">
+    <div class="pcard" onclick="openProductModal({{ p.id }},'{{ p.name|replace("'","\\'") }}',{{ p.sell_price }},'{{ p.unit }}','{{ p.image if p.image else '' }}')">
       <div class="p-img">
         {% if p.image %}<img src="{{ p.image }}" alt="{{ p.name }}">
         {% else %}🛍️{% endif %}
@@ -113,8 +139,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
             <div class="p-price">{{ p.sell_price }}₪</div>
             <div class="p-unit">/ {{ p.unit }}</div>
           </div>
-          <button class="add-btn"
-            onclick="addToCart({{ p.id }},'{{ p.name }}',{{ p.sell_price }},'{{ p.unit }}',event)">+</button>
+          <button class="add-btn" onclick="addToCart(event,{{ p.id }},'{{ p.name|replace("'","\\'") }}',{{ p.sell_price }},'{{ p.unit }}')">+</button>
         </div>
       </div>
     </div>
@@ -137,8 +162,35 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
   </button>
 </div>
 
+<!-- نافذة المنتج المنبثقة -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
+<div class="modal" id="product-modal">
+  <button class="modal-close" onclick="closeModal()">✕</button>
+  <div class="modal-img" id="modal-img">🛍️</div>
+  <div class="modal-content">
+    <div class="modal-name" id="modal-name"></div>
+    <div class="modal-price" id="modal-price"></div>
+    <div class="modal-unit" id="modal-unit"></div>
+    
+    <div class="modal-note-section">
+      <div class="modal-note-label">📝 ملاحظات خاصة</div>
+      <textarea class="modal-note-input" id="modal-note" rows="2" placeholder="مثال: اريدها ناضجة للطبخ، بدون ملح، مقطعة..."></textarea>
+    </div>
+    
+    <div class="modal-qty-section">
+      <button class="qty-btn minus" onclick="changeQty(-1)">−</button>
+      <div class="modal-qty" id="modal-qty">1</div>
+      <button class="qty-btn plus" onclick="changeQty(1)">+</button>
+    </div>
+    
+    <button class="modal-add-btn" onclick="addWithNote()">
+      <span>🛒 إضافة للسلة</span>
+      <span id="modal-total-price">0₪</span>
+    </button>
+  </div>
+</div>
+
 <nav class="bnav">
-  <!-- المتجر: واجهة محل خضراء (نشط) -->
   <a class="bni active" href="/shop">
     <span class="bni-ico">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="#1b5e20"><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/></svg>
@@ -146,7 +198,6 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     <span class="bni-lbl">المتجر</span>
   </a>
 
-  <!-- السلة: سلة تسوق -->
   <a class="bni" href="/cart">
     <span class="bni-ico">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -155,7 +206,6 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     <span class="bni-badge" id="nav-cart-count" style="display:none">0</span>
   </a>
 
-  <!-- تواصل: واتساب ملون -->
   <a class="bni" href="/contact">
     <span class="bni-ico">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -163,7 +213,6 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     <span class="bni-lbl">تواصل</span>
   </a>
 
-  <!-- طلباتي: دفتر سجل -->
   <a class="bni" href="/orders-history">
     <span class="bni-ico">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
@@ -171,7 +220,6 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     <span class="bni-lbl">طلباتي</span>
   </a>
 
-  <!-- حسابي: بروفايل -->
   <a class="bni" href="/account">
     <span class="bni-ico">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -182,6 +230,8 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 <script>
 let cart = JSON.parse(localStorage.getItem('dokkani_cart') || '[]');
+let currentProduct = null;
+let currentQty = 1;
 
 function saveCart(){ localStorage.setItem('dokkani_cart', JSON.stringify(cart)); updateUI(); }
 
@@ -196,14 +246,90 @@ function updateUI(){
   nb.textContent = count; nb.style.display = count>0?'flex':'none';
 }
 
-function addToCart(id, name, price, unit, e){
+// إضافة سريعة من زر +
+function addToCart(e, id, name, price, unit){
   e.stopPropagation();
   const ex = cart.find(i=>i.id===id);
-  if(ex){ ex.qty++; } else { cart.push({id,name,price,unit,icon:'🛍️',qty:1,type:'product'}); }
+  if(ex){ ex.qty++; } else { cart.push({id,name,price,unit,icon:'🛍️',qty:1,type:'product',note:''}); }
   saveCart();
   const btn = e.target;
   btn.textContent='✓'; btn.classList.add('added');
   setTimeout(()=>{ btn.textContent='+'; btn.classList.remove('added'); },800);
+}
+
+// فتح نافذة المنتج
+function openProductModal(id, name, price, unit, image){
+  currentProduct = {id, name, price, unit, image};
+  currentQty = 1;
+  
+  document.getElementById('modal-name').textContent = name;
+  document.getElementById('modal-price').textContent = price + '₪';
+  document.getElementById('modal-unit').textContent = '/ ' + unit;
+  document.getElementById('modal-qty').textContent = '1';
+  document.getElementById('modal-note').value = '';
+  document.getElementById('modal-total-price').textContent = price + '₪';
+  
+  const imgDiv = document.getElementById('modal-img');
+  if(image && image.trim() !== ''){
+    imgDiv.innerHTML = '<img src="'+image+'" style="width:100%;height:100%;object-fit:contain;background:#fff;padding:10px">';
+  } else {
+    imgDiv.innerHTML = '🛍️';
+  }
+  
+  document.getElementById('modal-overlay').classList.add('show');
+  document.getElementById('product-modal').classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('show');
+  document.getElementById('product-modal').classList.remove('show');
+  currentProduct = null;
+}
+
+function changeQty(delta){
+  currentQty = Math.max(1, currentQty + delta);
+  document.getElementById('modal-qty').textContent = currentQty;
+  if(currentProduct){
+    document.getElementById('modal-total-price').textContent = (currentProduct.price * currentQty).toFixed(1) + '₪';
+  }
+}
+
+function addWithNote(){
+  if(!currentProduct) return;
+  
+  const note = document.getElementById('modal-note').value.trim();
+  const id = currentProduct.id;
+  
+  if(note){
+    cart.push({
+      id: id + '_note_' + Date.now(),
+      productId: id,
+      name: currentProduct.name,
+      price: currentProduct.price,
+      unit: currentProduct.unit,
+      icon: '🛍️',
+      qty: currentQty,
+      type: 'product',
+      note: note
+    });
+  } else {
+    const ex = cart.find(i=>i.id===id);
+    if(ex){ ex.qty += currentQty; } else { 
+      cart.push({
+        id: id,
+        name: currentProduct.name,
+        price: currentProduct.price,
+        unit: currentProduct.unit,
+        icon: '🛍️',
+        qty: currentQty,
+        type: 'product',
+        note: ''
+      }); 
+    }
+  }
+  
+  saveCart();
+  closeModal();
 }
 
 function goCart(){
@@ -213,7 +339,7 @@ function goCart(){
 
 updateUI();
 
-// منع التكبير اليدوي لضمان استقرار التطبيق
+// منع التكبير
 document.addEventListener('touchstart', function(event) {
   if (event.touches.length > 1) { event.preventDefault(); }
 }, { passive: false });
