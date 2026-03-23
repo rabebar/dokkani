@@ -265,6 +265,20 @@ def admin_mobile():
                            products=[], # تم إفراغ القائمة الأولية لتسريع فتح الصفحة 10 أضعاف
                            app_name=Config.APP_NAME)
 
+@app.route('/work')
+@admin_required
+def work_panel():
+    """لوحة العمل للموبايل - PWA مستقلة"""
+    stats = get_daily_stats()
+    pending = execute_query("SELECT COUNT(*) as count FROM orders WHERE status = 'new'", fetchone=True)
+    stats['pending_count'] = pending['count'] if pending else 0
+    return render_template('work.html',
+                           orders=get_orders(),
+                           stats=stats,
+                           categories=get_categories(visible_only=False),
+                           subcategories=get_subcategories(visible_only=False),
+                           app_name=Config.APP_NAME)
+
 # ==========================================
 # API — الطلبات (المنطق المطور)
 # ==========================================
