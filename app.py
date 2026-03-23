@@ -653,13 +653,18 @@ def api_get_customer(phone):
 @app.route('/api/order/<int:order_id>')
 @admin_required
 def api_get_order(order_id):
-    order = execute_query("SELECT * FROM orders WHERE id = ?", (order_id,), fetchone=True)
+    import json
+    order = execute_query("SELECT * FROM orders WHERE id = %s", (order_id,), fetchone=True)
     if order:
-        items = execute_query("SELECT * FROM order_items WHERE order_id = ?", (order_id,))
         order_dict = dict(order)
-        order_dict['items'] = [dict(i) for i in items] if items else []
+        # الـ items مخزنة كـ JSON في حقل items
+        if isinstance(order_dict.get('items'), str):
+            try:
+                order_dict['items'] = json.loads(order_dict['items'])
+            except:
+                order_dict['items'] = []
         return jsonify({'success': True, 'order': order_dict})
-    return jsonify({'success': False, 'error': 'الطلب غير موجود'}), 404    
+    return jsonify({'success': False, 'error': 'الطلب غير موجود'}), 404   
     
     
 
