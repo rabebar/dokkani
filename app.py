@@ -649,6 +649,19 @@ def api_get_customer(phone):
         return jsonify({'success': True, 'customer': customer})
     else:
         return jsonify({'success': False, 'message': 'الرقم غير مسجل مسبقاً'})
+    
+@app.route('/api/order/<int:order_id>')
+@admin_required
+def api_get_order(order_id):
+    order = execute_query("SELECT * FROM orders WHERE id = ?", (order_id,), fetchone=True)
+    if order:
+        items = execute_query("SELECT * FROM order_items WHERE order_id = ?", (order_id,))
+        order_dict = dict(order)
+        order_dict['items'] = [dict(i) for i in items] if items else []
+        return jsonify({'success': True, 'order': order_dict})
+    return jsonify({'success': False, 'error': 'الطلب غير موجود'}), 404    
+    
+    
 
 
 # ==========================================

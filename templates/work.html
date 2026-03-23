@@ -259,11 +259,6 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
           <button class="order-btn btn-pick" data-order-id="{{ o.id }}" data-order-total="{{ o.total }}" onclick="openPickMode(this)">
     🛒 جمع
 </button>
-          <select class="status-select" onchange="updateStatus({{ o.id }}, this.value)">
-            <option value="new" {% if o.status == 'new' %}selected{% endif %}>جديد</option>
-            <option value="prep" {% if o.status == 'prep' %}selected{% endif %}>تحضير</option>
-            <option value="done" {% if o.status == 'done' %}selected{% endif %}>تم</option>
-          </select>
           <button class="order-btn btn-call" onclick="callCustomer('{{ o.phone }}')">📞</button>
         </div>
       </div>
@@ -557,8 +552,18 @@ function updatePickSummary() {
 
 async function completePick() {
   if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+  
+  try {
+    await fetch(`/api/order/${pickData.orderId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'prep', csrf_token: '{{ csrf_token() }}' })
+    });
+  } catch (e) {}
+  
   alert('✅ تم تأكيد جمع الطلب #' + pickData.orderId);
   closePickMode();
+  location.reload();
 }
 
 async function filterByCat(catId, btn) {
