@@ -202,8 +202,9 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
     </div>
   </div>
   <div class="hdr-actions">
+    <button class="hdr-btn" onclick="openHistory()">📊</button>
     <button class="hdr-btn" onclick="location.reload()">🔄</button>
-  </div>
+</div>
 </header>
 
 <!-- Main Content -->
@@ -332,9 +333,9 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
         <span id="pick-sum-collected">0₪</span>
       </div>
       <div class="pick-row">
-    <span>التوصيل</span>
-    <span id="pick-delivery">0₪</span>
-</div>
+        <span>التوصيل</span>
+        <span id="pick-delivery">0₪</span>
+      </div>
       <div class="pick-row">
         <span>مجموع التلجرام</span>
         <span id="pick-sum-telegram">0₪</span>
@@ -354,7 +355,19 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
   </div>
 </div>
 
+<!-- History Modal -->
+<div id="history-modal" class="pick-modal">
+  <div class="pick-content" style="max-height: 85vh;">
+    <div class="pick-header">
+      <span class="pick-title">📊 سجل الطلبات</span>
+      <button class="pick-close" onclick="closeHistory()">✕</button>
+    </div>
+    <div id="history-list" style="padding: 12px; overflow-y: auto; max-height: 70vh;"></div>
+  </div>
+</div>
+
 <!-- Scanner Modal -->
+
 <div id="scanner-modal" class="scanner-modal">
   <div id="reader"></div>
   <button class="scanner-close" onclick="closeScanner()">إغلاق الكاميرا</button>
@@ -766,6 +779,57 @@ document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.pre
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 document.addEventListener('gesturechange', (e) => e.preventDefault());
 document.body.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+
+async function openHistory() {
+    document.getElementById('history-modal').style.display = 'flex';
+    const list = document.getElementById('history-list');
+    list.innerHTML = '<div class="empty-state"><div class="empty-ico">⏳</div></div>';
+    
+    try {
+        const r = await fetch('/api/orders/history');
+        const d = await r.json();
+        if (d.success) {
+            renderHistory(d.history);
+        }
+    } catch (e) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-ico">❌</div></div>';
+    }
+}
+
+function closeHistory() {
+    document.getElementById('history-modal').style.display = 'none';
+}
+
+function renderHistory(history) {
+    const list = document.getElementById('history-list');
+    if (!Object.keys(history).length) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-ico">📭</div><div class="empty-text">لا توجد طلبات سابقة</div></div>';
+        return;
+    }
+    
+    const statusMap = { 'prep': '⏳ تحضير', 'done': '✅ تم', 'cancelled': '❌ ملغي' };
+    
+    list.innerHTML = Object.entries(history).map(([date, orders]) => `
+        <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; font-weight: 900; color: var(--g2); margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px;">
+                📅 ${date}
+            </div>
+            ${orders.map(o => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f9fafb; border-radius: 8px; margin-bottom: 6px;">
+                    <div>
+                        <span style="font-weight: 700; color: var(--blue);">#${o.id}</span>
+                        <span style="margin-right: 8px;">${o.name || 'زبون'}</span>
+                        <span style="color: var(--muted); font-size: 11px;">(${o.items_count} منتجات)</span>
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 900; color: var(--g2);">${o.total}₪</div>
+                        <div style="font-size: 10px; color: var(--muted);">${o.time}</div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `).join('');
+}
 </script>
 </body>
 </html>

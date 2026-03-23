@@ -666,7 +666,36 @@ def api_get_order(order_id):
         return jsonify({'success': True, 'order': order_dict, 'delivery': order_dict.get('delivery', 0)})
     return jsonify({'success': False, 'error': 'الطلب غير موجود'}), 404   
     
+@app.route('/api/orders/history')
+@admin_required
+def api_orders_history():
+    orders = execute_query("SELECT * FROM orders WHERE status != 'new' ORDER BY created_at DESC LIMIT 100", fetchall=True) or []
     
+    # تجميع حسب التاريخ
+    grouped = {}
+    for o in orders:
+        date_str = str(o.get('created_at', ''))[:10]  # YYYY-MM-DD
+        if date_str not in grouped:
+            grouped[date_str] = []
+        
+        # معالجة items
+        items = o.get('items')
+        if isinstance(items, str):
+            try:
+                items = json.loads(items)
+            except:
+                items = []
+        
+        grouped[date_str].append({
+            'id': o['id'],
+            'name': o.get('name'),
+            'total': o.get('total'),
+            'status': o.get('status'),
+            'items_count': len(items) if items else 0,
+            'time': str(o.get('created_at', ''))[11:16]  # HH:MM
+        })
+    
+    return jsonify({'success': True, 'history': grouped})
 
 
 # ==========================================
