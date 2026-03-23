@@ -344,9 +344,11 @@ def add_order(data):
              data.get('lat'), data.get('lng'), data.get('total', 0)), commit=True)
     return order_id
 
-def get_orders(phone=None):
+def get_orders(phone=None, status=None):
     if phone:
         rows = execute_query('SELECT * FROM orders WHERE phone=? ORDER BY created_at DESC', (phone,), fetchall=True)
+    elif status:
+        rows = execute_query('SELECT * FROM orders WHERE status=? ORDER BY created_at DESC', (status,), fetchall=True)
     else:
         rows = execute_query('SELECT * FROM orders ORDER BY created_at DESC', fetchall=True)
 

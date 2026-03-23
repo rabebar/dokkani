@@ -332,6 +332,10 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
         <span id="pick-sum-collected">0₪</span>
       </div>
       <div class="pick-row">
+    <span>التوصيل</span>
+    <span id="pick-delivery">0₪</span>
+</div>
+      <div class="pick-row">
         <span>مجموع التلجرام</span>
         <span id="pick-sum-telegram">0₪</span>
       </div>
@@ -475,6 +479,7 @@ function openPickMode(btn) {
                 
                 document.getElementById('pick-order-id').textContent = orderId;
                 document.getElementById('pick-sum-telegram').textContent = total.toFixed(1) + '₪';
+                document.getElementById('pick-delivery').textContent = (data.order.delivery || 0).toFixed(1) + '₪';
                 
                 const list = document.getElementById('pick-list');
                 list.innerHTML = items.map((item, i) => `
@@ -482,7 +487,10 @@ function openPickMode(btn) {
                       <div class="pick-check" id="pick-check-${i}"></div>
                       <div class="pick-name">${item.name}</div>
                       <div class="pick-qty">×${item.qty}</div>
-                      <div class="pick-price">${(item.price * item.qty).toFixed(1)}₪</div>
+                      <div class="pick-price">
+    <span id="item-price-${i}">${item.price}</span>₪ ×${item.qty}
+    <button onclick="editItemPrice(${i}, ${item.id})" style="font-size:10px; margin-right:5px; border:none; background:#f0fdf4; border-radius:4px; cursor:pointer;">✏️</button>
+</div>
                     </div>
                 `).join('');
                 
@@ -549,6 +557,26 @@ function updatePickSummary() {
     completeBtn.disabled = true;
   }
 }
+
+async function editItemPrice(index, prodId) {
+    const newPrice = prompt('أدخل السعر الجديد:');
+    if (!newPrice || isNaN(newPrice)) return;
+    
+    const fd = new FormData();
+    fd.append('price', newPrice);
+    fd.append('name', pickData.items[index].name);
+    fd.append('unit', pickData.items[index].unit || 'حبة');
+    fd.append('category_id', 1);
+    fd.append('csrf_token', '{{ csrf_token() }}');
+    
+    await fetch('/api/product/' + prodId, { method: 'POST', body: fd });
+    
+    pickData.items[index].price = parseFloat(newPrice);
+    document.getElementById('item-price-' + index).textContent = newPrice;
+    updatePickSummary();
+    alert('✅ تم تحديث السعر في التطبيق');
+}
+
 
 async function completePick() {
   if (navigator.vibrate) navigator.vibrate([50, 100, 50]);

@@ -273,7 +273,7 @@ def work_panel():
     pending = execute_query("SELECT COUNT(*) as count FROM orders WHERE status = 'new'", fetchone=True)
     stats['pending_count'] = pending['count'] if pending else 0
     return render_template('work.html',
-                           orders=get_orders(),
+                           orders=get_orders(status='new'),
                            stats=stats,
                            categories=get_categories(visible_only=False),
                            subcategories=get_subcategories(visible_only=False),
@@ -663,7 +663,7 @@ def api_get_order(order_id):
                 order_dict['items'] = json.loads(order_dict['items'])
             except:
                 order_dict['items'] = []
-        return jsonify({'success': True, 'order': order_dict})
+        return jsonify({'success': True, 'order': order_dict, 'delivery': order_dict.get('delivery', 0)})
     return jsonify({'success': False, 'error': 'الطلب غير موجود'}), 404   
     
     
