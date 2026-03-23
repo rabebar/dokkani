@@ -256,9 +256,9 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
           <span>{{ o.total }}₪</span>
         </div>
         <div class="order-actions">
-          <button class="order-btn btn-pick" onclick="openPickMode({{ o.id }}, {{ o.total }}, {{ o.items | tojson | replace("'", "\"") }})">
-            🛒 جمع
-          </button>
+          <button class="order-btn btn-pick" data-order-id="{{ o.id }}" data-order-total="{{ o.total }}" onclick="openPickMode(this)">
+    🛒 جمع
+</button>
           <select class="status-select" onchange="updateStatus({{ o.id }}, this.value)">
             <option value="new" {% if o.status == 'new' %}selected{% endif %}>جديد</option>
             <option value="prep" {% if o.status == 'prep' %}selected{% endif %}>تحضير</option>
@@ -467,24 +467,39 @@ function callCustomer(phone) {
   window.location.href = 'tel:' + phone;
 }
 
-function openPickMode(orderId, total, items) {
-  pickData = { orderId, items, total, collected: 0, checked: new Array(items.length).fill(false) };
-  
-  document.getElementById('pick-order-id').textContent = orderId;
-  document.getElementById('pick-sum-telegram').textContent = total.toFixed(1) + '₪';
-  
-  const list = document.getElementById('pick-list');
-  list.innerHTML = items.map((item, i) => `
-    <div class="pick-item" onclick="togglePickItem(${i})">
-      <div class="pick-check" id="pick-check-${i}"></div>
-      <div class="pick-name">${item.name}</div>
-      <div class="pick-qty">×${item.qty}</div>
-      <div class="pick-price">${(item.price * item.qty).toFixed(1)}₪</div>
-    </div>
-  `).join('');
-  
-  updatePickSummary();
-  document.getElementById('pick-modal').style.display = 'flex';
+function openPickMode(btn) {
+    const orderId = btn.dataset.orderId;
+    const total = parseFloat(btn.dataset.orderTotal);
+    
+    fetch('/api/order/' + orderId)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const items = data.order.items || [];
+                pickData = { orderId, items, total, collected: 0, checked: new Array(items.length).fill(false) };
+                
+                document.getElementById('pick-order-id').textContent = orderId;
+                document.getElementById('pick-sum-telegram').textContent = total.toFixed(1) + '₪';
+                
+                const list = document.getElementById('pick-list');
+                list.innerHTML = items.map((item, i) => `
+                    <div class="pick-item" onclick="togglePickItem(${i})">
+                      <div class="pick-check" id="pick-check-${i}"></div>
+                      <div class="pick-name">${item.name}</div>
+                      <div class="pick-qty">×${item.qty}</div>
+                      <div class="pick-price">${(item.price * item.qty).toFixed(1)}₪</div>
+                    </div>
+                `).join('');
+                
+                updatePickSummary();
+                document.getElementById('pick-modal').style.display = 'flex';
+            } else {
+                alert('تعذر جلب بيانات الطلب');
+            }
+        })
+        .catch(e => {
+            alert('خطأ في الاتصال');
+        });
 }
 
 function closePickMode() {
