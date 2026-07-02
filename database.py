@@ -286,16 +286,61 @@ def delete_subcategory(sub_id):
     execute_query('DELETE FROM subcategories WHERE id=?', (sub_id,), commit=True)
 
 # --- دوال المنتجات ---
-def _seed_category(row):
+def _get_or_create_category(name, icon=None, sort=999):
+    name = (name or '').strip()
+    if not name:
+        return None
+
+    existing = execute_query('SELECT id FROM categories WHERE TRIM(name)=TRIM(?)', (name,), fetchone=True)
+    if existing:
+        return existing['id']
+
+    return execute_query(
+        'INSERT INTO categories (name, icon, sort) VALUES (?, ?, ?)',
+        (name, icon or '', sort),
+        commit=True
+    )
+
+
+def _get_or_create_subcategory(name, category_id, icon=None):
+    name = (name or '').strip()
+    if not name or not category_id:
+        return None
+
+    existing = execute_query('SELECT id, category_id FROM subcategories WHERE TRIM(name)=TRIM(?)', (name,), fetchone=True)
+    if existing:
+        if existing.get('category_id') != category_id:
+            execute_query('UPDATE subcategories SET category_id=? WHERE id=?', (category_id, existing['id']), commit=True)
+        return existing['id']
+
+    return execute_query(
+        'INSERT INTO subcategories (name, icon, category_id) VALUES (?, ?, ?)',
+        (name, icon or '', category_id),
+        commit=True
+    )
+
+
+def _seed_category(row, cache):
+    category_name = (row.get('seed_category_name') or '').strip()
+    subcategory_name = (row.get('seed_subcategory_name') or '').strip()
+
+    if category_name and subcategory_name:
+        key = (category_name, subcategory_name)
+        if key not in cache:
+            category_id = _get_or_create_category(category_name)
+            subcategory_id = _get_or_create_subcategory(subcategory_name, category_id)
+            cache[key] = (category_id, subcategory_id)
+        return cache[key]
+
     try:
         category_id = int(str(row.get('seed_category_id') or '').strip() or 26)
     except Exception:
         category_id = 26
 
     try:
-        subcategory_id = int(str(row.get('seed_subcategory_id') or '').strip() or 68)
+        subcategory_id = int(str(row.get('seed_subcategory_id') or '').strip() or 73)
     except Exception:
-        subcategory_id = 68
+        subcategory_id = 73
 
     return category_id, subcategory_id
 
@@ -317,6 +362,7 @@ def seed_products_from_csv():
 
     created = 0
     errors = 0
+    category_cache = {}
     for sort_index, row in enumerate(rows, start=1):
         try:
             name = (row.get('final_name') or row.get('karaz_name') or '').strip()
@@ -328,7 +374,7 @@ def seed_products_from_csv():
             unit = (row.get('final_unit') or '\u0648\u062d\u062f\u0629').strip() or '\u0648\u062d\u062f\u0629'
             barcode = (row.get('final_barcode') or '').strip() or None
             image = (row.get('karaz_image') or '').strip() or None
-            category_id, subcategory_id = _seed_category(row)
+            category_id, subcategory_id = _seed_category(row, category_cache)
 
             execute_query(
                 'INSERT INTO products (name, price, unit, category_id, subcategory_id, image, barcode, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -350,6 +396,7 @@ def categorize_seed_products():
 
     updated = 0
     errors = 0
+    category_cache = {}
     for row in rows:
         try:
             name = (row.get('final_name') or row.get('karaz_name') or '').strip()
@@ -357,7 +404,7 @@ def categorize_seed_products():
             if not name and not barcode:
                 continue
 
-            category_id, subcategory_id = _seed_category(row)
+            category_id, subcategory_id = _seed_category(row, category_cache)
             if barcode:
                 existing = execute_query('SELECT id FROM products WHERE barcode=?', (barcode,), fetchone=True)
             else:
@@ -365,7 +412,7 @@ def categorize_seed_products():
 
             if existing:
                 execute_query(
-                    'UPDATE products SET category_id=?, subcategory_id=? WHERE id=? AND (subcategory_id IS NULL OR subcategory_id=0 OR category_id=26)',
+                    'UPDATE products SET category_id=?, subcategory_id=? WHERE id=?',
                     (category_id, subcategory_id, existing['id']),
                     commit=True
                 )
