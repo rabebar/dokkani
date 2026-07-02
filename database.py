@@ -166,6 +166,10 @@ def init_db():
         seed_categories()
         seed_subcategories()
 
+    product_check = execute_query('SELECT COUNT(*) as count FROM products', fetchone=True)
+    if product_check and product_check['count'] == 0:
+        seed_products_from_csv()
+
 def seed_categories():
     cats = [
         ('خضروات وفواكه', '🥦', 1), ('مواد تموينية ومعلبات', '🥫', 2),
@@ -280,6 +284,95 @@ def delete_subcategory(sub_id):
     execute_query('DELETE FROM subcategories WHERE id=?', (sub_id,), commit=True)
 
 # --- دوال المنتجات ---
+def _infer_seed_category_id(karaz_category, product_name):
+    text = f"{karaz_category or ''} {product_name or ''}".lower()
+
+    def has_any(*words):
+        return any(word in text for word in words)
+
+    if has_any('بوظة', 'مثلجات'):
+        return 13
+    if has_any('مفرز', 'مجمد', 'مجمّ', 'عجين'):
+        return 10
+    if has_any('خضروات', 'فواكه', 'الفواكة'):
+        return 1
+    if has_any('لحوم', 'مشرحات', 'نقانق', 'جمبري', 'كلماري', 'سمك'):
+        return 5
+    if has_any('ألبان', 'البان', 'أجبان', 'اجبان', 'حليب', 'لبن', 'مشتقات الحليب'):
+        return 7
+    if has_any('مخبز', 'مخبوزات', 'خبز'):
+        return 8
+    if has_any('المياه', 'مياه'):
+        return 9
+    if has_any('مشروبات', 'عصائر', 'غازية', 'طاقة'):
+        return 15
+    if has_any('قهوة', 'شاي'):
+        return 18
+    if has_any('أرز', 'ارز', 'الأرز', 'معكرونة', 'دقيق', 'سكر', 'ملح'):
+        return 3
+    if has_any('زيت', 'زيوت', 'سمنة', 'سمنه'):
+        return 4
+    if has_any('معلبات', 'شوربات', 'تمور', 'عسل', 'حلاوة', 'طعام قابل للدهن'):
+        return 2
+    if has_any('سلطات', 'مخللات'):
+        return 6
+    if has_any('مكسرات', 'بذور'):
+        return 11
+    if has_any('توابل', 'صلصة', 'صوص', 'كاتشب', 'بهار'):
+        return 17
+    if has_any('حلويات', 'شوكولاتة', 'بسكويت', 'سكاكر', 'علكة', 'قسم الحلويات'):
+        return 14
+    if has_any('شيبس', 'مقرمشات', 'سناكس'):
+        return 16
+    if has_any('منظفات', 'مستلزمات المنزل', 'معطرات', 'حشرات'):
+        return 20
+    if has_any('أطفال', 'اطفال', 'حفاضات'):
+        return 21
+    if has_any('أدوات للطعام', 'أكياس', 'قصدير', 'بلاستيك'):
+        return 22
+    if has_any('فوط', 'حلاقة', 'مزيلات', 'الصحة والجمال', 'عناية'):
+        return 23
+    if has_any('حيوانات'):
+        return 24
+    return 26
+
+
+def seed_products_from_csv():
+    seed_path = os.path.join(os.path.dirname(__file__), 'data', 'seed_products.csv')
+    if not os.path.exists(seed_path):
+        return {'created': 0, 'errors': 0, 'missing_file': True}
+
+    import csv
+
+    created = 0
+    errors = 0
+    with open(seed_path, 'r', encoding='utf-8-sig', newline='') as f:
+        reader = csv.DictReader(f)
+        for sort_index, row in enumerate(reader, start=1):
+            try:
+                name = (row.get('final_name') or row.get('karaz_name') or '').strip()
+                price_raw = (row.get('final_price') or row.get('karaz_price') or '').replace('₪', '').strip()
+                if not name or not price_raw:
+                    continue
+
+                price = float(price_raw)
+                unit = (row.get('final_unit') or 'وحدة').strip() or 'وحدة'
+                barcode = (row.get('final_barcode') or '').strip() or None
+                image = (row.get('karaz_image') or '').strip() or None
+                category_id = _infer_seed_category_id(row.get('karaz_category'), name)
+
+                execute_query(
+                    'INSERT INTO products (name, price, unit, category_id, subcategory_id, image, barcode, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    (name, price, unit, category_id, None, image, barcode, sort_index),
+                    commit=True
+                )
+                created += 1
+            except Exception:
+                errors += 1
+                continue
+
+    return {'created': created, 'errors': errors, 'missing_file': False}
+
 def get_products(category_id=None, subcategory_id=None, visible_only=True):
     q = 'SELECT * FROM products WHERE 1=1'
     params = []
