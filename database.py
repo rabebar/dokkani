@@ -321,6 +321,7 @@ def _hide_noncanonical_seed_taxonomy(category_names):
             commit=True
         )
     execute_query('UPDATE subcategories SET visible=0', commit=True)
+    execute_query('UPDATE products SET subcategory_id=NULL', commit=True)
 
 
 def _seed_category(row, cache, category_names):
