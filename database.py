@@ -479,7 +479,7 @@ def get_products(category_id=None, subcategory_id=None, visible_only=True):
     if subcategory_id:
         q += ' AND subcategory_id=?'; params.append(subcategory_id)
     if visible_only:
-        q += ' AND visible=1'
+        q += ' AND visible=1 AND price IS NOT NULL'
     q += ' ORDER BY sort, id'
     return execute_query(q, tuple(params), fetchall=True) or []
 
@@ -591,7 +591,13 @@ def calculate_profit(price, category_id=None):
     return 0.0  # إلغاء الربح التلقائي للتحكم بالأسعار يدوياً
 
 def get_selling_price(price, category_id=None):
-    return round(price + calculate_profit(price, category_id), 2)
+    if price is None or price == '':
+        return None
+    try:
+        numeric_price = float(price)
+    except (TypeError, ValueError):
+        return None
+    return round(numeric_price + calculate_profit(numeric_price, category_id), 2)
 
 def get_order_profit(items):
     total = 0
