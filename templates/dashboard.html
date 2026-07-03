@@ -312,7 +312,7 @@ function updateStatus(orderId, sel){
   fetch(`/api/order/${orderId}/status`, {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({status: sel.value})
+    body: JSON.stringify({status: sel.value, csrf_token: '{{ csrf_token() }}'})
   })
   .then(r=>r.json())
   .then(data=>{
@@ -351,7 +351,7 @@ setInterval(refreshStats, 30000);
 // 7. تنظيف الكاش
 function clearCache() {
   if(!confirm('هل تريد تنظيف الذاكرة المؤقتة؟ سيتم تحديث البيانات فوراً للزبائن.')) return;
-  fetch('/api/admin/clear-cache', { method: 'POST' })
+  fetch('/api/admin/clear-cache', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({csrf_token: '{{ csrf_token() }}'}) })
     .then(r => r.json())
     .then(data => {
       if(data.success) alert('✅ تم تنظيف الكاش بنجاح!');

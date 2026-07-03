@@ -30,7 +30,7 @@ class Config:
     APP_CITY = 'رام الله'
 
     # كلمة سر الأدمن ← من environment variable
-    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'dokkani-admin-2024')
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
 
     # إعدادات التوصيل المحدثة
     DELIVERY_PRICE_MIN   = 10  # الحد الأدنى الجديد

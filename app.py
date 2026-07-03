@@ -27,7 +27,7 @@ Compress(app)
 from flask_caching import Cache
 cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 300})
 app.config.from_object(Config)
-app.secret_key = os.environ.get('SECRET_KEY', 'dokkani-secret-key-2024-fallback')
+app.secret_key = app.config['SECRET_KEY']
 
 # ==========================================
 # الحماية والأمان
@@ -388,8 +388,15 @@ def place_order():
     return jsonify({'success': True, 'order_id': order_display_id})
 
 @app.route('/api/order/<int:order_id>/status', methods=['POST'])
+@admin_required
 def update_status(order_id):
-    status = request.json.get('status')
+    data = request.get_json(silent=True) or {}
+    if not validate_csrf_token(data.get('csrf_token')):
+        return jsonify({'success': False, 'error': 'Invalid request'}), 403
+    status = data.get('status')
+    allowed_statuses = {'new', 'prep', 'delivering', 'done', 'cancelled'}
+    if status not in allowed_statuses:
+        return jsonify({'success': False, 'error': 'Invalid status'}), 400
     update_order_status(order_id, status)
     try:
         notify_order_status(order_id, status)
@@ -642,6 +649,7 @@ def api_delete_customer():
     return jsonify({'success': True})
 
 @app.route('/api/stats')
+@admin_required
 def api_get_stats():
     return jsonify(get_daily_stats())
 
@@ -796,6 +804,13 @@ def service_worker():
         content = f.read()
     return Response(content, mimetype='application/javascript')
 
+@app.route('/work-service-worker.js')
+def work_service_worker():
+    from flask import Response
+    with open('static/work-service-worker.js') as f:
+        content = f.read()
+    return Response(content, mimetype='application/javascript')
+
 
 # ==========================================
 # API — استيراد Excel
@@ -858,7 +873,8 @@ def admin_login():
             error = 'طلب غير صالح، حاول مرة أخرى'
         else:
             password = request.form.get('password', '')
-            if password == app.config.get('ADMIN_PASSWORD', 'dokkani-admin-2024'):
+            admin_password = app.config.get('ADMIN_PASSWORD')
+            if admin_password and secrets.compare_digest(password, admin_password):
                 session.clear()  # مسح الجلسة القديمة
                 session.permanent = True
                 session['admin_logged_in'] = True
@@ -1001,7 +1017,7 @@ def ai_chat():
         """تنفيذ SQL بذكاء وحماية من البيانات الضخمة وأخطاء الفهرس"""
         try:
             sql = sql.strip().rstrip(';')
-            forbidden = ['DROP ', 'TRUNCATE ', 'ALTER ', 'GRANT ', 'CREATE ']
+            forbidden = ['DROP ', 'TRUNCATE ', 'ALTER ', 'GRANT ', 'CREATE ', 'UPDATE ', 'DELETE ', 'INSERT ']
             if any(w in sql.upper() for w in forbidden):
                 return "خطأ أمني: هذا الأمر محظور برمجياً."
             # تصحيح تلقائي: إذا كان الاستعلام يحتوي JOIN مع categories استبدله بـ category_id مباشرة
@@ -1012,10 +1028,10 @@ def ai_chat():
                 cat_row = execute_query("SELECT id FROM categories WHERE name ILIKE %s", (f'%{cat_name}%',), fetchone=True)
                 if cat_row:
                     sql = re.sub(r"JOIN\s+categories[^W]+WHERE\s+\w+\.name\s+(?:I?LIKE|=)\s*'[^']+'", f"WHERE category_id = {cat_row['id']}", sql, flags=re.IGNORECASE)
-            is_write = any(k in sql.upper() for k in ['UPDATE ', 'DELETE ', 'INSERT '])
-            res = execute_query(sql, commit=is_write, fetchall=True)
-            
-            if is_write: return "تم تنفيذ العملية بنجاح في قاعدة البيانات."
+            normalized_sql = sql.upper().lstrip()
+            if not (normalized_sql.startswith('SELECT ') or normalized_sql.startswith('WITH ')):
+                return "تم منع التنفيذ: مساعد البيانات يعمل بوضع القراءة فقط."
+            res = execute_query(sql, commit=False, fetchall=True)
             if not res or (isinstance(res, list) and len(res) == 0): 
                 return "لا توجد نتائج مطابقة لهذا الاستعلام في النظام."
 

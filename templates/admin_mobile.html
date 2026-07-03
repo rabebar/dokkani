@@ -198,7 +198,7 @@ function switchTab(tab, btn) {
 }
 
 async function updateStatus(id, status) {
-  try { await fetch(`/api/order/${id}/status`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status}) }); if(navigator.vibrate) navigator.vibrate(50); } catch(e) { alert("خطأ في التحديث"); }
+  try { await fetch(`/api/order/${id}/status`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status, csrf_token: '{{ csrf_token() }}'}) }); if(navigator.vibrate) navigator.vibrate(50); } catch(e) { alert("خطأ في التحديث"); }
 }
 
 async function filterByCat(catId, btn) {

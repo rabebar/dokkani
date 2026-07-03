@@ -433,6 +433,10 @@ let html5QrCode = null;
 let currentCat = 'all';
 let deferredPrompt = null;
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/work-service-worker.js', { scope: '/work' }).catch(() => {});
+}
+
 let pickData = { orderId: null, items: [], total: 0, collected: 0, checked: [] };
 
 window.addEventListener('beforeinstallprompt', (e) => {
