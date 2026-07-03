@@ -1,4 +1,4 @@
-const CACHE = 'dokkani-work-v1';
+const CACHE = 'dokkani-work-v2';
 const ASSETS = [
   '/work',
   '/work-manifest.json',

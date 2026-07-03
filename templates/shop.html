@@ -50,7 +50,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 /* BANNER */
 .banner{margin:12px 16px;background:linear-gradient(135deg,var(--g2),var(--g4));border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden}
-.banner::before{content:'🛒';position:absolute;left:-5px;bottom:-15px;font-size:80px;opacity:.08}
+.banner::before{content:'';position:absolute;left:-5px;bottom:-15px;font-size:80px;opacity:.08}
 .banner h3{color:#fff;font-size:15px;font-weight:900}
 .banner p{color:rgba(255,255,255,.75);font-size:11px;margin-top:3px}
 .banner-badge{background:var(--acc);color:var(--g1);padding:7px 14px;border-radius:20px;font-size:12px;font-weight:900;white-space:nowrap;z-index:1}
@@ -132,7 +132,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 <!-- PWA Banner -->
 <div id="pwa-banner" class="pwa-banner">
-  <div class="brand-ico" style="width:40px;height:40px;font-size:22px">🛒</div>
+  <div class="brand-ico" style="width:40px;height:40px;font-size:14px;font-weight:900">D</div>
   <div style="flex:1">
     <div style="font-size:13px;font-weight:900">تثبيت تطبيق دكّاني</div>
     <div style="font-size:10px;color:var(--g400)">للوصول السريع وتجربة أفضل</div>
@@ -143,14 +143,14 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 <div class="hdr">
   <div class="hdr-top">
     <div class="brand">
-      <div class="brand-ico">🛒</div>
+      <div class="brand-ico">D</div>
       <div>
         <div class="brand-name">{{ app_name }}</div>
-        <div class="brand-sub">توصيل سريع • رام الله 🇵🇸</div>
+        <div class="brand-sub">توصيل سريع - رام الله</div>
       </div>
     </div>
     <button class="cart-btn" onclick="goCart()">
-      🛒<div class="cart-count" id="cart-count">0</div>
+      <span>سلة</span><div class="cart-count" id="cart-count">0</div>
     </button>
   </div>
   <div class="srch">
@@ -163,10 +163,10 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 <div class="banner">
   <div>
-    <h3>أهلاً بك في دكّاني! 🛒</h3>
+    <h3>أهلاً بك في دكّاني</h3>
     <p>اختر القسم الذي تريده</p>
   </div>
-  <div class="banner-badge">🚀 45 دقيقة</div>
+  <div class="banner-badge">45 دقيقة</div>
 </div>
 <!-- شريط التنبيه الذكي للمواعيد -->
 <div id="delivery-alert-bar" style="margin: 0 16px 10px; padding: 10px 14px; border-radius: 12px; display: none; align-items: center; gap: 10px; border: 1.5px solid transparent; animation: slideUp 0.4s ease;">
@@ -262,7 +262,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 <div class="cart-bar" id="cart-bar">
   <button class="cart-bar-btn" onclick="goCart()">
     <div style="display:flex;align-items:center;gap:9px">
-      <span>🛒 عرض السلة</span>
+      <span>عرض السلة</span>
       <span class="cart-bdg" id="cart-bar-count">0 منتج</span>
     </div>
     <span id="cart-bar-total">0₪</span>
@@ -329,14 +329,14 @@ function updateDeliveryStatus() {
   if (hour >= 10 && hour < 16) {
     // الحالة 1: توصيل نشط (10:00 ص - 4:00 م)
     bar.classList.add('alert-green');
-    icon.textContent = '🚀';
+    icon.textContent = '';
     title.textContent = 'توصيل مباشر ونشط الآن';
     desc.textContent = 'سيصلك الطلب خلال 45-60 دقيقة في كافة أحياء رام الله.';
   } 
   else if (hour >= 16) {
     // الحالة 2: الجدولة للغد (من 4:00 م حتى منتصف الليل)
     bar.classList.add('alert-orange');
-    icon.textContent = '🚚';
+    icon.textContent = '';
     title.textContent = 'طلب مجدول للتوصيل غداً';
     desc.textContent = 'تجاوزنا موعد توصيل اليوم. سيتم إيصال طلبك غداً الساعة 10:00 صباحاً.';
   } 
@@ -389,7 +389,7 @@ function updateUI(){
 }
 
 function goCart(){
-  if(!cart.length){ alert('⚠️ السلة فارغة!'); return; }
+  if(!cart.length){ alert('السلة فارغة'); return; }
   window.location.href='/cart';
 }
 
@@ -418,9 +418,9 @@ function searchCats(){
       if(banner)banner.style.display='none';
       if(alertBar)alertBar.style.display='none';
       if(!prods.length){
-        resGrid.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--g400);grid-column:1/-1"><div style="font-size:40px">🔍</div><div style="font-weight:700">لا توجد نتائج</div></div>';
+        resGrid.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--g400);grid-column:1/-1"><div style="font-size:40px">بحث</div><div style="font-weight:700">لا توجد نتائج</div></div>';
       }else{
-        resGrid.innerHTML=prods.map(p=>`<div class="prod-card-s" onclick="addToSearchCart(${p.id},'${p.name.replace(/'/g,"\\'")}',${p.sell_price},'${p.unit}',this)"><div class="prod-img-s">${p.image?`<img src="${p.image}" alt="">`:'🛍️'}</div><div class="prod-info-s"><div class="prod-name-s">${p.name}</div>${p.barcode?`<span class="prod-barcode-s">🔢 ${p.barcode}</span>`:''}<div class="prod-cat-s">${p.cat_name||''}</div><div class="prod-price-s">${p.sell_price}₪ <span class="prod-unit-s">/ ${p.unit}</span></div></div><button class="prod-add-s">+</button></div>`).join('');
+        resGrid.innerHTML=prods.map(p=>`<div class="prod-card-s" onclick="addToSearchCart(${p.id},'${p.name.replace(/'/g,"\\'")}',${p.sell_price},'${p.unit}',this)"><div class="prod-img-s">${p.image?`<img src="${p.image}" alt="">`:''}</div><div class="prod-info-s"><div class="prod-name-s">${p.name}</div>${p.barcode?`<span class="prod-barcode-s">${p.barcode}</span>`:''}<div class="prod-cat-s">${p.cat_name||''}</div><div class="prod-price-s">${p.sell_price}₪ <span class="prod-unit-s">/ ${p.unit}</span></div></div><button class="prod-add-s">+</button></div>`).join('');
       }
       resGrid.style.display='grid';
     }catch(e){console.error(e);}
@@ -432,7 +432,7 @@ function addToSearchCart(id,name,price,unit,el){
   if(ex){ex.qty++;}else{cart.push({id,name,price,qty:1,unit,type:'product'});}
   localStorage.setItem('dokkani_cart',JSON.stringify(cart));
   const btn=el.querySelector('.prod-add-s');
-  if(btn){btn.textContent='✅';setTimeout(()=>btn.textContent='+',1000);}
+  if(btn){btn.textContent='تم';setTimeout(()=>btn.textContent='+',1000);}
   updateUI();
 }
 

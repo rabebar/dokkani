@@ -183,27 +183,27 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
 <body>
     <!-- Install Banner -->
 <div id="install-banner" class="install-banner">
-  <div class="install-ico">📲</div>
+  <div class="install-ico">W</div>
   <div class="install-text">
     <div class="install-title">تثبيت لوحة العمل</div>
     <div class="install-desc">أضفها للشاشة الرئيسية للوصول السريع</div>
   </div>
   <button class="install-btn" onclick="installPWA()">تثبيت</button>
-  <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; font-size:18px; cursor:pointer;">✕</button>
+  <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; font-size:18px; cursor:pointer;">×</button>
 </div>
 
 <!-- Header -->
 <header class="app-hdr">
   <div class="brand">
-    <div class="brand-ico">🛠️</div>
+    <div class="brand-ico">W</div>
     <div class="brand-txt">
       <h1>لوحة العمل</h1>
       <span>{{ app_name }}</span>
     </div>
   </div>
   <div class="hdr-actions">
-    <button class="hdr-btn" onclick="openHistory()">📊</button>
-    <button class="hdr-btn" onclick="location.reload()">🔄</button>
+    <button class="hdr-btn" onclick="openHistory()">سجل</button>
+    <button class="hdr-btn" onclick="location.reload()">تحديث</button>
 </div>
 </header>
 
@@ -211,10 +211,10 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
 <main class="main-content">
   <div class="main-tabs">
     <button class="tab-btn active" onclick="switchTab('orders', this)">
-      <span>📦 الطلبات</span>
+      <span>الطلبات</span>
     </button>
     <button class="tab-btn" onclick="switchTab('products', this)">
-      <span>🍎 المنتجات</span>
+      <span>المنتجات</span>
     </button>
   </div>
 
@@ -244,10 +244,10 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
         </div>
         <div class="order-body">
           <div class="order-customer">
-            <span>👤</span>
+            <span></span>
             <span>{{ o.name }}</span>
           </div>
-          <div class="order-phone">📞 {{ o.phone }}</div>
+          <div class="order-phone">{{ o.phone }}</div>
           <div class="order-items">
             {% for item in o['items'] %}• {{ item.name }} ({{ item.qty }}{{ item.unit or 'حبة' }})<br>{% endfor %}
           </div>
@@ -258,9 +258,9 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
         </div>
         <div class="order-actions">
           <button class="order-btn btn-pick" data-order-id="{{ o.id }}" data-order-total="{{ o.total }}" onclick="openPickMode(this)">
-    🛒 جمع
+    جمع
 </button>
-          <button class="order-btn btn-call" onclick="callCustomer('{{ o.phone }}')">📞</button>
+          <button class="order-btn btn-call" onclick="callCustomer('{{ o.phone }}')">اتصال</button>
         </div>
       </div>
       {% else %}
@@ -275,20 +275,20 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
   <!-- Products Panel -->
   <div id="panel-products" class="panel">
     <div class="search-box">
-      <input type="text" class="search-input" id="search-input" placeholder="🔍 بحث بالاسم أو الباركود..." oninput="searchProducts(this.value)">
-      <button class="scan-btn" onclick="openScanner()">📷</button>
+      <input type="text" class="search-input" id="search-input" placeholder="بحث بالاسم أو الباركود..." oninput="searchProducts(this.value)">
+      <button class="scan-btn" onclick="openScanner()">مسح</button>
     </div>
     
     <div class="cats-scroll" id="cats-scroll">
       <button class="cat-chip active" onclick="filterByCat('all', this)">الكل</button>
       {% for cat in categories %}
-      <button class="cat-chip" onclick="filterByCat({{ cat.id }}, this)">{{ cat.icon }} {{ cat.name }}</button>
+      <button class="cat-chip" onclick="filterByCat({{ cat.id }}, this)">{{ cat.name }}</button>
       {% endfor %}
     </div>
     
     <div class="prod-list" id="prod-list">
       <div class="empty-state">
-        <div class="empty-ico">🔍</div>
+        <div class="empty-ico">بحث</div>
         <div class="empty-text">اختر قسماً أو ابحث عن منتج</div>
       </div>
     </div>
@@ -298,14 +298,14 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
 <!-- Bottom Navigation -->
 <nav class="bnav">
   <div class="bni active" onclick="switchTab('orders', document.querySelectorAll('.tab-btn')[0])">
-    <span class="bni-ico">📦</span>
+    <span class="bni-ico">طلبات</span>
     <span>الطلبات</span>
   </div>
   <div class="scan-wrap">
-    <button class="scan-main" onclick="openScanner()">📷</button>
+    <button class="scan-main" onclick="openScanner()">مسح</button>
   </div>
   <div class="bni" onclick="switchTab('products', document.querySelectorAll('.tab-btn')[1])">
-    <span class="bni-ico">🍎</span>
+    <span class="bni-ico">منتجات</span>
     <span>المنتجات</span>
   </div>
 </nav>
@@ -313,8 +313,8 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
 <div id="pick-modal" class="pick-modal">
   <div class="pick-content">
     <div class="pick-header">
-      <span class="pick-title">🛒 جمع الطلب #<span id="pick-order-id"></span></span>
-      <button class="pick-close" onclick="closePickMode()">✕</button>
+      <span class="pick-title">جمع الطلب #<span id="pick-order-id"></span></span>
+      <button class="pick-close" onclick="closePickMode()">×</button>
     </div>
     <div class="pick-info">
       <div class="pick-customer" id="pick-customer"></div>
@@ -341,7 +341,7 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
         <span id="pick-sum-telegram">0₪</span>
       </div>
       <div class="pick-row" id="pick-diff-row" style="display:none;">
-        <span>⚠️ الفرق</span>
+        <span>الفرق</span>
         <span id="pick-diff">0₪</span>
       </div>
       <div class="pick-row total">
@@ -349,7 +349,7 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
         <span id="pick-status">جاري الجمع...</span>
       </div>
       <button class="pick-complete-btn" id="pick-complete-btn" disabled onclick="completePick()">
-        ✅ تأكيد إنهاء الجمع
+        تأكيد إنهاء الجمع
       </button>
     </div>
   </div>
@@ -359,8 +359,8 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
 <div id="history-modal" class="pick-modal">
   <div class="pick-content" style="max-height: 85vh;">
     <div class="pick-header">
-      <span class="pick-title">📊 سجل الطلبات</span>
-      <button class="pick-close" onclick="closeHistory()">✕</button>
+      <span class="pick-title">سجل الطلبات</span>
+      <button class="pick-close" onclick="closeHistory()">×</button>
     </div>
     <div id="history-list" style="padding: 12px; overflow-y: auto; max-height: 70vh;"></div>
   </div>
@@ -376,32 +376,32 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
 <!-- Product Edit Modal -->
 <div id="prod-modal" class="prod-modal">
   <div class="prod-modal-content">
-    <div class="modal-title" id="modal-title">➕ منتج جديد</div>
+    <div class="modal-title" id="modal-title">منتج جديد</div>
     <input type="hidden" id="edit-prod-id">
     
     <div class="form-group">
-      <label class="form-label">📸 الصورة</label>
+      <label class="form-label">الصورة</label>
       <input type="file" id="p-image" class="form-input" accept="image/*">
     </div>
     
     <div class="form-group">
-      <label class="form-label">📝 الاسم</label>
+      <label class="form-label">الاسم</label>
       <input type="text" id="p-name" class="form-input">
     </div>
     
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">💰 السعر</label>
+        <label class="form-label">السعر</label>
         <input type="number" id="p-price" class="form-input" step="0.5">
       </div>
       <div class="form-group">
-        <label class="form-label">⚖️ الوحدة</label>
+        <label class="form-label">الوحدة</label>
         <input type="text" id="p-unit" class="form-input" placeholder="حبة">
       </div>
     </div>
     
     <div class="form-group">
-      <label class="form-label">📂 القسم</label>
+      <label class="form-label">القسم</label>
       <select id="p-cat" class="form-input" onchange="updateSubcats(this.value)">
         {% for cat in categories %}
         <option value="{{ cat.id }}">{{ cat.name }}</option>
@@ -410,18 +410,18 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
     </div>
     
     <div class="form-group">
-      <label class="form-label">📁 القسم الفرعي</label>
+      <label class="form-label">القسم الفرعي</label>
       <select id="p-subcat" class="form-input"></select>
     </div>
     
     <div class="form-group">
-      <label class="form-label">🔢 الباركود</label>
+      <label class="form-label">الباركود</label>
       <input type="text" id="p-barcode" class="form-input" placeholder="امسح أو اكتب يدوياً">
     </div>
     
     <div class="btn-row">
       <button class="btn-cancel" onclick="closeProdModal()">إلغاء</button>
-      <button class="btn-save" onclick="saveProduct()">💾 حفظ</button>
+      <button class="btn-save" onclick="saveProduct()">حفظ</button>
     </div>
   </div>
 </div>
@@ -506,7 +506,7 @@ function openPickMode(btn) {
                       <div class="pick-qty">×${item.qty}</div>
                       <div class="pick-price">
     <span id="item-price-${i}">${item.price}</span>₪ ×${item.qty}
-    <button onclick="editItemPrice(${i}, ${item.id})" style="font-size:10px; margin-right:5px; border:none; background:#f0fdf4; border-radius:4px; cursor:pointer;">✏️</button>
+    <button onclick="editItemPrice(${i}, ${item.id})" style="font-size:10px; margin-right:5px; border:none; background:#f0fdf4; border-radius:4px; cursor:pointer;">تعديل</button>
 </div>
                     </div>
                 `).join('');
@@ -556,12 +556,12 @@ function updatePickSummary() {
   
   if (checkedCount === pickData.items.length) {
     if (Math.abs(diff) < 0.1) {
-      status.textContent = '✅ متطابق تماماً!';
+      status.textContent = 'متطابق تماماً';
       status.style.color = '#1b5e20';
       diffRow.style.display = 'none';
       completeBtn.disabled = false;
     } else {
-      status.textContent = '⚠️ يوجد فرق';
+      status.textContent = 'يوجد فرق';
       status.style.color = '#dc2626';
       diffRow.style.display = 'flex';
       document.getElementById('pick-diff').textContent = diff.toFixed(1) + '₪';
@@ -591,7 +591,7 @@ async function editItemPrice(index, prodId) {
     pickData.items[index].price = parseFloat(newPrice);
     document.getElementById('item-price-' + index).textContent = newPrice;
     updatePickSummary();
-    alert('✅ تم تحديث السعر في التطبيق');
+    alert('تم تحديث السعر في التطبيق');
 }
 
 
@@ -606,7 +606,7 @@ async function completePick() {
     });
   } catch (e) {}
   
-  alert('✅ تم تأكيد جمع الطلب #' + pickData.orderId);
+  alert('تم تأكيد جمع الطلب #' + pickData.orderId);
   closePickMode();
   location.reload();
 }
@@ -617,14 +617,14 @@ async function filterByCat(catId, btn) {
   btn.classList.add('active');
   
   const list = document.getElementById('prod-list');
-  list.innerHTML = '<div class="empty-state"><div class="empty-ico">⏳</div></div>';
+  list.innerHTML = '<div class="empty-state"><div class="empty-ico">...</div></div>';
   
   try {
     const r = await fetch(`/api/admin/search-all?cat=${catId}`);
     const d = await r.json();
     renderProducts(d.products || []);
   } catch (e) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-ico">❌</div><div class="empty-text">خطأ</div></div>';
+    list.innerHTML = '<div class="empty-state"><div class="empty-ico">خطأ</div><div class="empty-text">خطأ</div></div>';
   }
 }
 
@@ -641,19 +641,19 @@ async function searchProducts(q) {
 function renderProducts(prods) {
   const list = document.getElementById('prod-list');
   if (!prods.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-ico">🔍</div><div class="empty-text">لا توجد نتائج</div></div>';
+    list.innerHTML = '<div class="empty-state"><div class="empty-ico">بحث</div><div class="empty-text">لا توجد نتائج</div></div>';
     return;
   }
   
   list.innerHTML = prods.map(p => `
     <div class="prod-card">
-      <img src="${p.image || 'https://via.placeholder.com/48?text=📦'}" class="prod-img" onerror="this.src='https://via.placeholder.com/48?text=📦'">
+      <img src="${p.image || 'https://via.placeholder.com/48?text=Item'}" class="prod-img" onerror="this.src='https://via.placeholder.com/48?text=Item'">
       <div class="prod-info">
         <div class="prod-name">${p.name}</div>
         ${p.barcode ? `<span class="prod-barcode">${p.barcode}</span>` : ''}
         <div class="prod-price">${p.price}₪</div>
       </div>
-      <button class="prod-edit" onclick="editProduct(${p.id})">✏️</button>
+      <button class="prod-edit" onclick="editProduct(${p.id})">تعديل</button>
     </div>
   `).join('');
 }
@@ -708,7 +708,7 @@ async function handleBarcode(code) {
 }
 
 function openProdModal(name = '', unit = '', code = '', id = '', price = '') {
-  document.getElementById('modal-title').textContent = id ? '✏️ تعديل منتج' : '➕ منتج جديد';
+  document.getElementById('modal-title').textContent = id ? 'تعديل منتج' : 'منتج جديد';
   document.getElementById('edit-prod-id').value = id;
   document.getElementById('p-name').value = name;
   document.getElementById('p-unit').value = unit || 'حبة';
@@ -768,14 +768,14 @@ async function saveProduct() {
     const r = await fetch(id ? `/api/product/${id}` : '/api/product', { method: 'POST', body: fd });
     const d = await r.json();
     if (d.success) {
-      alert('✅ تم الحفظ');
+      alert('تم الحفظ');
       closeProdModal();
       location.reload();
     } else {
-      alert('❌ ' + (d.error || 'خطأ في الحفظ'));
+      alert(d.error || 'خطأ في الحفظ');
     }
   } catch (e) {
-    alert('❌ خطأ في الاتصال');
+    alert('خطأ في الاتصال');
   }
 }
 
@@ -787,7 +787,7 @@ document.body.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e
 async function openHistory() {
     document.getElementById('history-modal').style.display = 'flex';
     const list = document.getElementById('history-list');
-    list.innerHTML = '<div class="empty-state"><div class="empty-ico">⏳</div></div>';
+    list.innerHTML = '<div class="empty-state"><div class="empty-ico">...</div></div>';
     
     try {
         const r = await fetch('/api/orders/history');
@@ -796,7 +796,7 @@ async function openHistory() {
             renderHistory(d.history);
         }
     } catch (e) {
-        list.innerHTML = '<div class="empty-state"><div class="empty-ico">❌</div></div>';
+        list.innerHTML = '<div class="empty-state"><div class="empty-ico">خطأ</div></div>';
     }
 }
 
@@ -811,12 +811,12 @@ function renderHistory(history) {
         return;
     }
     
-    const statusMap = { 'prep': '⏳ تحضير', 'done': '✅ تم', 'cancelled': '❌ ملغي' };
+    const statusMap = { 'prep': 'تحضير', 'done': 'تم', 'cancelled': 'ملغي' };
     
     list.innerHTML = Object.entries(history).map(([date, orders]) => `
         <div style="margin-bottom: 16px;">
             <div style="font-size: 12px; font-weight: 900; color: var(--g2); margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px;">
-                📅 ${date}
+                 ${date}
             </div>
             ${orders.map(o => `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f9fafb; border-radius: 8px; margin-bottom: 6px;">

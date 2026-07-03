@@ -1,4 +1,4 @@
-const CACHE = 'dokkani-v3';
+const CACHE = 'dokkani-v4';
 const STATIC_ASSETS = ['/', '/shop', '/cart', '/static/manifest.json'];
 
 const CACHE_PATTERNS = [
