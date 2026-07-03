@@ -295,6 +295,16 @@ def _canonical_seed_categories(rows):
     return names
 
 
+def _canonical_seed_subcategories(rows):
+    pairs = []
+    for row in rows:
+        cat = (row.get('seed_category_name') or '').strip()
+        sub = (row.get('seed_subcategory_name') or '').strip()
+        if cat and sub and (cat, sub) not in pairs:
+            pairs.append((cat, sub))
+    return pairs
+
+
 def _get_or_create_category(name, sort=999):
     name = (name or '').strip()
     if not name:
@@ -312,7 +322,44 @@ def _get_or_create_category(name, sort=999):
     )
 
 
-def _hide_noncanonical_seed_taxonomy(category_names):
+def _get_or_create_subcategory(name, category_id, sort=999):
+    name = (name or '').strip()
+    if not name or not category_id:
+        return None
+
+    existing = execute_query(
+        'SELECT id FROM subcategories WHERE TRIM(name)=TRIM(?) AND category_id=?',
+        (name, category_id),
+        fetchone=True
+    )
+    if existing:
+        execute_query('UPDATE subcategories SET visible=1, sort=? WHERE id=?', (sort, existing['id']), commit=True)
+        return existing['id']
+
+    return execute_query(
+        'INSERT INTO subcategories (name, icon, category_id, visible, sort) VALUES (?, ?, ?, 1, ?)',
+        (name, '', category_id, sort),
+        commit=True
+    )
+
+
+def _prepare_seed_taxonomy(rows):
+    category_names = _canonical_seed_categories(rows)
+    category_ids = {}
+    subcategory_ids = {}
+
+    for idx, name in enumerate(category_names, start=1):
+        category_ids[name] = _get_or_create_category(name, sort=idx)
+
+    for idx, (cat, sub) in enumerate(_canonical_seed_subcategories(rows), start=1):
+        cat_id = category_ids.get(cat) or _get_or_create_category(cat, sort=999)
+        subcategory_ids[(cat, sub)] = _get_or_create_subcategory(sub, cat_id, sort=idx)
+
+    _hide_noncanonical_seed_taxonomy(category_names, list(subcategory_ids.values()))
+    return category_names, category_ids, subcategory_ids
+
+
+def _hide_noncanonical_seed_taxonomy(category_names, subcategory_ids):
     if category_names:
         placeholders = ','.join(['?'] * len(category_names))
         execute_query(
@@ -320,22 +367,24 @@ def _hide_noncanonical_seed_taxonomy(category_names):
             tuple(category_names),
             commit=True
         )
-    execute_query('UPDATE subcategories SET visible=1', commit=True)
-    execute_query('UPDATE products SET subcategory_id=NULL', commit=True)
+
+    if subcategory_ids:
+        placeholders = ','.join(['?'] * len(subcategory_ids))
+        execute_query(
+            f'UPDATE subcategories SET visible=0 WHERE id NOT IN ({placeholders})',
+            tuple(subcategory_ids),
+            commit=True
+        )
+    else:
+        execute_query('UPDATE subcategories SET visible=0', commit=True)
 
 
-def _seed_category(row, cache, category_names):
+def _seed_category(row, category_ids, subcategory_ids):
     category_name = (row.get('seed_category_name') or '').strip()
-    if not category_name:
-        category_name = category_names[0] if category_names else None
-    if not category_name:
-        return None, None
-
-    if category_name not in cache:
-        sort = category_names.index(category_name) + 1 if category_name in category_names else 999
-        cache[category_name] = _get_or_create_category(category_name, sort=sort)
-
-    return cache[category_name], None
+    subcategory_name = (row.get('seed_subcategory_name') or '').strip()
+    category_id = category_ids.get(category_name)
+    subcategory_id = subcategory_ids.get((category_name, subcategory_name)) if subcategory_name else None
+    return category_id, subcategory_id
 
 
 def _seed_rows():
@@ -355,8 +404,7 @@ def seed_products_from_csv():
 
     created = 0
     errors = 0
-    category_cache = {}
-    category_names = _canonical_seed_categories(rows)
+    _, category_ids, subcategory_ids = _prepare_seed_taxonomy(rows)
     for sort_index, row in enumerate(rows, start=1):
         try:
             name = (row.get('final_name') or row.get('karaz_name') or '').strip()
@@ -368,7 +416,7 @@ def seed_products_from_csv():
             unit = (row.get('final_unit') or '\u0648\u062d\u062f\u0629').strip() or '\u0648\u062d\u062f\u0629'
             barcode = (row.get('final_barcode') or '').strip() or None
             image = (row.get('karaz_image') or '').strip() or None
-            category_id, subcategory_id = _seed_category(row, category_cache, category_names)
+            category_id, subcategory_id = _seed_category(row, category_ids, subcategory_ids)
 
             execute_query(
                 'INSERT INTO products (name, price, unit, category_id, subcategory_id, image, barcode, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -380,7 +428,6 @@ def seed_products_from_csv():
             errors += 1
             continue
 
-    _hide_noncanonical_seed_taxonomy(category_names)
     return {'created': created, 'errors': errors, 'missing_file': False}
 
 
@@ -391,8 +438,7 @@ def categorize_seed_products():
 
     updated = 0
     errors = 0
-    category_cache = {}
-    category_names = _canonical_seed_categories(rows)
+    _, category_ids, subcategory_ids = _prepare_seed_taxonomy(rows)
     for row in rows:
         try:
             name = (row.get('final_name') or row.get('karaz_name') or '').strip()
@@ -400,7 +446,7 @@ def categorize_seed_products():
             if not name and not barcode:
                 continue
 
-            category_id, subcategory_id = _seed_category(row, category_cache, category_names)
+            category_id, subcategory_id = _seed_category(row, category_ids, subcategory_ids)
             if barcode:
                 existing = execute_query('SELECT id FROM products WHERE barcode=?', (barcode,), fetchone=True)
             else:
@@ -417,7 +463,6 @@ def categorize_seed_products():
             errors += 1
             continue
 
-    _hide_noncanonical_seed_taxonomy(category_names)
     return {'updated': updated, 'errors': errors, 'missing_file': False}
 
 
