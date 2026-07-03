@@ -35,6 +35,7 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(135deg,#1a4a1e,#2
 
   <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="next" value="{{ next_url }}">
     <div class="field">
       <label>كلمة السر</label>
       <input type="password" name="password" placeholder="••••••••" autofocus required>

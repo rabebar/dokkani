@@ -33,6 +33,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dokkani-secret-key-2024-fallback'
 # الحماية والأمان
 # ==========================================
 from functools import wraps
+from urllib.parse import quote
 from flask import session, request, jsonify, redirect
 from datetime import timedelta
 
@@ -80,7 +81,8 @@ def admin_required(f):
     @wraps(f)
     def wrapped(*args, **kwargs):
         if not session.get('admin_logged_in'):
-            return redirect('/admin/login')
+            next_url = request.full_path if request.query_string else request.path
+            return redirect('/admin/login?next=' + quote(next_url, safe=''))
         return f(*args, **kwargs)
     return wrapped
 
@@ -264,6 +266,12 @@ def admin_mobile():
                            subcategories=get_subcategories(visible_only=False),
                            products=[], # تم إفراغ القائمة الأولية لتسريع فتح الصفحة 10 أضعاف
                            app_name=Config.APP_NAME)
+
+@app.route('/WORK')
+@app.route('/Work')
+@app.route('/work/')
+def work_redirect():
+    return redirect('/work')
 
 @app.route('/work')
 @admin_required
@@ -856,10 +864,13 @@ def admin_login():
                 session['admin_logged_in'] = True
                 session['login_time'] = int(time.time())
                 session['session_id'] = secrets.token_hex(16)
-                return redirect('/admin')
+                next_url = request.form.get('next') or request.args.get('next') or '/admin'
+                if not next_url.startswith('/') or next_url.startswith('//'):
+                    next_url = '/admin'
+                return redirect(next_url)
             else:
                 error = 'كلمة السر غلط، حاول مرة أخرى'
-    return render_template('admin_login.html', error=error, app_name=Config.APP_NAME)
+    return render_template('admin_login.html', error=error, app_name=Config.APP_NAME, next_url=request.args.get('next', ''))
 
 @app.route('/admin/logout')
 def admin_logout():
