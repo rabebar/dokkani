@@ -11,9 +11,14 @@ from config import Config
 import math
 # إعداد تجمّع الاتصالات (Connection Pool)
 db_url = os.environ.get('DATABASE_URL') or getattr(Config, 'DATABASE_URL', None)
+IS_PRODUCTION = os.environ.get('RENDER') is not None or os.environ.get('DYNO') is not None
+if IS_PRODUCTION and not db_url:
+    raise RuntimeError('DATABASE_URL is required in production. Refusing to use SQLite on Render.')
+
 if db_url and db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
+DB_BACKEND = 'postgres' if db_url else 'sqlite'
 _pool = pool.ThreadedConnectionPool(1, 10, dsn=db_url) if db_url else None
 
 def get_db():
@@ -77,7 +82,7 @@ def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False
 
 def init_db():
     """تأسيس الجداول - تعمل لمرة واحدة عند تشغيل النظام"""
-    is_pg = os.environ.get('DATABASE_URL') is not None
+    is_pg = DB_BACKEND == 'postgres'
     pk = "SERIAL PRIMARY KEY" if is_pg else "INTEGER PRIMARY KEY AUTOINCREMENT"
 
     execute_query(f'''CREATE TABLE IF NOT EXISTS categories (
