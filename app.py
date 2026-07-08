@@ -29,6 +29,97 @@ cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT':
 app.config.from_object(Config)
 app.secret_key = app.config['SECRET_KEY']
 
+CUSTOMER_CATEGORY_LABELS = {
+    'مياه ومشروبات طاقة': 'مياه معدنية',
+    'مياه معدنية': 'مياه معدنية',
+    'عصائر ومشروبات غازية': 'مشروبات غازية',
+    'مشروبات غازية': 'مشروبات غازية',
+    'ملحمة': 'لحوم ودواجن',
+    'لحوم ودواجن': 'لحوم ودواجن',
+    'خضار وفواكه': 'خضار وفواكه',
+}
+CUSTOMER_CATEGORY_NAMES = tuple(CUSTOMER_CATEGORY_LABELS.keys())
+CUSTOMER_ALLOWED_PRODUCT_TERMS = {
+    'مياه معدنية': ('مياه', 'ماء', 'معدنية'),
+    'مشروبات غازية': ('غازية', 'كوكا', 'كولا', 'بيبسي', 'سفن', 'ميرندا', 'فانتا', 'سبرايت', 'شويبس'),
+    'لحوم ودواجن': ('لحم', 'لحوم', 'دجاج', 'دواجن', 'فروج', 'صدر', 'فخذ', 'مفروم', 'ستيك', 'كباب'),
+    'خضار وفواكه': (),
+}
+CUSTOMER_BLOCKED_PRODUCT_TERMS = {
+    'مياه معدنية': ('طاقة', 'ريد بول', 'energy'),
+    'مشروبات غازية': ('عصير', 'طاقة', 'مياه', 'ماء', 'قهوة', 'شاي', 'أعشاب', 'حليب'),
+    'لحوم ودواجن': ('أسماك', 'سمك', 'بحرية'),
+    'خضار وفواكه': (),
+}
+
+def _customer_category_label(name):
+    return CUSTOMER_CATEGORY_LABELS.get((name or '').strip())
+
+def _is_customer_category(category):
+    return bool(category and category.get('visible') and _customer_category_label(category.get('name')))
+
+def _apply_customer_category_label(category):
+    if category:
+        label = _customer_category_label(category.get('name'))
+        if label:
+            category['name'] = label
+    return category
+
+def get_customer_categories():
+    categories = []
+    for category in get_categories():
+        if _is_customer_category(category):
+            categories.append(_apply_customer_category_label(category))
+    return categories
+
+def _apply_customer_product_labels(products):
+    for product in products:
+        label = _customer_category_label(product.get('cat_name'))
+        if label:
+            product['cat_name'] = label
+    return products
+
+def _contains_any(value, terms):
+    text = (value or '').strip().lower()
+    return any(term.lower() in text for term in terms)
+
+def _customer_product_allowed(label, product):
+    name = product.get('name') or ''
+    blocked = CUSTOMER_BLOCKED_PRODUCT_TERMS.get(label, ())
+    if blocked and _contains_any(name, blocked):
+        return False
+
+    required = CUSTOMER_ALLOWED_PRODUCT_TERMS.get(label, ())
+    return not required or _contains_any(name, required)
+
+def _customer_subcategory_allowed(label, subcategory):
+    name = subcategory.get('name') or ''
+    blocked = CUSTOMER_BLOCKED_PRODUCT_TERMS.get(label, ())
+    if blocked and _contains_any(name, blocked):
+        return False
+
+    required = CUSTOMER_ALLOWED_PRODUCT_TERMS.get(label, ())
+    return not required or _contains_any(name, required)
+
+def _filter_customer_products(label, products):
+    return [product for product in products if _customer_product_allowed(label, product)]
+
+def _filter_customer_subcategories(label, subcategories):
+    return [subcategory for subcategory in subcategories if _customer_subcategory_allowed(label, subcategory)]
+
+def _filter_customer_search_products(products):
+    filtered = []
+    for product in products:
+        label = _customer_category_label(product.get('cat_name'))
+        if label and _customer_product_allowed(label, product):
+            product['cat_name'] = label
+            filtered.append(product)
+    return filtered
+
+def _customer_category_filter_sql(prefix='c'):
+    placeholders = ','.join(['?'] * len(CUSTOMER_CATEGORY_NAMES))
+    return f"{prefix}.visible=1 AND {prefix}.name IN ({placeholders})", CUSTOMER_CATEGORY_NAMES
+
 # ==========================================
 # الحماية والأمان
 # ==========================================
@@ -181,7 +272,7 @@ def profile():
 def shop():
     if not is_mobile():
         return render_template('landing.html', app_name=Config.APP_NAME, app_phone=Config.APP_PHONE)
-    categories = get_categories()
+    categories = get_customer_categories()
     return render_template('shop.html', categories=categories, app_name=Config.APP_NAME, app_phone=Config.APP_PHONE)
 
 @app.route('/category/<int:cat_id>')
@@ -189,9 +280,10 @@ def shop():
 def category_page(cat_id):
     if not is_mobile(): return redirect('/')
     cat = execute_query('SELECT * FROM categories WHERE id=?', (cat_id,), fetchone=True)
-    if not cat: return redirect('/shop')
-    subcats  = get_subcategories(category_id=cat_id)
-    products = get_products_with_sell_price(category_id=cat_id)
+    if not _is_customer_category(cat): return redirect('/shop')
+    cat = _apply_customer_category_label(cat)
+    subcats  = _filter_customer_subcategories(cat['name'], get_subcategories(category_id=cat_id))
+    products = _filter_customer_products(cat['name'], get_products_with_sell_price(category_id=cat_id))
     return render_template('category.html', cat=cat, subcats=subcats, products=products, app_name=Config.APP_NAME)
 
 @app.route('/subcategory/<int:sub_id>')
@@ -200,8 +292,13 @@ def subcategory_page(sub_id):
     if not is_mobile(): return redirect('/')
     sub = execute_query('SELECT * FROM subcategories WHERE id=?', (sub_id,), fetchone=True)
     if not sub: return redirect('/shop')
-    products = get_products_with_sell_price(subcategory_id=sub_id)
     cat = execute_query('SELECT * FROM categories WHERE id=?', (sub.get('category_id'),), fetchone=True)
+    if not _is_customer_category(cat) or not sub.get('visible'):
+        return redirect('/shop')
+    cat = _apply_customer_category_label(cat)
+    if not _customer_subcategory_allowed(cat['name'], sub):
+        return redirect('/shop')
+    products = _filter_customer_products(cat['name'], get_products_with_sell_price(subcategory_id=sub_id))
     return render_template('subcategory.html', sub=sub, cat=cat, products=products, app_name=Config.APP_NAME)
 
 @app.route('/cart')
@@ -240,11 +337,63 @@ def admin():
 
 @app.route('/admin/products')
 @admin_required
+def _product_has_valid_price(product):
+    price = product.get('price')
+    if price is None or price == '':
+        return False
+    try:
+        return float(price) >= 0
+    except (TypeError, ValueError):
+        return False
+
+def _build_product_readiness(products):
+    stats = {
+        'total': len(products),
+        'ready': 0,
+        'missing_price': 0,
+        'missing_category': 0,
+        'missing_subcategory': 0,
+        'missing_image': 0,
+        'hidden': 0,
+    }
+    review_items = []
+    for product in products:
+        issues = []
+        if not _product_has_valid_price(product):
+            stats['missing_price'] += 1
+            issues.append('بدون سعر')
+        if not product.get('category_id'):
+            stats['missing_category'] += 1
+            issues.append('بدون قسم رئيسي')
+        if not product.get('subcategory_id'):
+            stats['missing_subcategory'] += 1
+            issues.append('بدون قسم فرعي')
+        if not product.get('image'):
+            stats['missing_image'] += 1
+            issues.append('بدون صورة')
+        if not product.get('visible'):
+            stats['hidden'] += 1
+            issues.append('مخفي')
+
+        if issues:
+            review_items.append({'product': product, 'issues': issues})
+        else:
+            stats['ready'] += 1
+
+    stats['ready_percent'] = round((stats['ready'] / stats['total']) * 100) if stats['total'] else 0
+    return stats, review_items
+
+@app.route('/admin/products')
+@admin_required
 def admin_products():
+    products = get_products(visible_only=False)
+    readiness_stats, readiness_items = _build_product_readiness(products)
     return render_template('admin_products.html',
                            categories=get_categories(visible_only=False),
                            subcategories=get_subcategories(visible_only=False),
-                           products=get_products(visible_only=False),
+                           products=products,
+                           readiness_stats=readiness_stats,
+                           readiness_items=readiness_items,
                            app_name=Config.APP_NAME)
 
 @app.route('/admin/accounting')
@@ -296,32 +445,33 @@ def api_search():
     q = request.args.get('q', '').strip()
     if not q or len(q) < 2:
         return jsonify({'products': []})
+    category_filter_sql, category_filter_params = _customer_category_filter_sql('c')
     # دعم البحث بالباركود (أرقام فقط)
     if q.isdigit():
         results = execute_query(
-            """SELECT p.id, p.name, p.price, p.image, p.unit, p.barcode, c.name as cat_name, p.category_id
+            f"""SELECT p.id, p.name, p.price, p.image, p.unit, p.barcode, c.name as cat_name, p.category_id
                FROM products p
                LEFT JOIN categories c ON c.id = p.category_id
-               WHERE p.visible=1 AND p.barcode = ?
+               WHERE p.visible=1 AND {category_filter_sql} AND p.barcode = ?
                LIMIT 30""",
-            (q,), fetchall=True
+            (*category_filter_params, q), fetchall=True
         ) or []
         if results:
             for p in results:
                 p['sell_price'] = get_selling_price(p['price'], p.get('category_id'))
-            return jsonify({'products': results, 'barcode_match': True})
+            return jsonify({'products': _filter_customer_search_products(results), 'barcode_match': True})
     # البحث العادي بالاسم
     results = execute_query(
-        """SELECT p.id, p.name, p.price, p.image, p.unit, p.barcode, c.name as cat_name, p.category_id
+        f"""SELECT p.id, p.name, p.price, p.image, p.unit, p.barcode, c.name as cat_name, p.category_id
            FROM products p
            LEFT JOIN categories c ON c.id = p.category_id
-           WHERE p.visible=1 AND p.name LIKE ?
+           WHERE p.visible=1 AND {category_filter_sql} AND p.name LIKE ?
            LIMIT 30""",
-        (f'%{q}%',), fetchall=True
+        (*category_filter_params, f'%{q}%'), fetchall=True
     ) or []
     for p in results:
         p['sell_price'] = get_selling_price(p['price'], p.get('category_id'))
-    return jsonify({'products': results})
+    return jsonify({'products': _filter_customer_search_products(results)})
 
 @app.route('/api/admin/search-all')
 @admin_required
