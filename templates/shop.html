@@ -191,7 +191,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 <div class="cat-grid" id="cat-grid">
   {% for cat in categories %}
-  <a class="cat-card" href="/category/{{ cat.id }}" id="cc-{{ cat.id }}">
+  <a class="cat-card" href="{{ cat.url or ('/category/' ~ cat.id) }}" id="cc-{{ cat.id }}">
     <div class="cat-ico">
       {% if cat.image %}
         <img loading="lazy" src="{{ cat.image }}" alt="{{ cat.name }}">

@@ -107,7 +107,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 <div class="sec-hdr">📂 الأقسام الفرعية</div>
 <div class="sub-grid">
   {% for sub in subcats %}
-  <a class="sub-card" href="/subcategory/{{ sub.id }}">
+  <a class="sub-card" href="{{ sub.url or ('/subcategory/' ~ sub.id) }}">
     <div class="sub-ico">
       {% if sub.image %}<img src="{{ sub.image }}" alt="{{ sub.name }}">
       {% else %}{{ sub.icon }}{% endif %}

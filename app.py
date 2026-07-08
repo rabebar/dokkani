@@ -33,43 +33,68 @@ CUSTOMER_CATEGORY_LABELS = {
     'مياه ومشروبات طاقة': 'مياه معدنية',
     'مياه معدنية': 'مياه معدنية',
     'عصائر ومشروبات غازية': 'مشروبات غازية',
+    'مشروبات غازية وعصائر': 'مشروبات غازية',
     'مشروبات غازية': 'مشروبات غازية',
     'ملحمة': 'لحوم ودواجن',
     'لحوم ودواجن': 'لحوم ودواجن',
+    'خضروات وفواكه': 'خضار وفواكه',
     'خضار وفواكه': 'خضار وفواكه',
 }
 CUSTOMER_CATEGORY_NAMES = tuple(CUSTOMER_CATEGORY_LABELS.keys())
+CUSTOMER_CATEGORY_SPLITS = {
+    'عصائر ومشروبات غازية': ('مياه معدنية', 'مشروبات غازية'),
+    'مشروبات غازية وعصائر': ('مياه معدنية', 'مشروبات غازية'),
+}
+CUSTOMER_ALLOWED_SUBCATEGORY_TERMS = {
+    'مياه معدنية': ('مياه', 'مياه معدنية'),
+    'مشروبات غازية': ('مشروبات غازية',),
+    'لحوم ودواجن': ('لحوم ومشرحات', 'لحوم طازجة', 'دواجن', 'ملحمة'),
+    'خضار وفواكه': ('خضار', 'خضروات', 'فواكه', 'أعشاب وتوابل طازجة'),
+}
 CUSTOMER_ALLOWED_PRODUCT_TERMS = {
-    'مياه معدنية': ('مياه', 'ماء', 'معدنية'),
-    'مشروبات غازية': ('غازية', 'كوكا', 'كولا', 'بيبسي', 'سفن', 'ميرندا', 'فانتا', 'سبرايت', 'شويبس'),
-    'لحوم ودواجن': ('لحم', 'لحوم', 'دجاج', 'دواجن', 'فروج', 'صدر', 'فخذ', 'مفروم', 'ستيك', 'كباب'),
+    'مياه معدنية': ('مياه', 'ماء', 'معدنية', 'water'),
+    'مشروبات غازية': ('كولا', 'بيبسي', 'شات', 'cola', 'pepsi'),
+    'لحوم ودواجن': ('لحم', 'لحوم', 'دجاج', 'دواجن', 'فروج', 'صدر', 'فخذ', 'جناح', 'جنحان', 'مفروم', 'ستيك', 'كباب', 'شاورما', 'برغر', 'كفتة', 'beef', 'chicken', 'steak'),
     'خضار وفواكه': (),
 }
 CUSTOMER_BLOCKED_PRODUCT_TERMS = {
-    'مياه معدنية': ('طاقة', 'ريد بول', 'energy'),
-    'مشروبات غازية': ('عصير', 'طاقة', 'مياه', 'ماء', 'قهوة', 'شاي', 'أعشاب', 'حليب'),
-    'لحوم ودواجن': ('أسماك', 'سمك', 'بحرية'),
-    'خضار وفواكه': (),
+    'مياه معدنية': ('طاقة', 'ريد بول', 'energy', 'protein water', 'sour', 'warheads', 'deodorant', 'spray', 'waterlily', 'rose water', 'تونا', 'تونة', 'tuna'),
+    'مشروبات غازية': ('عصير', 'طاقة', 'مياه', 'ماء', 'قهوة', 'شاي', 'أعشاب', 'حليب', 'لبن', 'بودينج', 'بروتين', 'شوكولا', 'protein', 'coffee', 'tea', 'chocolate', 'cookies', 'kellogg', 'loacker', 'hippo', 'yogourt'),
+    'لحوم ودواجن': ('أسماك', 'سمك', 'بحرية', 'جمبري', 'روبيان', 'كلماري', 'crab', 'shrimp', 'fish', 'frozen', 'مجمد', 'مفرز', 'شنيتسل', 'نقانق', 'مرتديلا', 'سلامي', 'بسطرمة', 'حبش', 'روست بيف', 'pastrama', 'salami', 'mortadella', 'sausage', 'schnitzel', 'turkey', 'pet', 'قطط', 'كلاب'),
+    'خضار وفواكه': ('كورن فليكس', 'كورن فلكس', 'سيريال', 'مربى', 'مربيات', 'عسل', 'قمر الدين', 'توتي فروتي', 'فروتي', 'مفرز', 'مجمد', 'مجمّدة', 'لمبورج', 'امبورج', 'محمص', 'مكسرات', 'مبشور', 'مجفف', 'مجففة', 'سموذي', 'شوسترنج', 'مبهرة', 'طابات', 'حلقات', 'بوريقس', 'فروست', 'سفن ستارز', 'تابوغان', 'مقطع', 'السلام', 'مطبوخ', 'cooked', 'dried', 'desiccated', 'cranberries', 'cherries', 'apricots', 'kiwi', 'pineapple', 'figs', 'nuts', 'corn flakes', 'cereal', 'jam', 'honey', 'frozen', 'fruity', 'fruitango', 'confiture', 'lamb weston', 'aviko', 'fries', 'wedges', 'tabugan', 'sunfrost', 'chef frozen'),
 }
 
+def _customer_category_labels(name):
+    clean_name = (name or '').strip()
+    return CUSTOMER_CATEGORY_SPLITS.get(clean_name) or ((CUSTOMER_CATEGORY_LABELS.get(clean_name),) if CUSTOMER_CATEGORY_LABELS.get(clean_name) else ())
+
 def _customer_category_label(name):
-    return CUSTOMER_CATEGORY_LABELS.get((name or '').strip())
+    labels = _customer_category_labels(name)
+    return labels[0] if labels else None
 
 def _is_customer_category(category):
-    return bool(category and category.get('visible') and _customer_category_label(category.get('name')))
+    return bool(category and category.get('visible') and _customer_category_labels(category.get('name')))
 
-def _apply_customer_category_label(category):
+def _apply_customer_category_label(category, label=None):
     if category:
-        label = _customer_category_label(category.get('name'))
+        label = label or _customer_category_label(category.get('name'))
         if label:
+            source_id = category.get('source_id') or category.get('id')
             category['name'] = label
+            category['source_id'] = source_id
+            category['url'] = f"/category/{source_id}?view={quote(label)}"
     return category
 
 def get_customer_categories():
     categories = []
+    seen = set()
     for category in get_categories():
         if _is_customer_category(category):
-            categories.append(_apply_customer_category_label(category))
+            for label in _customer_category_labels(category.get('name')):
+                if label in seen:
+                    continue
+                seen.add(label)
+                categories.append(_apply_customer_category_label(dict(category), label))
     return categories
 
 def _apply_customer_product_labels(products):
@@ -79,9 +104,19 @@ def _apply_customer_product_labels(products):
             product['cat_name'] = label
     return products
 
-def _contains_any(value, terms):
+def _normalize_filter_text(value):
     text = (value or '').strip().lower()
-    return any(term.lower() in text for term in terms)
+    replacements = {
+        'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ى': 'ي', 'ة': 'ه',
+        'ـ': '', 'ّ': '', 'َ': '', 'ً': '', 'ُ': '', 'ٌ': '', 'ِ': '', 'ٍ': '', 'ْ': '',
+    }
+    for src, dst in replacements.items():
+        text = text.replace(src, dst)
+    return text
+
+def _contains_any(value, terms):
+    text = _normalize_filter_text(value)
+    return any(_normalize_filter_text(term) in text for term in terms)
 
 def _customer_product_allowed(label, product):
     name = product.get('name') or ''
@@ -98,7 +133,7 @@ def _customer_subcategory_allowed(label, subcategory):
     if blocked and _contains_any(name, blocked):
         return False
 
-    required = CUSTOMER_ALLOWED_PRODUCT_TERMS.get(label, ())
+    required = CUSTOMER_ALLOWED_SUBCATEGORY_TERMS.get(label, ())
     return not required or _contains_any(name, required)
 
 def _filter_customer_products(label, products):
@@ -110,10 +145,11 @@ def _filter_customer_subcategories(label, subcategories):
 def _filter_customer_search_products(products):
     filtered = []
     for product in products:
-        label = _customer_category_label(product.get('cat_name'))
-        if label and _customer_product_allowed(label, product):
-            product['cat_name'] = label
-            filtered.append(product)
+        for label in _customer_category_labels(product.get('cat_name')):
+            if _customer_product_allowed(label, product):
+                product['cat_name'] = label
+                filtered.append(product)
+                break
     return filtered
 
 def _customer_category_filter_sql(prefix='c'):
@@ -268,7 +304,6 @@ def profile():
     return render_template('profile.html', app_name=Config.APP_NAME, app_phone=Config.APP_PHONE)
 
 @app.route('/shop')
-@cache.cached(timeout=600)
 def shop():
     if not is_mobile():
         return render_template('landing.html', app_name=Config.APP_NAME, app_phone=Config.APP_PHONE)
@@ -276,18 +311,21 @@ def shop():
     return render_template('shop.html', categories=categories, app_name=Config.APP_NAME, app_phone=Config.APP_PHONE)
 
 @app.route('/category/<int:cat_id>')
-@cache.cached(timeout=300)
 def category_page(cat_id):
     if not is_mobile(): return redirect('/')
     cat = execute_query('SELECT * FROM categories WHERE id=?', (cat_id,), fetchone=True)
     if not _is_customer_category(cat): return redirect('/shop')
-    cat = _apply_customer_category_label(cat)
+    allowed_labels = _customer_category_labels(cat.get('name'))
+    requested_label = request.args.get('view', '').strip()
+    label = requested_label if requested_label in allowed_labels else allowed_labels[0]
+    cat = _apply_customer_category_label(cat, label)
     subcats  = _filter_customer_subcategories(cat['name'], get_subcategories(category_id=cat_id))
+    for sub in subcats:
+        sub['url'] = f"/subcategory/{sub['id']}?view={quote(cat['name'])}"
     products = _filter_customer_products(cat['name'], get_products_with_sell_price(category_id=cat_id))
     return render_template('category.html', cat=cat, subcats=subcats, products=products, app_name=Config.APP_NAME)
 
 @app.route('/subcategory/<int:sub_id>')
-@cache.cached(timeout=300)
 def subcategory_page(sub_id):
     if not is_mobile(): return redirect('/')
     sub = execute_query('SELECT * FROM subcategories WHERE id=?', (sub_id,), fetchone=True)
@@ -295,7 +333,10 @@ def subcategory_page(sub_id):
     cat = execute_query('SELECT * FROM categories WHERE id=?', (sub.get('category_id'),), fetchone=True)
     if not _is_customer_category(cat) or not sub.get('visible'):
         return redirect('/shop')
-    cat = _apply_customer_category_label(cat)
+    allowed_labels = _customer_category_labels(cat.get('name'))
+    requested_label = request.args.get('view', '').strip()
+    label = requested_label if requested_label in allowed_labels else allowed_labels[0]
+    cat = _apply_customer_category_label(cat, label)
     if not _customer_subcategory_allowed(cat['name'], sub):
         return redirect('/shop')
     products = _filter_customer_products(cat['name'], get_products_with_sell_price(subcategory_id=sub_id))
