@@ -29,6 +29,10 @@ cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT':
 app.config.from_object(Config)
 app.secret_key = app.config['SECRET_KEY']
 
+@app.errorhandler(500)
+def server_error(error):
+    return render_template('error.html', app_name=Config.APP_NAME), 500
+
 CUSTOMER_CATEGORY_LABELS = {
     'مياه ومشروبات طاقة': 'مياه معدنية',
     'مياه معدنية': 'مياه معدنية',

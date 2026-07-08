@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>{{ app_name }} — إعادة تحميل</title>
+<meta name="theme-color" content="#2e7d32">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#1b5e20;--g2:#2e7d32;--acc:#00c853;--w:#fff;--ink:#1f2937;--muted:#6b7280}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;font-family:'Cairo',system-ui,-apple-system,'Segoe UI',sans-serif;background:linear-gradient(180deg,#eef8ef,#fff);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px}
+.wrap{width:min(420px,100%);text-align:center}
+.mark{width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,var(--g1),var(--g2));display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:#fff;font-size:34px;box-shadow:0 12px 30px rgba(46,125,50,.22)}
+h1{font-size:24px;font-weight:900;margin-bottom:8px}
+p{font-size:15px;line-height:1.8;color:var(--muted);font-weight:700}
+.hint{margin-top:22px;background:var(--w);border:1px solid rgba(46,125,50,.14);box-shadow:0 8px 24px rgba(0,0,0,.06);border-radius:18px;padding:18px}
+.pull{font-size:42px;color:var(--g2);line-height:1;animation:pull 1.4s ease-in-out infinite}
+@keyframes pull{0%,100%{transform:translateY(-4px)}50%{transform:translateY(8px)}}
+.small{font-size:12px;color:#9ca3af;margin-top:14px;font-weight:700}
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="mark">↻</div>
+    <h1>اسحب الشاشة للأسفل</h1>
+    <p>الاتصال يحتاج إعادة تحميل سريعة.</p>
+    <div class="hint">
+      <div class="pull">↓</div>
+      <p>اسحب من أعلى الصفحة للأسفل ثم اتركها.</p>
+    </div>
+    <div class="small">{{ app_name }}</div>
+  </main>
+</body>
+</html>
