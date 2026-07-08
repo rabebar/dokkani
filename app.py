@@ -52,16 +52,16 @@ CUSTOMER_ALLOWED_SUBCATEGORY_TERMS = {
     'خضار وفواكه': ('خضار', 'خضروات', 'فواكه', 'أعشاب وتوابل طازجة'),
 }
 CUSTOMER_ALLOWED_PRODUCT_TERMS = {
-    'مياه معدنية': ('مياه', 'ماء', 'معدنية', 'water'),
-    'مشروبات غازية': ('كولا', 'بيبسي', 'شات', 'cola', 'pepsi'),
+    'مياه معدنية': ('أروى', 'اروى', 'جريكو', 'jericho', 'arwa'),
+    'مشروبات غازية': ('كولا', 'كوكا', 'بيبسي', 'شات', 'coca', 'coke', 'cola', 'pepsi'),
     'لحوم ودواجن': ('لحم', 'لحوم', 'دجاج', 'دواجن', 'فروج', 'صدر', 'فخذ', 'جناح', 'جنحان', 'مفروم', 'ستيك', 'كباب', 'شاورما', 'برغر', 'كفتة', 'beef', 'chicken', 'steak'),
     'خضار وفواكه': (),
 }
 CUSTOMER_BLOCKED_PRODUCT_TERMS = {
-    'مياه معدنية': ('طاقة', 'ريد بول', 'energy', 'protein water', 'sour', 'warheads', 'deodorant', 'spray', 'waterlily', 'rose water', 'تونا', 'تونة', 'tuna'),
-    'مشروبات غازية': ('عصير', 'طاقة', 'مياه', 'ماء', 'قهوة', 'شاي', 'أعشاب', 'حليب', 'لبن', 'بودينج', 'بروتين', 'شوكولا', 'protein', 'coffee', 'tea', 'chocolate', 'cookies', 'kellogg', 'loacker', 'hippo', 'yogourt'),
-    'لحوم ودواجن': ('أسماك', 'سمك', 'بحرية', 'جمبري', 'روبيان', 'كلماري', 'crab', 'shrimp', 'fish', 'frozen', 'مجمد', 'مفرز', 'شنيتسل', 'نقانق', 'مرتديلا', 'سلامي', 'بسطرمة', 'حبش', 'روست بيف', 'pastrama', 'salami', 'mortadella', 'sausage', 'schnitzel', 'turkey', 'pet', 'قطط', 'كلاب'),
-    'خضار وفواكه': ('كورن فليكس', 'كورن فلكس', 'سيريال', 'مربى', 'مربيات', 'عسل', 'قمر الدين', 'توتي فروتي', 'فروتي', 'مفرز', 'مجمد', 'مجمّدة', 'لمبورج', 'امبورج', 'محمص', 'مكسرات', 'مبشور', 'مجفف', 'مجففة', 'سموذي', 'شوسترنج', 'مبهرة', 'طابات', 'حلقات', 'بوريقس', 'فروست', 'سفن ستارز', 'تابوغان', 'مقطع', 'السلام', 'مطبوخ', 'cooked', 'dried', 'desiccated', 'cranberries', 'cherries', 'apricots', 'kiwi', 'pineapple', 'figs', 'nuts', 'corn flakes', 'cereal', 'jam', 'honey', 'frozen', 'fruity', 'fruitango', 'confiture', 'lamb weston', 'aviko', 'fries', 'wedges', 'tabugan', 'sunfrost', 'chef frozen'),
+    'مياه معدنية': ('طاقة', 'ريد بول', 'energy', 'protein water', 'sour', 'warheads', 'deodorant', 'spray', 'waterlily', 'rose water', 'تونا', 'تونة', 'tuna', 'sparkling', 'غازية', 'منكهة', 'lemon', 'berry', 'apple', 'watermelon', 'soda', 'tonic', 'perrier', 'nestle', 'نستلة', 'aqua', 'عين جدي', 'ice'),
+    'مشروبات غازية': ('جرين كولا', 'green cola', 'عصير', 'طاقة', 'مياه', 'ماء', 'قهوة', 'شاي', 'أعشاب', 'حليب', 'لبن', 'بودينج', 'بروتين', 'شوكولا', 'protein', 'coffee', 'tea', 'chocolate', 'cookies', 'kellogg', 'loacker', 'hippo', 'yogourt'),
+    'لحوم ودواجن': ('أسماك', 'سمك', 'بحرية', 'جمبري', 'روبيان', 'كلماري', 'crab', 'shrimp', 'fish', 'frozen', 'مجمد', 'مفرز', 'مشرحات', 'شنيتسل', 'نقانق', 'مرتديلا', 'سلامي', 'بسطرمة', 'حبش', 'روست بيف', 'برغر', 'burger', 'pastrama', 'salami', 'mortadella', 'sausage', 'schnitzel', 'turkey', 'pet', 'قطط', 'كلاب'),
+    'خضار وفواكه': ('كورن فليكس', 'كورن فلكس', 'سيريال', 'مربى', 'مربيات', 'عسل', 'قمر الدين', 'توتي فروتي', 'فروتي', 'مفرز', 'مجمد', 'مجمّدة', 'لمبورج', 'امبورج', 'محمص', 'مكسرات', 'مبشور', 'مجفف', 'مجففة', 'سموذي', 'شوسترنج', 'مبهرة', 'طابات', 'حلقات', 'بوريقس', 'فروست', 'سفن ستارز', 'تابوغان', 'مقطع', 'السلام', 'مطبوخ', 'مقشر', 'بكيت', 'باكيت', 'علبة', 'معلب', 'معبأ', 'packet', 'pack', 'box', 'cooked', 'peeled', 'dried', 'desiccated', 'cranberries', 'cherries', 'apricots', 'kiwi', 'pineapple', 'figs', 'nuts', 'corn flakes', 'cereal', 'jam', 'honey', 'frozen', 'fruity', 'fruitango', 'confiture', 'lamb weston', 'aviko', 'fries', 'wedges', 'tabugan', 'sunfrost', 'chef frozen', 'natura nuova'),
 }
 
 def _customer_category_labels(name):
