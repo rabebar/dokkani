@@ -6,6 +6,7 @@ import os
 import json
 import psycopg2
 from psycopg2 import pool
+from psycopg2 import OperationalError, InterfaceError
 from psycopg2.extras import RealDictCursor
 from config import Config
 import math
@@ -30,20 +31,40 @@ def get_db():
         conn = sqlite3.connect('dokkani.db')
         conn.row_factory = sqlite3.Row
         return conn
-def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False):
-    """المحرك الموحد: يعيد البيانات دائماً كقواميس (Dictionaries) قابلة للتعديل"""
+
+def _is_postgres_connection_error(error):
+    if not isinstance(error, (OperationalError, InterfaceError)):
+        return False
+    message = str(error).lower()
+    transient_markers = (
+        'ssl syscall error',
+        'eof detected',
+        'server closed the connection',
+        'connection already closed',
+        'terminating connection',
+        'connection not open',
+        'could not receive data',
+        'could not send data',
+    )
+    return any(marker in message for marker in transient_markers)
+
+def _return_connection(conn, is_pg, close=False):
+    if is_pg and _pool:
+        _pool.putconn(conn, close=close)
+    else:
+        conn.close()
+
+def _execute_query_once(query, params=(), commit=False, fetchone=False, fetchall=False):
     conn = get_db()
     is_pg = not hasattr(conn, 'row_factory')
-    
+    close_conn = False
+
     try:
-        if is_pg:
-            query = query.replace('?', '%s')
-            cur = conn.cursor(cursor_factory=RealDictCursor)
-        else:
-            cur = conn.cursor()
-        
-        cur.execute(query, params)
-        
+        sql = query.replace('?', '%s') if is_pg else query
+        cur = conn.cursor(cursor_factory=RealDictCursor) if is_pg else conn.cursor()
+
+        cur.execute(sql, params)
+
         res = None
         if fetchone:
             raw = cur.fetchone()
@@ -74,11 +95,27 @@ def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False
                     res = cur.lastrowid
 
         return res
+    except Exception:
+        close_conn = is_pg
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise
     finally:
-        if is_pg and _pool:
-            _pool.putconn(conn)
-        else:
-            conn.close()
+        _return_connection(conn, is_pg, close=close_conn)
+
+def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False):
+    """المحرك الموحد: يعيد البيانات دائماً كقواميس (Dictionaries) قابلة للتعديل"""
+    if not _pool:
+        return _execute_query_once(query, params, commit, fetchone, fetchall)
+
+    try:
+        return _execute_query_once(query, params, commit, fetchone, fetchall)
+    except Exception as error:
+        if _is_postgres_connection_error(error):
+            return _execute_query_once(query, params, commit, fetchone, fetchall)
+        raise
 
 def init_db():
     """تأسيس الجداول - تعمل لمرة واحدة عند تشغيل النظام"""
