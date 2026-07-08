@@ -110,12 +110,16 @@ def execute_query(query, params=(), commit=False, fetchone=False, fetchall=False
     if not _pool:
         return _execute_query_once(query, params, commit, fetchone, fetchall)
 
-    try:
-        return _execute_query_once(query, params, commit, fetchone, fetchall)
-    except Exception as error:
-        if _is_postgres_connection_error(error):
+    last_error = None
+    for attempt in range(3):
+        try:
             return _execute_query_once(query, params, commit, fetchone, fetchall)
-        raise
+        except Exception as error:
+            if not _is_postgres_connection_error(error):
+                raise
+            last_error = error
+
+    raise last_error
 
 def init_db():
     """تأسيس الجداول - تعمل لمرة واحدة عند تشغيل النظام"""
