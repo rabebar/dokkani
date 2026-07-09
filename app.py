@@ -6,6 +6,7 @@ import os
 import time
 import secrets
 from flask import Flask, render_template, request, jsonify, redirect
+from werkzeug.exceptions import InternalServerError
 from config import Config
 from telegram_notify import notify_new_order, notify_order_status
 from database import (
@@ -31,7 +32,9 @@ app.secret_key = app.config['SECRET_KEY']
 
 @app.errorhandler(500)
 def server_error(error):
-    return render_template('error.html', app_name=Config.APP_NAME), 500
+    if is_mobile():
+        return render_template('error.html', app_name=Config.APP_NAME), 500
+    return InternalServerError().get_response()
 
 CUSTOMER_CATEGORY_LABELS = {
     'مياه ومشروبات طاقة': 'مياه معدنية',
