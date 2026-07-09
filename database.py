@@ -224,57 +224,6 @@ def init_db():
         seed_products_from_csv()
     else:
         categorize_seed_products()
-    ensure_core_soda_products()
-
-def ensure_core_soda_products():
-    category_id = _get_or_create_category('عصائر ومشروبات غازية', sort=32)
-    subcategory_id = _get_or_create_subcategory('مشروبات غازية', category_id, sort=1)
-    products = [
-        ('بيبسي زجاج 250 ملم', 2.5, '6251124004205'),
-        ('بيبسي 250 ملم', 1.5, '6251919000016'),
-        ('علبة بيبسي 330 ملم', 2.5, '6251919000481'),
-        ('بيبسي 150 ملم', 1.5, '6251919000580'),
-        ('بيبسي 1 لتر', 4.0, '6251919000023'),
-        ('بيبسي زجاج', 2.5, '6251124006063'),
-        ('بيبسي حديد 250 مل', 2.5, '6251919000535'),
-        ('بيبسي ماكس ليمي 250 ملم', 1.5, '6251919000740'),
-        ('بيبسي ماكس ليمي 150 ملم', 1.5, '6251919000665'),
-        ('علبة بيبسي ماكس ليمي 330 ملم', 2.5, '6251919000498'),
-        ('بيبسي ماكس 1 لتر', 4.0, '6251919000412'),
-        ('علبة بيبسي ماكس 330 ملم', 2.5, '6251919000672'),
-        ('بيبسي ماكس 150 ملم', 1.5, '6251919000764'),
-        ('كوكاكولا مشكل 330 ملم', 2.5, '5449000000996'),
-        ('كولا 330 زجاج', 3.0, '54491571'),
-        ('كولا علب حديد 150 مل', 1.5, '54492127'),
-        ('كولا دايت 1.125 لتر', 4.0, '5449000002679'),
-        ('كوكاكولا 1.5 لتر', 4.5, '5449000051981'),
-        ('كولا دايت 330 مل', 2.5, '5449000053879'),
-        ('كوكا كولا 250 مل', 2.5, '5449000008046'),
-        ('كولا علب 250', 1.5, '5449000229816'),
-        ('كولا زيرو بلاستيك', 1.5, '50112579'),
-        ('كولا بلاستك صغير', 1.5, '97000090338243'),
-        ('مشروب شات غازي', 1.0, '655729308090'),
-        ('كولا شات مشكل', 1.0, '0655729308236'),
-        ('كولا زيرو شات', 1.0, '0655729308137'),
-        ('كولا شات فواكه استوائية', 1.0, '655729308427'),
-        ('شات بلو', 2.0, '6251897000428'),
-        ('كولا شات ليمون ونعنع', 1.5, '0655729308656'),
-    ]
-    start_sort = 100
-    for index, (name, price, barcode) in enumerate(products, start=start_sort):
-        existing = execute_query('SELECT id FROM products WHERE barcode=?', (barcode,), fetchone=True)
-        if existing:
-            execute_query(
-                'UPDATE products SET name=?, price=?, unit=?, category_id=?, subcategory_id=?, visible=1, sort=? WHERE id=?',
-                (name, price, 'وحدة', category_id, subcategory_id, index, existing['id']),
-                commit=True
-            )
-        else:
-            execute_query(
-                'INSERT INTO products (name, price, unit, category_id, subcategory_id, barcode, visible, sort) VALUES (?, ?, ?, ?, ?, ?, 1, ?)',
-                (name, price, 'وحدة', category_id, subcategory_id, barcode, index),
-                commit=True
-            )
 
 def seed_categories():
     cats = [
