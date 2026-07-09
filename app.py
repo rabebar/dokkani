@@ -383,8 +383,6 @@ def account():
 def admin():
     return render_template('dashboard.html', orders=get_orders(), stats=get_daily_stats(), app_name=Config.APP_NAME)
 
-@app.route('/admin/products')
-@admin_required
 def _product_has_valid_price(product):
     price = product.get('price')
     if price is None or price == '':
