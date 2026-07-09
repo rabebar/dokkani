@@ -214,16 +214,9 @@ def init_db():
         created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''', commit=True)
 
-    check = execute_query('SELECT COUNT(*) as count FROM categories', fetchone=True)
-    if check and check['count'] == 0:
-        seed_categories()
-        seed_subcategories()
-
-    product_check = execute_query('SELECT COUNT(*) as count FROM products', fetchone=True)
-    if product_check and product_check['count'] == 0:
-        seed_products_from_csv()
-    else:
-        categorize_seed_products()
+    # Production data is managed from the database/admin panel only.
+    # Do not auto-seed or recategorize on startup, because that can create
+    # duplicate taxonomy rows or override the admin's visible/category choices.
 
 def seed_categories():
     cats = [
