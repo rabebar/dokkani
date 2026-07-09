@@ -5,7 +5,7 @@
 import os
 import time
 import secrets
-from flask import Flask, render_template, request, jsonify, redirect
+from flask import Flask, render_template, request, jsonify, redirect, send_from_directory
 from werkzeug.exceptions import InternalServerError
 from config import Config
 from telegram_notify import notify_new_order, notify_order_status
@@ -103,7 +103,7 @@ def add_security_headers(response):
     return response
 
 
-UPLOAD_FOLDER = os.path.join('static', 'uploads')
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or os.path.join('static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # سجل لمنع تكرار الطلبات البرمجي
@@ -841,7 +841,11 @@ def save_upload(file, prefix='img'):
     filename = f"{prefix}_{os.urandom(6).hex()}.{ext}"
     path = os.path.join(UPLOAD_FOLDER, filename)
     file.save(path)
-    return f"/static/uploads/{filename}"
+    return f"/uploads/{filename}"
+
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 @app.route('/manifest.json')
 def manifest():

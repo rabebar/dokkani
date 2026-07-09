@@ -165,7 +165,7 @@ async function saveImage(id, btn) {
         const response = await fetch('/api/admin/confirm-image', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ prod_id: id, image_url: imageUrl })
+            body: JSON.stringify({ prod_id: id, image_url: imageUrl, csrf_token: '{{ csrf_token() }}' })
         });
         const data = await response.json();
         if (data.success) {
@@ -188,7 +188,8 @@ async function deleteProduct(id, name) {
     try {
         const response = await fetch(`/api/product/${id}/delete`, { 
             method: 'POST',
-            headers: {'Content-Type': 'application/json'}
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ csrf_token: '{{ csrf_token() }}' })
         });
         const data = await response.json();
         if (data.success) {
