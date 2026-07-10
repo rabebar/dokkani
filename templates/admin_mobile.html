@@ -56,10 +56,13 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
 /* Bottom Nav */
 .bnav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--w); height: var(--nav); display: flex; align-items: center; border-top: 1px solid #e5e7eb; box-shadow: 0 -4px 20px rgba(0,0,0,0.05); z-index: 1001; }
-.bni { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--muted); text-decoration: none; font-size: 10px; font-weight: 700; }
+.bni { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--muted); text-decoration: none; font-size: 10px; font-weight: 700; }
 .bni.active { color: var(--g2); }
+.bni-ico { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+.nav-icon { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .scan-btn-wrap { position: relative; top: -25px; }
 .scan-main-btn { width: 64px; height: 64px; background: linear-gradient(135deg, var(--acc), var(--g2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--w); border: 5px solid var(--bg); box-shadow: 0 8px 20px rgba(0,200,83,0.3); }
+.scan-icon { width: 29px; height: 29px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: flex-end; z-index: 3000; backdrop-filter: blur(4px); }
@@ -141,9 +144,9 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
 <!-- شريط السفلي -->
 <nav class="bnav">
-  <a href="javascript:void(0)" onclick="switchTab('orders', document.querySelectorAll('.tab-item')[0])" class="bni active" id="nav-orders"><span>📦 الطلبات</span></a>
-  <div class="scan-btn-wrap"><button class="scan-main-btn" onclick="openScanner()">📷</button></div>
-  <a href="javascript:void(0)" onclick="switchTab('products', document.querySelectorAll('.tab-item')[1])" class="bni" id="nav-products"><span>🍎 المنتجات</span></a>
+  <a href="javascript:void(0)" onclick="switchTab('orders', document.querySelectorAll('.tab-item')[0])" class="bni active" id="nav-orders"><span class="bni-ico"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v16l-3-1.8-3 1.8-3-1.8L7 21V5a2 2 0 0 1 2-2Z"/><path d="M9.5 8h5"/><path d="M9.5 12h5"/><path d="M9.5 16h3"/></svg></span><span>الطلبات</span></a>
+  <div class="scan-btn-wrap"><button class="scan-main-btn" onclick="openScanner()" aria-label="مسح"><svg class="scan-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2"/><path d="M17 4h2a1 1 0 0 1 1 1v2"/><path d="M20 17v2a1 1 0 0 1-1 1h-2"/><path d="M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 8v8"/><path d="M10 8v8"/><path d="M14 8v8"/><path d="M17 8v8"/></svg></button></div>
+  <a href="javascript:void(0)" onclick="switchTab('products', document.querySelectorAll('.tab-item')[1])" class="bni" id="nav-products"><span class="bni-ico"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5V20h16v-9.5"/><path d="M3 10.5 5 4h14l2 6.5"/><path d="M8 20v-5h5v5"/><path d="M3 10.5h18"/></svg></span><span>المنتجات</span></a>
 </nav>
 
 <!-- مودال الإضافة -->

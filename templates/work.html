@@ -147,9 +147,11 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
 .bnav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--w); display: flex; align-items: center; border-top: 1px solid #e5e7eb; box-shadow: 0 -4px 20px rgba(0,0,0,0.05); z-index: 1001; }
 .bni { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--muted); text-decoration: none; font-size: 10px; font-weight: 700; padding: 8px 0; cursor: pointer; }
 .bni.active { color: var(--g2); }
-.bni-ico { font-size: 22px; }
+.bni-ico { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+.nav-icon { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .scan-wrap { position: relative; top: -20px; }
 .scan-main { width: 60px; height: 60px; background: linear-gradient(135deg, var(--acc), var(--g2)); border-radius: 50%; border: 4px solid var(--bg); box-shadow: 0 6px 20px rgba(0,200,83,0.35); display: flex; align-items: center; justify-content: center; font-size: 26px; color: white; cursor: pointer; }
+.scan-icon { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
 .scanner-modal { position: fixed; inset: 0; background: #000; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 3000; }
 #reader { width: 100%; max-width: 400px; }
@@ -298,14 +300,14 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
 <!-- Bottom Navigation -->
 <nav class="bnav">
   <div class="bni active" onclick="switchTab('orders', document.querySelectorAll('.tab-btn')[0])">
-    <span class="bni-ico">طلبات</span>
+    <span class="bni-ico"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v16l-3-1.8-3 1.8-3-1.8L7 21V5a2 2 0 0 1 2-2Z"/><path d="M9.5 8h5"/><path d="M9.5 12h5"/><path d="M9.5 16h3"/></svg></span>
     <span>الطلبات</span>
   </div>
   <div class="scan-wrap">
-    <button class="scan-main" onclick="openScanner()">مسح</button>
+    <button class="scan-main" onclick="openScanner()" aria-label="مسح"><svg class="scan-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2"/><path d="M17 4h2a1 1 0 0 1 1 1v2"/><path d="M20 17v2a1 1 0 0 1-1 1h-2"/><path d="M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 8v8"/><path d="M10 8v8"/><path d="M14 8v8"/><path d="M17 8v8"/></svg></button>
   </div>
   <div class="bni" onclick="switchTab('products', document.querySelectorAll('.tab-btn')[1])">
-    <span class="bni-ico">منتجات</span>
+    <span class="bni-ico"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5V20h16v-9.5"/><path d="M3 10.5 5 4h14l2 6.5"/><path d="M8 20v-5h5v5"/><path d="M3 10.5h18"/></svg></span>
     <span>المنتجات</span>
   </div>
 </nav>
