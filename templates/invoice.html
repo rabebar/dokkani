@@ -144,7 +144,7 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
     </div>
     <div class="total-row grand">
       <span>الإجمالي النهائي</span>
-      <span>{{ ((order.total or 0) + (order.delivery or 0))|round|int }}₪</span>
+      <span>{{ (order.final_total or ((order.total or 0) + (order.delivery or 0)))|round|int }}₪</span>
     </div>
   </div>
 
@@ -181,7 +181,7 @@ const msg = `🧾 *فاتورة دكّاني #{{ order['id'] }}*\n\n` +
     {% for item in items %}`• {{ item['name'] }} ({{ item['qty'] }} {{ item['unit'] or 'حبة' }})\n` + {% endfor %}
   {% endfor %}
   `\n🚗 التوصيل: {{ order['delivery']|round|int }}₪\n` +
-  `✅ *الإجمالي النهائي: {{ ((order['total'] or 0) + (order['delivery'] or 0))|round|int }}₪*`;
+  `✅ *الإجمالي النهائي: {{ (order['final_total'] or ((order['total'] or 0) + (order['delivery'] or 0)))|round|int }}₪*`;
 
 document.getElementById('wa-btn').href = 
   `https://wa.me/{{ app_whatsapp }}?text=${encodeURIComponent(msg)}`;

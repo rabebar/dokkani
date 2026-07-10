@@ -565,7 +565,7 @@ def add_order(data):
     existing = execute_query('SELECT id, orders_count, total_spent FROM customers WHERE phone=?', (data.get('phone'),), fetchone=True)
     if existing:
         new_count = (existing.get('orders_count') or 0) + 1
-        new_total = (existing.get('total_spent') or 0) + (data.get('total') or 0)
+        new_total = (existing.get('total_spent') or 0) + ((data.get('total') or 0) + (data.get('delivery') or 0))
         execute_query('UPDATE customers SET orders_count=?, total_spent=?, name=? WHERE id=?',
                      (new_count, new_total, data.get('name'), existing.get('id')), commit=True)
     else:
@@ -573,7 +573,7 @@ def add_order(data):
             VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)''',
             (data.get('name'), data.get('phone'), data.get('whatsapp'),
              data.get('neighborhood'), data.get('address'),
-             data.get('lat'), data.get('lng'), data.get('total', 0)), commit=True)
+             data.get('lat'), data.get('lng'), (data.get('total') or 0) + (data.get('delivery') or 0)), commit=True)
     return order_id
 
 def get_orders(phone=None, status=None):
@@ -597,6 +597,7 @@ def get_orders(phone=None, status=None):
         elif items_value is None:
             o['items'] = []
         o['status_text'] = status_map.get(o['status'], o['status'])
+        o['final_total'] = round((o.get('total') or 0) + (o.get('delivery') or 0), 2)
     return rows
 
 def update_order_status(order_id, status):
@@ -620,7 +621,7 @@ def get_daily_stats():
     return {
         'orders_count':   len(active_orders),
         'completed_count': len(completed),
-        'total_sales':    round(sum(o.get('total') or 0 for o in completed), 2),
+        'total_sales':    round(sum((o.get('total') or 0) + (o.get('delivery') or 0) for o in completed), 2),
         'daily_profit':   round(total_profit, 2),
         'total_expenses': 0,
         'net_profit':     round(total_profit, 2),

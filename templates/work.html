@@ -256,10 +256,10 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
         </div>
         <div class="order-total">
           <span>المجموع</span>
-          <span>{{ o.total }}₪</span>
+          <span>{{ o.final_total }}₪</span>
         </div>
         <div class="order-actions">
-          <button class="order-btn btn-pick" data-order-id="{{ o.id }}" data-order-total="{{ o.total }}" onclick="openPickMode(this)">
+          <button class="order-btn btn-pick" data-order-id="{{ o.id }}" data-order-total="{{ o.final_total }}" onclick="openPickMode(this)">
     جمع
 </button>
           <button class="order-btn btn-call" onclick="callCustomer('{{ o.phone }}')">اتصال</button>
@@ -828,7 +828,7 @@ function renderHistory(history) {
                         <span style="color: var(--muted); font-size: 11px;">(${o.items_count} منتجات)</span>
                     </div>
                     <div style="text-align: left;">
-                        <div style="font-weight: 900; color: var(--g2);">${o.total}₪</div>
+                        <div style="font-weight: 900; color: var(--g2);">${o.final_total || ((o.total || 0) + (o.delivery || 0))}₪</div>
                         <div style="font-size: 10px; color: var(--muted);">${o.time}</div>
                     </div>
                 </div>

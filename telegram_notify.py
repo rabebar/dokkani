@@ -77,8 +77,9 @@ def notify_new_order(order):
         f"{'─' * 25}\n"
         f"🛍️ <b>المنتجات:</b>\n{items_text}"
         f"{'─' * 25}\n"
-        f"💰 الإجمالي: <b>{order.get('total')}₪</b>\n"
+        f"💰 المنتجات: <b>{order.get('total')}₪</b>\n"
         f"🚗 التوصيل: {order.get('delivery')}₪\n"
+        f"✅ الإجمالي النهائي: <b>{order.get('final_total') or ((order.get('total') or 0) + (order.get('delivery') or 0))}₪</b>\n"
         f"{pay}\n"
         f"💚 ربحي: <b>{order.get('profit')}₪</b>\n"
     )

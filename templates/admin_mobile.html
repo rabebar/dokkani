@@ -115,7 +115,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
           {% for item in o['items'] %}• {{ item.name }} ({{ item.qty }})<br>{% endfor %}
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-          <span style="font-weight:900;">{{ o.total }}₪</span>
+          <span style="font-weight:900;">{{ o.final_total }}₪</span>
           <select onchange="updateStatus({{ o.id }}, this.value)" style="padding:5px; border-radius:8px; font-family:'Cairo';">
             <option value="new" {% if o.status == 'new' %}selected{% endif %}>جديد</option>
             <option value="prep" {% if o.status == 'prep' %}selected{% endif %}>تحضير</option>

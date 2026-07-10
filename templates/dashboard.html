@@ -204,7 +204,7 @@ tr:hover td{background:#fafff9}
               data-name="{{ o.name | e }}"
               data-phone="{{ o.phone }}"
               data-addr="{{ o.neighborhood }} — {{ o.address | e }}"
-              data-total="{{ o.total }}"
+              data-total="{{ o.final_total }}"
               data-notes="{{ o.notes | e if o.notes else '' }}"
               data-items='{{ o["items"] | tojson }}'>
             <td onclick="openModalFromRow(this.closest('tr'))" style="cursor:pointer;">
@@ -228,7 +228,7 @@ tr:hover td{background:#fafff9}
             <td style="color: var(--red); font-size: 11px; font-weight: 900; max-width: 130px; word-wrap: break-word;">
               {{ o.notes if o.notes else '—' }}
             </td>
-            <td><b style="font-size: 14px;">{{ o.total }}₪</b></td>
+            <td><b style="font-size: 14px;">{{ o.final_total }}₪</b></td>
             <td>
               <span class="sp sp-{{ o.status }}">{{ o.status_text }}</span>
               <select class="sel-status" onchange="updateStatus({{ o.id }}, this)" onclick="event.stopPropagation()" style="display: block; margin-top: 6px; width: 100%;">

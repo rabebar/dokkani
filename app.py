@@ -410,16 +410,22 @@ def api_admin_search_all():
 def place_order():
     data = request.json
     phone = data.get('phone')
-    total = data.get('total')
+    items = data.get('items', []) or []
+    products_total = round(sum(
+        float(item.get('price') or 0) * float(item.get('qty') or 1)
+        for item in items
+    ), 2)
 
     # منع تكرار الطلب (خلال 5 ثوانٍ لنفس الزبون والمبلغ)
     now = time.time()
-    check_key = f"{phone}_{total}"
+    check_key = f"{phone}_{products_total}"
     if check_key in last_orders_check and (now - last_orders_check[check_key] < 5):
         return jsonify({'success': False, 'message': 'الطلب قيد المعالجة'})
     last_orders_check[check_key] = now
 
     data['delivery'] = calculate_delivery_fee(data.get('lat'), data.get('lng'))
+    data['total'] = products_total
+    data['final_total'] = round(products_total + data['delivery'], 2)
     data['profit'] = get_order_profit(data.get('items', []))
 
     # جلب الباركود لكل منتج من قاعدة البيانات
@@ -735,6 +741,7 @@ def api_get_order(order_id):
                 order_dict['items'] = json.loads(order_dict['items'])
             except:
                 order_dict['items'] = []
+        order_dict['final_total'] = round((order_dict.get('total') or 0) + (order_dict.get('delivery') or 0), 2)
         return jsonify({'success': True, 'order': order_dict, 'delivery': order_dict.get('delivery', 0)})
     return jsonify({'success': False, 'error': 'الطلب غير موجود'}), 404   
     
@@ -762,6 +769,8 @@ def api_orders_history():
             'id': o['id'],
             'name': o.get('name'),
             'total': o.get('total'),
+            'delivery': o.get('delivery') or 0,
+            'final_total': round((o.get('total') or 0) + (o.get('delivery') or 0), 2),
             'status': o.get('status'),
             'items_count': len(items) if items else 0,
             'time': str(o.get('created_at', ''))[11:16]  # HH:MM

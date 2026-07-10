@@ -197,7 +197,7 @@ function loadProfile(){
   .then(r=>r.json())
   .then(data=>{
     const orders = data.orders || [];
-    const total  = orders.reduce((s,o)=>s+(o.total||0),0);
+    const total  = orders.reduce((s,o)=>s+(o.final_total || ((o.total || 0) + (o.delivery || 0))),0);
     document.getElementById('st-orders').textContent = orders.length;
     document.getElementById('st-spent').textContent  = total.toFixed(0)+'₪';
     if(orders.length >= 3){

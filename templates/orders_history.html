@@ -137,7 +137,7 @@ function renderOrders(orders){
       <div class="oc-body">
         <div class="oc-items">${itemsText}${more}</div>
         <div class="oc-foot">
-          <div class="oc-total">الإجمالي: ${o.total}₪</div>
+          <div class="oc-total">الإجمالي: ${(o.final_total || ((o.total || 0) + (o.delivery || 0))).toFixed(1)}₪</div>
           <button class="reorder-btn" onclick="reorder(${JSON.stringify(items).replace(/"/g,'&quot;')})">🔁 إعادة الطلب</button>
         </div>
       </div>

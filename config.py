@@ -34,7 +34,7 @@ class Config:
 
     # إعدادات التوصيل المحدثة
     DELIVERY_PRICE_MIN   = 10  # الحد الأدنى الجديد
-    DELIVERY_PRICE_MAX   = 20  # الحد الأقصى الجديد
+    DELIVERY_PRICE_MAX   = 25  # الحد الأقصى الجديد
     DELIVERY_PER_KM     = 2.5 # تكلفة الكيلومتر المحدثة
 
     # هامش الربح — بقالة
