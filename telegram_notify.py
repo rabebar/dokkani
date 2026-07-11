@@ -49,11 +49,23 @@ def notify_new_order(order):
         barcode_str = f" 🔢[{item.get('barcode')}]" if item.get('barcode') else ""
         items_text += f"  • {item.get('name')} × {item.get('qty')} — {item.get('price')}₪{barcode_str}\n"
 
+    def money(value):
+        try:
+            return f"{float(value):.1f}"
+        except (TypeError, ValueError):
+            return "0.0"
+
     # رابط واتساب
     phone = (order.get('whatsapp') or order.get('phone') or '')
-    phone = phone.replace('+', '').replace('-', '').replace(' ', '')
+    phone = ''.join(ch for ch in phone if ch.isdigit())
     if phone.startswith('970'):
         pass
+    elif phone.startswith('972'):
+        pass
+    elif phone.startswith('00970'):
+        phone = phone[2:]
+    elif phone.startswith('00972'):
+        phone = phone[2:]
     elif phone.startswith('0'):
         phone = '970' + phone[1:]
     else:
@@ -77,9 +89,9 @@ def notify_new_order(order):
         f"{'─' * 25}\n"
         f"🛍️ <b>المنتجات:</b>\n{items_text}"
         f"{'─' * 25}\n"
-        f"💰 المنتجات: <b>{order.get('total')}₪</b>\n"
-        f"🚗 التوصيل: {order.get('delivery')}₪\n"
-        f"✅ الإجمالي النهائي: <b>{order.get('final_total') or ((order.get('total') or 0) + (order.get('delivery') or 0))}₪</b>\n"
+        f"💰 المنتجات: <b>{money(order.get('total'))}₪</b>\n"
+        f"🚗 التوصيل: {money(order.get('delivery'))}₪\n"
+        f"✅ الإجمالي النهائي: <b>{money(order.get('final_total') or ((order.get('total') or 0) + (order.get('delivery') or 0)))}₪</b>\n"
         f"{pay}\n"
         f"💚 ربحي: <b>{order.get('profit')}₪</b>\n"
     )

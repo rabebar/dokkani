@@ -122,9 +122,9 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
           </div>
         </div>
         <div class="item-price">
-          {{ (item.final_price * item.qty)|round|int }}₪
+          {{ "%.1f"|format(item.final_price * item.qty) }}₪
           <div style="font-size: 9px; color: #9ca3af; font-weight: 400; text-align: left;">
-            ({{ item.final_price }}₪ للوحدة)
+            ({{ "%.1f"|format(item.final_price) }}₪ للوحدة)
           </div>
         </div>
       </div>
@@ -136,15 +136,15 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
   <div class="inv-totals">
     <div class="total-row">
       <span>المجموع الفرعي</span>
-      <span>{{ order.total|round|int }}₪</span>
+      <span>{{ "%.1f"|format(order.total or 0) }}₪</span>
     </div>
     <div class="total-row">
       <span>رسوم التوصيل</span>
-      <span>{{ order.delivery|round|int }}₪</span>
+      <span>{{ "%.1f"|format(order.delivery or 0) }}₪</span>
     </div>
     <div class="total-row grand">
       <span>الإجمالي النهائي</span>
-      <span>{{ (order.final_total or ((order.total or 0) + (order.delivery or 0)))|round|int }}₪</span>
+      <span>{{ "%.1f"|format(order.final_total or ((order.total or 0) + (order.delivery or 0))) }}₪</span>
     </div>
   </div>
 
@@ -180,8 +180,8 @@ const msg = `*فاتورة دكّاني #{{ order['id'] }}*\n\n` +
     `\n*--- {{ cat_name }} ---*\n` +
     {% for item in items %}`• {{ item['name'] }} ({{ item['qty'] }} {{ item['unit'] or 'حبة' }})\n` + {% endfor %}
   {% endfor %}
-  `\nالتوصيل: {{ order['delivery']|round|int }}₪\n` +
-  `*الإجمالي النهائي: {{ (order['final_total'] or ((order['total'] or 0) + (order['delivery'] or 0)))|round|int }}₪*`;
+  `\nالتوصيل: {{ "%.1f"|format(order['delivery'] or 0) }}₪\n` +
+  `*الإجمالي النهائي: {{ "%.1f"|format(order['final_total'] or ((order['total'] or 0) + (order['delivery'] or 0))) }}₪*`;
 
 document.getElementById('wa-btn').href = 
   `https://wa.me/{{ app_whatsapp }}?text=${encodeURIComponent(msg)}`;
