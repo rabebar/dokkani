@@ -102,14 +102,14 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
       <div class="hdr-sub">{{ subcats|length }} قسم فرعي • {{ products|length }} منتج</div>
     </div>
     <button class="cart-btn" onclick="goCart()">
-      🛒<div class="cart-count" id="cart-count">0</div>
+      <span class="cart-icon-text">سلة</span><div class="cart-count" id="cart-count">0</div>
     </button>
   </div>
 </div>
 
 <!-- الأقسام الفرعية -->
 {% if subcats %}
-<div class="sec-hdr">📂 الأقسام الفرعية</div>
+<div class="sec-hdr">الأقسام الفرعية</div>
 <div class="sub-grid">
   {% for sub in subcats %}
   <a class="sub-card" href="/subcategory/{{ sub.id }}">
@@ -127,7 +127,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 {% if products %}
 <div class="divider">
   <div class="div-hdr">
-    <span>🛍️ جميع منتجات {{ cat.name }}</span>
+    <span>جميع منتجات {{ cat.name }}</span>
     <span style="font-size:11px;color:var(--g400);font-weight:400">{{ products|length }} منتج</span>
   </div>
   <div class="pgrid">
@@ -177,7 +177,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 <div class="cart-bar" id="cart-bar">
   <button class="cart-bar-btn" onclick="goCart()">
     <div style="display:flex;align-items:center;gap:9px">
-      <span>🛒 عرض السلة</span>
+      <span>عرض السلة</span>
       <span class="cart-bdg" id="cart-bar-count">0 منتج</span>
     </div>
     <span id="cart-bar-total">0₪</span>
@@ -195,7 +195,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     <div class="modal-unit" id="modal-unit"></div>
     
     <div class="modal-note-section">
-      <div class="modal-note-label">📝 ملاحظات خاصة</div>
+      <div class="modal-note-label">ملاحظات خاصة</div>
       <textarea class="modal-note-input" id="modal-note" rows="2" placeholder="مثال: اريدها ناضجة للطبخ، بدون ملح، مقطعة..."></textarea>
     </div>
     
@@ -206,7 +206,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     </div>
     
     <button class="modal-add-btn" onclick="addWithNote()">
-      <span>🛒 إضافة للسلة</span>
+      <span>إضافة للسلة</span>
       <span id="modal-total-price">0₪</span>
     </button>
   </div>
@@ -355,7 +355,7 @@ function addWithNote(){
 }
 
 function goCart(){
-  if(!cart.length){ alert('⚠️ السلة فارغة!'); return; }
+  if(!cart.length){ alert('السلة فارغة'); return; }
   window.location.href='/cart';
 }
 

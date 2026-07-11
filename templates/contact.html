@@ -14,7 +14,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .hdr p{color:rgba(255,255,255,.65);font-size:12px;margin-top:3px}
 .content{padding:20px 16px}
 .hero{background:linear-gradient(135deg,var(--g2),var(--g4));border-radius:18px;padding:28px 22px;text-align:center;margin-bottom:18px;position:relative;overflow:hidden}
-.hero::before{content:'💬';position:absolute;left:-10px;bottom:-15px;font-size:90px;opacity:.08}
+.hero::before{content:'';position:absolute;left:-10px;bottom:-15px;font-size:90px;opacity:.08}
 .hero-ico{font-size:50px;margin-bottom:12px}
 .hero h2{color:#fff;font-size:18px;font-weight:900;margin-bottom:6px}
 .hero p{color:rgba(255,255,255,.75);font-size:13px;line-height:1.6}
@@ -45,21 +45,21 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 <body>
 
 <div class="hdr">
-  <h1>💬 تواصل معنا</h1>
+  <h1>تواصل معنا</h1>
   <p>نحن هنا لمساعدتك دائماً</p>
 </div>
 
 <div class="content">
   <div class="hero">
-    <div class="hero-ico">🛒</div>
+    <div class="hero-ico">دكّاني</div>
     <h2>{{ app_name }}</h2>
-    <p>توصيل سريع لباب بيتك<br>رام الله وضواحيها 🇵🇸</p>
+    <p>توصيل سريع لباب بيتك<br>رام الله وضواحيها</p>
   </div>
 
   <div class="card">
-    <div class="card-title">📞 وسائل التواصل</div>
+    <div class="card-title">وسائل التواصل</div>
     <a class="contact-item" href="https://wa.me/{{ app_whatsapp }}" target="_blank">
-      <div class="ci-ico wa">💬</div>
+      <div class="ci-ico wa">WA</div>
       <div>
         <div class="ci-name">واتساب</div>
         <div class="ci-desc">اضغط للتواصل الفوري</div>
@@ -67,7 +67,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
       <span class="ci-arrow">←</span>
     </a>
     <a class="contact-item" href="tel:+970{{ app_phone }}">
-      <div class="ci-ico ph">📞</div>
+      <div class="ci-ico ph">TEL</div>
       <div>
         <div class="ci-name">اتصال مباشر</div>
         <div class="ci-desc" dir="ltr">+970{{ app_phone }}</div>
@@ -75,7 +75,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
       <span class="ci-arrow">←</span>
     </a>
     <a class="contact-item" onclick="sendWhatsApp()">
-      <div class="ci-ico hr">📝</div>
+      <div class="ci-ico hr">?</div>
       <div>
         <div class="ci-name">أرسل طلباً خاصاً</div>
         <div class="ci-desc">منتج مش موجود؟ اطلبه منا</div>
@@ -85,13 +85,13 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
   </div>
 
   <div class="card">
-    <div class="card-title">🕐 أوقات العمل</div>
+    <div class="card-title">أوقات العمل</div>
     <div class="hours-row"><span class="hours-day">السبت — الخميس</span><span class="hours-time">8:00 ص — 10:00 م</span></div>
     <div class="hours-row"><span class="hours-day">الجمعة</span><span class="hours-time">2:00 م — 10:00 م</span></div>
   </div>
 
   <div class="card">
-    <div class="card-title">📍 منطقة التوصيل</div>
+    <div class="card-title">منطقة التوصيل</div>
     <div class="hours-row"><span class="hours-day">0 — 2 كم</span><span class="hours-time" style="color:var(--g2)">5₪</span></div>
     <div class="hours-row"><span class="hours-day">2 — 5 كم</span><span class="hours-time" style="color:var(--orange,#fb8c00)">8₪</span></div>
     <div class="hours-row"><span class="hours-day">+5 كم</span><span class="hours-time" style="color:#e53935">12₪</span></div>
@@ -143,7 +143,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 <script>
 function sendWhatsApp(){
-  const msg = encodeURIComponent('مرحبا، أريد طلب منتج غير متوفر في التطبيق 🛒');
+  const msg = encodeURIComponent('مرحبا، أريد طلب منتج غير متوفر في التطبيق');
   window.open('https://wa.me/{{ app_whatsapp }}?text='+msg, '_blank');
 }
 

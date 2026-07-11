@@ -114,10 +114,10 @@ function renderOrders(orders){
   if(!orders.length){
     c.innerHTML = `
       <div class="empty-state">
-        <div class="empty-ico">📭</div>
+        <div class="empty-ico"></div>
         <div class="empty-title">لا توجد طلبات بعد</div>
         <div style="font-size:12px">لم تقم بأي طلب حتى الآن</div>
-        <a class="shop-btn" href="/shop">🛒 ابدأ التسوق</a>
+        <a class="shop-btn" href="/shop">ابدأ التسوق</a>
       </div>`;
     return;
   }
@@ -138,7 +138,7 @@ function renderOrders(orders){
         <div class="oc-items">${itemsText}${more}</div>
         <div class="oc-foot">
           <div class="oc-total">الإجمالي: ${(o.final_total || ((o.total || 0) + (o.delivery || 0))).toFixed(1)}₪</div>
-          <button class="reorder-btn" onclick="reorder(${JSON.stringify(items).replace(/"/g,'&quot;')})">🔁 إعادة الطلب</button>
+          <button class="reorder-btn" onclick="reorder(${JSON.stringify(items).replace(/"/g,'&quot;')})">إعادة الطلب</button>
         </div>
       </div>
     </div>`;
@@ -161,7 +161,7 @@ window.onload = () => {
   if(!profile.phone){
     document.getElementById('content').innerHTML = `
       <div class="empty-state">
-        <div class="empty-ico">👤</div>
+        <div class="empty-ico"></div>
         <div class="empty-title">سجّل بياناتك أولاً</div>
         <a class="shop-btn" href="/">تسجيل البيانات</a>
       </div>`;

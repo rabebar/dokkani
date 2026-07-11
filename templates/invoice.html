@@ -69,14 +69,14 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
   <!-- Header -->
   <div class="inv-header">
     <div class="inv-badge">رقمي · Digital</div>
-    <div class="inv-logo">🛒</div>
+    <div class="inv-logo">₪</div>
     <div class="inv-brand">دكّاني</div>
-    <div class="inv-sub">رام الله 🇵🇸 · خدمة التوصيل</div>
+    <div class="inv-sub">رام الله · خدمة التوصيل</div>
   </div>
 
   <!-- Status -->
   <div class="inv-status">
-    <div class="status-ico">✅</div>
+    <div class="status-ico">تم</div>
     <div>
       <div class="status-txt">تم استلام طلبك بنجاح!</div>
       <div class="status-sub">وقت التوصيل المتوقع: 45–60 دقيقة</div>
@@ -95,7 +95,7 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
     </div>
     <div class="info-row">
       <span class="info-lbl">طريقة الدفع</span>
-      <span class="info-val">💵 {{ 'كاش عند الاستلام' if order.payment == 'cash' else order.payment }}</span>
+      <span class="info-val">{{ 'كاش عند الاستلام' if order.payment == 'cash' else order.payment }}</span>
     </div>
     <div class="info-row">
       <span class="info-lbl">الحالة</span>
@@ -105,12 +105,12 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
 
   <!-- Items -->
   <div class="inv-items">
-    <div class="items-title">📦 تفاصيل الطلب حسب الأصناف</div>
+    <div class="items-title">تفاصيل الطلب حسب الأصناف</div>
     
     {% for cat_name, items in grouped_items.items() %}
       <!-- عنوان القسم الرئيسي -->
       <div style="background: #f1f8e9; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 900; color: #2e7d32; margin-top: 12px; border-right: 4px solid #43a047; display: flex; align-items: center; gap: 6px;">
-        <span>📂</span> {{ cat_name }}
+        <span></span> {{ cat_name }}
       </div>
 
       {% for item in items %}
@@ -139,7 +139,7 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
       <span>{{ order.total|round|int }}₪</span>
     </div>
     <div class="total-row">
-      <span>🚗 رسوم التوصيل</span>
+      <span>رسوم التوصيل</span>
       <span>{{ order.delivery|round|int }}₪</span>
     </div>
     <div class="total-row grand">
@@ -150,19 +150,19 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
 
   <!-- Customer -->
   <div class="inv-customer">
-    <div class="cust-title">👤 بيانات التوصيل</div>
-    <div class="cust-row">👤 <span><b>{{ order.name }}</b></span></div>
-    <div class="cust-row">📞 <span dir="ltr"><b>{{ order.phone }}</b></span></div>
-    {% if order.neighborhood %}<div class="cust-row">📍 <span><b>{{ order.neighborhood }}</b></span></div>{% endif %}
-    {% if order.address %}<div class="cust-row">🏠 <span>{{ order.address }}</span></div>{% endif %}
-    {% if order.notes %}<div class="cust-row">📝 <span>{{ order.notes }}</span></div>{% endif %}
+    <div class="cust-title">بيانات التوصيل</div>
+    <div class="cust-row"><span><b>{{ order.name }}</b></span></div>
+    <div class="cust-row"><span dir="ltr"><b>{{ order.phone }}</b></span></div>
+    {% if order.neighborhood %}<div class="cust-row"><span><b>{{ order.neighborhood }}</b></span></div>{% endif %}
+    {% if order.address %}<div class="cust-row"><span>{{ order.address }}</span></div>{% endif %}
+    {% if order.notes %}<div class="cust-row"><span>{{ order.notes }}</span></div>{% endif %}
   </div>
 
   <!-- Actions -->
   <div class="inv-actions">
-    <a class="btn btn-share" id="wa-btn" href="#">💬 مشاركة عبر واتساب</a>
-    <a class="btn btn-shop" href="/shop">🛒 طلب مرة أخرى</a>
-    <a class="btn btn-close" href="/">🏠 العودة للرئيسية</a>
+    <a class="btn btn-share" id="wa-btn" href="#">مشاركة عبر واتساب</a>
+    <a class="btn btn-shop" href="/shop">طلب مرة أخرى</a>
+    <a class="btn btn-close" href="/">العودة للرئيسية</a>
   </div>
 
   <div class="inv-watermark">دكّاني · فاتورة رقمية · #{{ order.id }}</div>
@@ -171,17 +171,17 @@ body{font-family:'Cairo',sans-serif;background:#f3f4f6;min-height:100vh;padding:
 <script>
 
 // رسالة واتساب جاهزة بتفاصيل الطلب
-const msg = `🧾 *فاتورة دكّاني #{{ order['id'] }}*\n\n` +
-  `👤 {{ order['name'] }}\n` +
-  `📞 {{ order['phone'] }}\n` +
-  `📍 {{ order['neighborhood'] or '' }}\n\n` +
-  `📦 *تفاصيل الطلب:*\n` +
+const msg = `*فاتورة دكّاني #{{ order['id'] }}*\n\n` +
+  `{{ order['name'] }}\n` +
+  `{{ order['phone'] }}\n` +
+  `{{ order['neighborhood'] or '' }}\n\n` +
+  `*تفاصيل الطلب:*\n` +
   {% for cat_name, items in grouped_items.items() %}
     `\n*--- {{ cat_name }} ---*\n` +
     {% for item in items %}`• {{ item['name'] }} ({{ item['qty'] }} {{ item['unit'] or 'حبة' }})\n` + {% endfor %}
   {% endfor %}
-  `\n🚗 التوصيل: {{ order['delivery']|round|int }}₪\n` +
-  `✅ *الإجمالي النهائي: {{ (order['final_total'] or ((order['total'] or 0) + (order['delivery'] or 0)))|round|int }}₪*`;
+  `\nالتوصيل: {{ order['delivery']|round|int }}₪\n` +
+  `*الإجمالي النهائي: {{ (order['final_total'] or ((order['total'] or 0) + (order['delivery'] or 0)))|round|int }}₪*`;
 
 document.getElementById('wa-btn').href = 
   `https://wa.me/{{ app_whatsapp }}?text=${encodeURIComponent(msg)}`;

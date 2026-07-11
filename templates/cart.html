@@ -132,7 +132,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 <div class="hdr">
   <button class="back-btn" onclick="history.back()">←</button>
   <div>
-    <div class="hdr-title">🛒 سلة المشتريات</div>
+    <div class="hdr-title">سلة المشتريات</div>
     <div class="hdr-sub" id="cart-sub">جاري التحميل...</div>
   </div>
 </div>
@@ -153,38 +153,38 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 </style>
 <!-- المنتجات -->
 <div class="section">
-  <div class="sec-hdr">📦 المنتجات المختارة</div>
+  <div class="sec-hdr">المنتجات المختارة</div>
   <div id="cart-items"></div>
 </div>
 
 <!-- ملاحظات -->
 <div class="section" style="margin-top:10px">
-  <div class="sec-hdr">📝 ملاحظات</div>
+  <div class="sec-hdr">ملاحظات</div>
   <textarea class="note-inp" id="notes" rows="2" placeholder="مثال: الجبنة قليلة الملح، الموز ناضج..."></textarea>
 </div>
 
 <!-- الفاتورة -->
 <div class="section" style="margin-top:10px">
-  <div class="sec-hdr">🧾 ملخص الفاتورة</div>
+  <div class="sec-hdr">ملخص الفاتورة</div>
   <div class="summary">
     <div class="sr"><span>المنتجات</span><span id="sum-products">0₪</span></div>
-    <div class="sr delivery-row"><span>🚗 رسوم التوصيل</span><span id="sum-delivery">{{ delivery_min }}₪</span></div>
+    <div class="sr delivery-row"><span>رسوم التوصيل</span><span id="sum-delivery">{{ delivery_min }}₪</span></div>
     <div class="sr total"><span>الإجمالي</span><span id="sum-total">0₪</span></div>
   </div>
 </div>
 
 <!-- الدفع -->
 <div class="section" style="margin-top:10px">
-  <div class="sec-hdr">💳 طريقة الدفع</div>
+  <div class="sec-hdr">طريقة الدفع</div>
   <div class="pay-opts">
     <label class="pay-opt selected" onclick="selectPay('cash',this)">
       <input type="radio" name="pay" value="cash" checked>
-      <span class="pay-ico">💵</span>
+      <span class="pay-ico">₪</span>
       <div><div class="pay-name">كاش عند الاستلام</div><div class="pay-desc">ادفع لما يوصل المندوب</div></div>
     </label>
     <label class="pay-opt" onclick="selectPay('reflect',this)">
       <input type="radio" name="pay" value="reflect">
-      <span class="pay-ico">📱</span>
+      <span class="pay-ico">QR</span>
       <div><div class="pay-name">محفظة Reflect</div><div class="pay-desc">دفع إلكتروني سريع عبر QR</div></div>
     </label>
   </div>
@@ -192,7 +192,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 <!-- QR Reflect -->
 <div class="qr-box" id="qr-box">
-  <div class="qr-title">📱 ادفع عبر Reflect</div>
+  <div class="qr-title">ادفع عبر Reflect</div>
   <div class="qr-sub">افتح تطبيق Reflect وامسح الكود أدناه</div>
   <img class="qr-img" loading="lazy" src="/static/reflect_qr.jpg" alt="Reflect QR Code">
   <div class="qr-amount-lbl">المبلغ المطلوب</div>
@@ -202,7 +202,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
 <!-- زر الطلب -->
 <div class="order-btn-wrap">
-  <button class="order-btn" id="main-order-btn" onclick="placeOrder()">✅ تأكيد الطلب الآن</button>
+  <button class="order-btn" id="main-order-btn" onclick="placeOrder()">تأكيد الطلب الآن</button>
 </div>
 <nav class="bnav">
   <!-- المتجر: واجهة محل خضراء -->
@@ -292,12 +292,12 @@ function updateCartDeliveryNotice() {
     desc.textContent = 'جولة التوصيل نشطة حالياً (خلال 45-60 دقيقة).';
   } else if (hour >= 16) {
     bar.classList.add('alert-orange');
-    icon.textContent = '🚚';
+    icon.textContent = '';
     title.textContent = 'موعد التوصيل: غداً صباحاً';
     desc.textContent = 'تجاوزنا الرابعة عصراً، سيتم إيصال طلبك غداً الساعة 10:00 صباحاً.';
   } else {
     bar.classList.add('alert-blue');
-    icon.textContent = '☀️';
+    icon.textContent = '';
     title.textContent = 'موعد التوصيل: 10:00 صباحاً';
     desc.textContent = 'سيصلك طلبك مع أول جولة اليوم عند الساعة العاشرة.';
   }
@@ -307,7 +307,7 @@ updateCartDeliveryNotice();
 function renderCart(){
   const container = document.getElementById('cart-items');
   if(!cart.length){
-    container.innerHTML = '<div class="empty"><div class="empty-ico">🛒</div><div>السلة فارغة</div></div>';
+    container.innerHTML = '<div class="empty"><div class="empty-ico"></div><div>السلة فارغة</div></div>';
     document.getElementById('cart-sub').textContent = 'السلة فارغة';
     document.getElementById('main-order-btn').disabled = true;
     return;
@@ -325,7 +325,7 @@ function renderCart(){
         <button class="qb" onclick="changeQty(${i},1)">+</button>
       </div>
       <div class="ci-price">${(item.price * item.qty).toFixed(1)}₪</div>
-      <button class="del-btn" onclick="removeItem(${i})">🗑️</button>
+      <button class="del-btn" onclick="removeItem(${i})">حذف</button>
     </div>
   `).join('');
   updateSummary();
@@ -367,8 +367,8 @@ function placeOrder(){
   
   // 1. القفل الفوري والمنع
   if(btn.disabled) return; 
-  if(!cart.length){ alert('⚠️ السلة فارغة!'); return; }
-  if(!profile.name){ alert('⚠️ يرجى إكمال بيانات الملف الشخصي أولاً'); window.location.href='/'; return; }
+  if(!cart.length){ alert('السلة فارغة'); return; }
+  if(!profile.name){ alert('يرجى إكمال بيانات الملف الشخصي أولاً'); window.location.href='/'; return; }
 
   // 2. تعطيل الزر فوراً لمنع الضغط المتعدد
   btn.disabled = true;
@@ -409,7 +409,7 @@ function placeOrder(){
   .then(r => r.json())
   .then(data => {
     if(data.success){
-      // ✅ حفظ رقم الطلب الموحد في ذاكرة المتصفح لتعرضه صفحة النجاح
+      // حفظ رقم الطلب الموحد في ذاكرة المتصفح لتعرضه صفحة النجاح
       localStorage.setItem('dokkani_last_order', data.order_id);
       
       // نجاح: تفريغ السلة والتوجه لصفحة النجاح
@@ -419,14 +419,14 @@ function placeOrder(){
       // فشل من جهة السيرفر (مثل طلب مكرر)
       alert(data.message || '❌ حدث خطأ أثناء إرسال الطلب');
       btn.disabled = false;
-      btn.textContent = '✅ تأكيد الطلب الآن';
+      btn.textContent = 'تأكيد الطلب الآن';
     }
   })
   .catch(err => {
     console.error(err);
     alert('❌ فشل الاتصال بالسيرفر، تأكد من الإنترنت وحاول مجدداً');
     btn.disabled = false;
-    btn.textContent = '✅ تأكيد الطلب الآن';
+    btn.textContent = 'تأكيد الطلب الآن';
   });
 }
 

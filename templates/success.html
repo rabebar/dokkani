@@ -29,8 +29,8 @@ h1{font-size:22px;font-weight:900;color:#1b5e20;margin-bottom:7px}
 </head>
 <body>
 <div class="card">
-  <div class="check">✅</div>
-  <h1>تم استلام طلبك! 🎉</h1>
+  <div class="check">تم</div>
+  <h1>تم استلام طلبك</h1>
   <p class="sub">شكراً لك! سنتواصل معك قريباً لتأكيد موعد التوصيل</p>
 
   <div class="order-id-box">
@@ -38,20 +38,20 @@ h1{font-size:22px;font-weight:900;color:#1b5e20;margin-bottom:7px}
     <div class="order-id-val" id="order-num">#---</div>
   </div>
 
-  <div class="info-row"><span>🕐</span><span>وقت التوصيل المتوقع: <b>45–60 دقيقة</b></span></div>
-  <div class="info-row"><span>💵</span><span>الدفع <b>عند الاستلام</b></span></div>
-  <div class="info-row"><span>📞</span><span>للاستفسار: <b dir="ltr">{{ app_phone }}</b></span></div>
+  <div class="info-row"><span>وقت التوصيل المتوقع: <b>45–60 دقيقة</b></span></div>
+  <div class="info-row"><span>الدفع <b>عند الاستلام</b></span></div>
+  <div class="info-row"><span>للاستفسار: <b dir="ltr">{{ app_phone }}</b></span></div>
 
   <div class="actions">
     <a class="btn btn-wa" href="https://wa.me/{{ app_whatsapp }}" target="_blank">
-      💬 تواصل معنا على واتساب
+      تواصل معنا على واتساب
     </a>
-    <a class="btn btn-primary" href="/shop">🛒 طلب مرة أخرى</a>
-    <a class="btn btn-outline" href="/">🏠 تعديل بياناتي</a>
+    <a class="btn btn-primary" href="/shop">طلب مرة أخرى</a>
+    <a class="btn btn-outline" href="/">تعديل بياناتي</a>
   </div>
 </div>
 <script>
-// ✅ تفريغ السلة تلقائياً
+// تفريغ السلة تلقائياً
 localStorage.removeItem('dokkani_cart');
 
 const orderId = localStorage.getItem('dokkani_last_order');

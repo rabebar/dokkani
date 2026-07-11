@@ -79,7 +79,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 <body>
 
 <div class="hdr">
-  <div class="avatar" id="avatar">👤</div>
+  <div class="avatar" id="avatar"></div>
   <div class="user-name" id="user-name">جاري التحميل...</div>
   <div class="user-info" id="user-phone"></div>
   <div id="vip-wrap"></div>
@@ -99,11 +99,11 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
   <div class="card">
     <div class="card-title">✏️ تعديل بياناتي</div>
     <div style="padding:16px">
-      <div class="edit-field"><label>👤 الاسم</label><input type="text" id="edit-name"></div>
-      <div class="edit-field"><label>📞 الهاتف</label><input type="tel" id="edit-phone" dir="ltr"></div>
-      <div class="edit-field"><label>💬 واتساب</label><input type="tel" id="edit-wa" dir="ltr"></div>
-      <div class="edit-field"><label>🏘️ المنطقة</label><input type="text" id="edit-hood"></div>
-      <div class="edit-field"><label>🏢 العنوان</label><textarea id="edit-addr" rows="2"></textarea></div>
+      <div class="edit-field"><label>الاسم</label><input type="text" id="edit-name"></div>
+      <div class="edit-field"><label>الهاتف</label><input type="tel" id="edit-phone" dir="ltr"></div>
+      <div class="edit-field"><label>واتساب</label><input type="tel" id="edit-wa" dir="ltr"></div>
+      <div class="edit-field"><label>المنطقة</label><input type="text" id="edit-hood"></div>
+      <div class="edit-field"><label>العنوان</label><textarea id="edit-addr" rows="2"></textarea></div>
       <button class="save-btn" onclick="saveEdits()">💾 حفظ التعديلات</button>
     </div>
   </div>
@@ -117,7 +117,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
       <span class="mi-arrow">←</span>
     </a>
     <a class="menu-item" href="/contact">
-      <div class="mi-ico" style="background:#e8f5e9">💬</div>
+      <div class="mi-ico" style="background:#e8f5e9">WA</div>
       <div><div class="mi-name">تواصل معنا</div><div class="mi-desc">واتساب أو اتصال مباشر</div></div>
       <span class="mi-arrow">←</span>
     </a>
@@ -125,7 +125,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 
   <!-- الخيارات الخطرة -->
   <button class="danger-btn" onclick="deleteAccount()">
-    🗑️ حذف حسابي نهائياً
+    حذف حسابي نهائياً
   </button>
   <button class="logout-btn" onclick="logout()">
     🚪 تسجيل الخروج
@@ -178,7 +178,7 @@ function loadProfile(){
   if(!profile.name){
     window.location.href='/'; return;
   }
-  document.getElementById('avatar').textContent = profile.name[0] || '👤';
+  document.getElementById('avatar').textContent = profile.name[0] || '';
   document.getElementById('user-name').textContent = profile.name;
   document.getElementById('user-phone').textContent = profile.phone;
   document.getElementById('st-area').textContent = profile.neighborhood ? profile.neighborhood.substring(0,5) : '—';
@@ -201,7 +201,7 @@ function loadProfile(){
     document.getElementById('st-orders').textContent = orders.length;
     document.getElementById('st-spent').textContent  = total.toFixed(0)+'₪';
     if(orders.length >= 3){
-      document.getElementById('vip-wrap').innerHTML = '<div class="vip-badge">⭐ زبون VIP</div>';
+      document.getElementById('vip-wrap').innerHTML = '<div class="vip-badge">زبون VIP</div>';
     }
   });
 }
@@ -213,7 +213,7 @@ function saveEdits(){
   profile.neighborhood = document.getElementById('edit-hood').value.trim();
   profile.address      = document.getElementById('edit-addr').value.trim();
   localStorage.setItem('dokkani_profile', JSON.stringify(profile));
-  alert('✅ تم حفظ التعديلات!');
+  alert('تم حفظ التعديلات');
   location.reload();
 }
 
@@ -225,7 +225,7 @@ function logout(){
 }
 
 function deleteAccount(){
-  if(!confirm('⚠️ هل أنت متأكد من حذف حسابك نهائياً؟\nلا يمكن التراجع عن هذا الإجراء!')) return;
+  if(!confirm('هل أنت متأكد من حذف حسابك نهائياً؟\nلا يمكن التراجع عن هذا الإجراء.')) return;
   fetch('/api/customer/delete',{
     method:'POST',
     headers:{'Content-Type':'application/json'},

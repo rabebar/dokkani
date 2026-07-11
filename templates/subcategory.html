@@ -80,7 +80,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
       <div class="hdr-sub">{{ products|length }} منتج</div>
     </div>
     <button class="cart-btn" onclick="goCart()">
-      🛒<div class="cart-count" id="cart-count">0</div>
+      <span class="cart-icon-text">سلة</span><div class="cart-count" id="cart-count">0</div>
     </button>
   </div>
 </div>
@@ -98,9 +98,9 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 <!-- فلاتر التصفية -->
 <div class="sort-bar">
   <button class="sf active" onclick="sortProds('default',this)">الكل</button>
-  <button class="sf" onclick="sortProds('price_asc',this)">⬆️ السعر: الأقل</button>
-  <button class="sf" onclick="sortProds('price_desc',this)">⬇️ السعر: الأعلى</button>
-  <button class="sf" onclick="sortProds('name',this)">🔤 الاسم</button>
+  <button class="sf" onclick="sortProds('price_asc',this)">السعر: الأقل</button>
+  <button class="sf" onclick="sortProds('price_desc',this)">السعر: الأعلى</button>
+  <button class="sf" onclick="sortProds('name',this)">الاسم</button>
 </div>
 
 <div class="pgrid" id="pgrid">
@@ -153,7 +153,7 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 <div class="cart-bar" id="cart-bar">
   <button class="cart-bar-btn" onclick="goCart()">
     <div style="display:flex;align-items:center;gap:9px">
-      <span>🛒 عرض السلة</span>
+      <span>عرض السلة</span>
       <span class="cart-bdg" id="cart-bar-count">0 منتج</span>
     </div>
     <span id="cart-bar-total">0₪</span>
@@ -247,7 +247,7 @@ function sortProds(type, btn){
 }
 
 function goCart(){
-  if(!cart.length){ alert('⚠️ السلة فارغة!'); return; }
+  if(!cart.length){ alert('السلة فارغة'); return; }
   window.location.href='/cart';
 }
 
