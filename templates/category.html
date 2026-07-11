@@ -44,6 +44,10 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .add-btn{width:28px;height:28px;background:var(--g4);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;border:none;cursor:pointer;transition:all .2s;flex-shrink:0}
 .add-btn:active{transform:scale(.88)}
 .add-btn.added{background:var(--g1)}
+.brand-divider{grid-column:1/-1;margin:4px 0 0;padding:8px 12px;border-radius:12px;background:var(--gx);color:var(--g1);font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--g200)}
+.brand-divider span:last-child{font-size:10px;color:var(--g400);font-weight:700}
+.pcard.cigarette-card{position:relative}
+.brand-tag{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:2px 7px;margin-bottom:5px;border-radius:999px;background:#f3f7ef;color:var(--g2);font-size:9px;font-weight:900;line-height:1}
 .empty{text-align:center;padding:30px;color:var(--g400);font-size:13px}
 
 /* CART BAR */
@@ -127,13 +131,30 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     <span style="font-size:11px;color:var(--g400);font-weight:400">{{ products|length }} منتج</span>
   </div>
   <div class="pgrid">
+    {% set is_cigarettes = cat.id == 39 %}
+    {% if is_cigarettes %}{% set ns = namespace(brand='') %}{% endif %}
     {% for p in products %}
-    <div class="pcard" onclick="openProductModal({{ p.id }},'{{ p.name|replace("'","\\'") }}',{{ p.sell_price }},'{{ p.unit }}','{{ p.image if p.image else '' }}')">
+    {% if is_cigarettes %}
+      {% if 'Marlboro' in p.name %}{% set brand = 'Marlboro / مارلبورو' %}
+      {% elif 'بارلمنت' in p.name or 'Parliament' in p.name %}{% set brand = 'Parliament / بارلمنت' %}
+      {% elif 'L&M' in p.name %}{% set brand = 'L&M' %}
+      {% elif 'Winston' in p.name %}{% set brand = 'Winston / وينستون' %}
+      {% elif 'Gauloises' in p.name %}{% set brand = 'Gauloises / جلواز' %}
+      {% elif 'Davidoff' in p.name %}{% set brand = 'Davidoff / دافيدوف' %}
+      {% elif 'Imperial' in p.name %}{% set brand = 'Imperial / إمبريال' %}
+      {% else %}{% set brand = 'سجائر أخرى' %}{% endif %}
+      {% if brand != ns.brand %}
+        <div class="brand-divider"><span>{{ brand }}</span><span>مرتبة حسب النوع</span></div>
+        {% set ns.brand = brand %}
+      {% endif %}
+    {% endif %}
+    <div class="pcard{% if is_cigarettes %} cigarette-card{% endif %}" onclick="openProductModal({{ p.id }},'{{ p.name|replace("'","\\'") }}',{{ p.sell_price }},'{{ p.unit }}','{{ p.image if p.image else '' }}')">
       <div class="p-img">
         {% if p.image %}<img src="{{ p.image }}" alt="{{ p.name }}">
         {% else %}🛍️{% endif %}
       </div>
       <div class="p-info">
+        {% if is_cigarettes %}<div class="brand-tag">{{ brand }}</div>{% endif %}
         <div class="p-name">{{ p.name }}</div>
         <div class="p-bot">
           <div>
