@@ -93,7 +93,7 @@ def notify_new_order(order):
         f"🚗 التوصيل: {money(order.get('delivery'))}₪\n"
         f"✅ الإجمالي النهائي: <b>{money(order.get('final_total') or ((order.get('total') or 0) + (order.get('delivery') or 0)))}₪</b>\n"
         f"{pay}\n"
-        f"💚 ربحي: <b>{order.get('profit')}₪</b>\n"
+        f"💚 ربح المنتجات: <b>{order.get('profit')}₪</b>\n"
     )
 
     if order.get('notes'):

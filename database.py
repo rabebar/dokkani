@@ -176,6 +176,9 @@ def init_db():
         id             {pk},
         name           TEXT NOT NULL,
         price          REAL NOT NULL,
+        cost_price     REAL,
+        sell_price     REAL,
+        profit_enabled INTEGER DEFAULT 0,
         image          TEXT,
         unit           TEXT DEFAULT 'حبة',
         category_id    INTEGER,
@@ -200,6 +203,18 @@ def init_db():
     try:
         execute_query('ALTER TABLE products ADD COLUMN barcode TEXT', commit=True)
     except: pass
+    try:
+        execute_query('ALTER TABLE products ADD COLUMN cost_price REAL', commit=True)
+    except: pass
+    try:
+        execute_query('ALTER TABLE products ADD COLUMN sell_price REAL', commit=True)
+    except: pass
+    try:
+        execute_query('ALTER TABLE products ADD COLUMN profit_enabled INTEGER DEFAULT 0', commit=True)
+    except: pass
+    execute_query('UPDATE products SET sell_price=price WHERE sell_price IS NULL', commit=True)
+    execute_query('UPDATE products SET cost_price=price WHERE cost_price IS NULL', commit=True)
+    execute_query('UPDATE products SET profit_enabled=0 WHERE profit_enabled IS NULL', commit=True)
 
     execute_query(f'''CREATE TABLE IF NOT EXISTS orders (
         id           {pk},
@@ -491,8 +506,8 @@ def seed_products_from_csv():
             category_id, subcategory_id = _seed_category(row, category_ids, subcategory_ids)
 
             execute_query(
-                'INSERT INTO products (name, price, unit, category_id, subcategory_id, image, barcode, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                (name, price, unit, category_id, subcategory_id, image, barcode, sort_index),
+                'INSERT INTO products (name, price, cost_price, sell_price, profit_enabled, unit, category_id, subcategory_id, image, barcode, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                (name, price, price, price, 0, unit, category_id, subcategory_id, image, barcode, sort_index),
                 commit=True
             )
             created += 1
@@ -553,17 +568,35 @@ def get_products(category_id=None, subcategory_id=None, visible_only=True):
 def get_products_with_sell_price(category_id=None, subcategory_id=None, visible_only=True):
     products = get_products(category_id, subcategory_id, visible_only)
     for p in products:
-        p['sell_price'] = get_selling_price(p['price'], p.get('category_id'))
+        p['sell_price'] = get_selling_price(p.get('sell_price') if p.get('sell_price') is not None else p.get('price'), p.get('category_id'))
+        p['cost_price'] = p.get('cost_price') if p.get('cost_price') is not None else p.get('price')
+        p['unit_profit'] = get_product_unit_profit(p)
     return products
 
-def add_product(name, price, unit, category_id, subcategory_id=None, image=None, barcode=None):
-    execute_query('INSERT INTO products (name, price, unit, category_id, subcategory_id, image, barcode) VALUES (?, ?, ?, ?, ?, ?, ?)', (name, price, unit, category_id, subcategory_id, image, barcode), commit=True)
+def add_product(name, price, unit, category_id, subcategory_id=None, image=None, barcode=None, cost_price=None, sell_price=None, profit_enabled=0):
+    sell_price = price if sell_price is None else sell_price
+    cost_price = sell_price if cost_price is None else cost_price
+    execute_query('''INSERT INTO products
+        (name, price, cost_price, sell_price, profit_enabled, unit, category_id, subcategory_id, image, barcode)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        (name, sell_price, cost_price, sell_price, int(bool(profit_enabled)), unit, category_id, subcategory_id, image, barcode),
+        commit=True)
 
-def update_product(prod_id, name, price, unit, category_id, subcategory_id=None, image=None, barcode=None):
+def update_product(prod_id, name, price, unit, category_id, subcategory_id=None, image=None, barcode=None, cost_price=None, sell_price=None, profit_enabled=0):
+    sell_price = price if sell_price is None else sell_price
+    cost_price = sell_price if cost_price is None else cost_price
     if image:
-        execute_query('UPDATE products SET name=?, price=?, unit=?, category_id=?, subcategory_id=?, image=?, barcode=? WHERE id=?', (name, price, unit, category_id, subcategory_id, image, barcode, prod_id), commit=True)
+        execute_query('''UPDATE products
+            SET name=?, price=?, cost_price=?, sell_price=?, profit_enabled=?, unit=?, category_id=?, subcategory_id=?, image=?, barcode=?
+            WHERE id=?''',
+            (name, sell_price, cost_price, sell_price, int(bool(profit_enabled)), unit, category_id, subcategory_id, image, barcode, prod_id),
+            commit=True)
     else:
-        execute_query('UPDATE products SET name=?, price=?, unit=?, category_id=?, subcategory_id=?, barcode=? WHERE id=?', (name, price, unit, category_id, subcategory_id, barcode, prod_id), commit=True)
+        execute_query('''UPDATE products
+            SET name=?, price=?, cost_price=?, sell_price=?, profit_enabled=?, unit=?, category_id=?, subcategory_id=?, barcode=?
+            WHERE id=?''',
+            (name, sell_price, cost_price, sell_price, int(bool(profit_enabled)), unit, category_id, subcategory_id, barcode, prod_id),
+            commit=True)
 
 def toggle_product(prod_id):
     execute_query('UPDATE products SET visible=1-visible WHERE id=?', (prod_id,), commit=True)
@@ -664,16 +697,19 @@ def delete_customer(phone):
 def get_daily_stats():
     orders = execute_query('SELECT * FROM orders', fetchall=True) or []
     completed = [o for o in orders if o['status'] == 'done']
-    total_profit = sum(((o.get('profit') or 0) + (o.get('delivery') or 0)) for o in completed)
+    product_profit = sum((o.get('profit') or 0) for o in completed)
+    delivery_total = sum((o.get('delivery') or 0) for o in completed)
     active_orders = [o for o in orders if o['status'] not in ['done', 'cancelled']]
 
     return {
         'orders_count':   len(active_orders),
         'completed_count': len(completed),
         'total_sales':    round(sum((o.get('total') or 0) + (o.get('delivery') or 0) for o in completed), 2),
-        'daily_profit':   round(total_profit, 2),
+        'products_sales':  round(sum((o.get('total') or 0) for o in completed), 2),
+        'delivery_total':  round(delivery_total, 2),
+        'daily_profit':   round(product_profit, 2),
         'total_expenses': 0,
-        'net_profit':     round(total_profit, 2),
+        'net_profit':     round(product_profit, 2),
         'expenses': [{'name': '⛽ بنزين', 'val': 0}, {'name': '📱 إنترنت', 'val': 0}, {'name': '🛍️ أكياس', 'val': 0}]
     }
 
@@ -690,13 +726,28 @@ def get_selling_price(price, category_id=None):
         return None
     return round(numeric_price + calculate_profit(numeric_price, category_id), 2)
 
+def get_product_unit_profit(product):
+    if not product or not product.get('profit_enabled'):
+        return 0.0
+    try:
+        sell = float(product.get('sell_price') if product.get('sell_price') is not None else product.get('price') or 0)
+        cost = float(product.get('cost_price') if product.get('cost_price') is not None else sell)
+        return round(max(sell - cost, 0), 2)
+    except (TypeError, ValueError):
+        return 0.0
+
 def get_order_profit(items):
     total = 0
     for item in items:
-        price = float(item.get('price', 0)); qty = float(item.get('qty', 1))
-        if item.get('type') == 'veg': total += 1.0 * qty
-        elif item.get('type') == 'meat': total += 2.0 * qty
-        else: total += calculate_profit(price) * qty
+        try:
+            qty = float(item.get('qty', 1))
+        except (TypeError, ValueError):
+            qty = 1
+        prod_id = item.get('id')
+        product = None
+        if prod_id:
+            product = execute_query('SELECT price, cost_price, sell_price, profit_enabled FROM products WHERE id=?', (prod_id,), fetchone=True)
+        total += get_product_unit_profit(product) * qty
     return round(total, 2)
 
 def calculate_delivery_fee(lat, lng):

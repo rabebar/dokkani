@@ -356,7 +356,7 @@ def api_search():
     # دعم البحث بالباركود (أرقام فقط)
     if q.isdigit():
         results = execute_query(
-            f"""SELECT p.id, p.name, p.price, p.image, p.unit, p.barcode, c.name as cat_name, p.category_id
+            f"""SELECT p.id, p.name, p.price, p.sell_price, p.cost_price, p.profit_enabled, p.image, p.unit, p.barcode, c.name as cat_name, p.category_id
                FROM products p
                LEFT JOIN categories c ON c.id = p.category_id
                WHERE p.visible=1 AND c.visible=1 AND p.barcode = ?
@@ -365,11 +365,11 @@ def api_search():
         ) or []
         if results:
             for p in results:
-                p['sell_price'] = get_selling_price(p['price'], p.get('category_id'))
+                p['sell_price'] = get_selling_price(p.get('sell_price') if p.get('sell_price') is not None else p.get('price'), p.get('category_id'))
             return jsonify({'products': results, 'barcode_match': True})
     # البحث العادي بالاسم
     results = execute_query(
-        f"""SELECT p.id, p.name, p.price, p.image, p.unit, p.barcode, c.name as cat_name, p.category_id
+        f"""SELECT p.id, p.name, p.price, p.sell_price, p.cost_price, p.profit_enabled, p.image, p.unit, p.barcode, c.name as cat_name, p.category_id
            FROM products p
            LEFT JOIN categories c ON c.id = p.category_id
            WHERE p.visible=1 AND c.visible=1 AND p.name LIKE ?
@@ -377,7 +377,7 @@ def api_search():
         (f'%{q}%',), fetchall=True
     ) or []
     for p in results:
-        p['sell_price'] = get_selling_price(p['price'], p.get('category_id'))
+        p['sell_price'] = get_selling_price(p.get('sell_price') if p.get('sell_price') is not None else p.get('price'), p.get('category_id'))
     return jsonify({'products': results})
 
 @app.route('/api/admin/search-all')
@@ -389,7 +389,7 @@ def api_admin_search_all():
     
     prod_id = request.args.get('id')
     
-    query = "SELECT p.id AS id, p.name AS name, p.price AS price, p.image AS image, p.visible AS visible, p.category_id AS category_id, p.subcategory_id AS subcategory_id, p.barcode AS barcode, p.unit AS unit, c.name as cat_name FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE 1=1"
+    query = "SELECT p.id AS id, p.name AS name, p.price AS price, p.cost_price AS cost_price, p.sell_price AS sell_price, p.profit_enabled AS profit_enabled, p.image AS image, p.visible AS visible, p.category_id AS category_id, p.subcategory_id AS subcategory_id, p.barcode AS barcode, p.unit AS unit, c.name as cat_name FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE 1=1"
     params = []
     
     if prod_id:
@@ -416,9 +416,32 @@ def place_order():
     if not phone:
         return jsonify({'success': False, 'message': 'Phone number is required'}), 400
     items = data.get('items', []) or []
+    normalized_items = []
+    for item in items:
+        prod_id = item.get('id')
+        qty = item.get('qty') or 1
+        prod = None
+        if prod_id:
+            prod = execute_query('''SELECT p.id, p.name, p.sell_price, p.price, p.unit, p.barcode, c.name AS cat_name
+                FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE p.id=?''',
+                (prod_id,), fetchone=True)
+        if prod:
+            sell_price = prod.get('sell_price') if prod.get('sell_price') is not None else prod.get('price')
+            normalized_items.append({
+                'id': prod.get('id'),
+                'name': prod.get('name'),
+                'price': float(sell_price or 0),
+                'qty': qty,
+                'unit': prod.get('unit') or item.get('unit') or 'حبة',
+                'barcode': prod.get('barcode'),
+                'cat_name': prod.get('cat_name') or item.get('cat_name') or 'متنوعات'
+            })
+        else:
+            normalized_items.append(item)
+    data['items'] = normalized_items
     products_total = round(sum(
         float(item.get('price') or 0) * float(item.get('qty') or 1)
-        for item in items
+        for item in normalized_items
     ), 2)
 
     # منع تكرار الطلب (خلال 5 ثوانٍ لنفس الزبون والمبلغ)
@@ -432,16 +455,6 @@ def place_order():
     data['total'] = products_total
     data['final_total'] = round(products_total + data['delivery'], 2)
     data['profit'] = get_order_profit(data.get('items', []))
-
-    # جلب الباركود لكل منتج من قاعدة البيانات
-    items_with_barcode = []
-    for item in data.get('items', []):
-        prod_id = item.get('id')
-        if prod_id:
-            prod = execute_query('SELECT barcode FROM products WHERE id=?', (prod_id,), fetchone=True)
-            item['barcode'] = prod.get('barcode') if prod else None
-        items_with_barcode.append(item)
-    data['items'] = items_with_barcode
 
     order_display_id = add_order(data)
 
@@ -574,12 +587,16 @@ def api_add_product():
         return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     name = request.form.get('name')
     price_raw = request.form.get('price')
+    cost_raw = request.form.get('cost_price')
+    sell_raw = request.form.get('sell_price') or price_raw
     
     if not name or not price_raw:
         return jsonify({'success': False, 'error': '⚠️ عذراً، يجب إدخال اسم المنتج وسعره'}), 400
         
     try:
-        price = float(price_raw)
+        price = float(sell_raw)
+        cost_price = float(cost_raw) if cost_raw not in (None, '') else price
+        sell_price = float(sell_raw)
     except ValueError:
         return jsonify({'success': False, 'error': '⚠️ خطأ: السعر يجب أن يكون رقماً'}), 400
 
@@ -588,8 +605,9 @@ def api_add_product():
     subcategory_id = request.form.get('subcategory_id')
     subcategory_id = int(subcategory_id) if subcategory_id else None
     barcode = request.form.get('barcode')
+    profit_enabled = request.form.get('profit_enabled') == '1'
     image = save_upload(request.files.get('image'), 'prod')
-    add_product(name, price, unit, category_id, subcategory_id, image, barcode)
+    add_product(name, price, unit, category_id, subcategory_id, image, barcode, cost_price, sell_price, profit_enabled)
     return jsonify({'success': True})
 
 @app.route('/api/product/<int:prod_id>', methods=['POST'])
@@ -599,12 +617,18 @@ def api_update_product(prod_id):
         return jsonify({'success': False, 'error': 'طلب غير صالح'}), 403
     name = request.form.get('name')
     price_raw = request.form.get('price')
+    cost_raw = request.form.get('cost_price')
+    sell_raw = request.form.get('sell_price') or price_raw
+    existing_product = execute_query('SELECT cost_price, sell_price, profit_enabled FROM products WHERE id=?', (prod_id,), fetchone=True) or {}
     
     if not name or not price_raw:
         return jsonify({'success': False, 'error': '⚠️ يجب وجود اسم وسعر للمنتج'}), 400
         
     try:
-        price = float(price_raw)
+        price = float(sell_raw)
+        existing_cost = existing_product.get('cost_price')
+        cost_price = float(cost_raw) if cost_raw not in (None, '') else (float(existing_cost) if existing_cost is not None else price)
+        sell_price = float(sell_raw)
     except ValueError:
         return jsonify({'success': False, 'error': '⚠️ السعر يجب أن يكون رقماً'}), 400
 
@@ -613,9 +637,10 @@ def api_update_product(prod_id):
     subcategory_id = request.form.get('subcategory_id')
     subcategory_id = int(subcategory_id) if subcategory_id else None
     barcode = request.form.get('barcode')
+    profit_enabled = request.form.get('profit_enabled') == '1' if 'profit_enabled' in request.form else bool(existing_product.get('profit_enabled'))
     image = save_upload(request.files.get('image'), 'prod')
     
-    update_product(prod_id, name, price, unit, category_id, subcategory_id, image, barcode)
+    update_product(prod_id, name, price, unit, category_id, subcategory_id, image, barcode, cost_price, sell_price, profit_enabled)
     return jsonify({'success': True})
 
 @app.route('/api/product/<int:prod_id>/toggle', methods=['POST'])
@@ -1132,13 +1157,13 @@ def ai_chat():
     db_schema = f"""أنت مساعد ذكي لمتجر دكّاني للبقالة في رام الله. هيكل قاعدة بيانات PostgreSQL الكاملة:
 
    === جدول المنتجات: products ===
-    - الأعمدة الحقيقية الوحيدة هي: id, name, price, unit, category_id, subcategory_id, image, visible, sort
+    - الأعمدة الحقيقية الأساسية هي: id, name, price, cost_price, sell_price, profit_enabled, unit, category_id, subcategory_id, image, visible, sort
     - ممنوع استخدام أي اسم عمود آخر مثل product_id أو product_name أو title
-    - id هو رقم المنتج، name هو اسم المنتج، price هو السعر بالشيكل
+    - id هو رقم المنتج، name هو اسم المنتج، price و sell_price هما سعر البيع للزبون، cost_price هو سعر التكلفة الداخلي، profit_enabled يحدد هل المنتج يدخل في حساب الأرباح
     - category_id (رقم القسم), subcategory_id (رقم القسم الفرعي)
     - image (رابط الصورة), visible (هل المنتج ظاهر: true/false), sort (رقم الترتيب)
     - الأقسام المتاحة مع IDs الحقيقية (استخدم category_id مباشرة وليس اسم القسم): {cats_map}
-    - مثال صحيح: SELECT id, name, price FROM products WHERE category_id = 28
+    - مثال صحيح: SELECT id, name, sell_price, cost_price, profit_enabled FROM products WHERE category_id = 28
     - مثال خاطئ: SELECT * FROM products JOIN categories ON ... WHERE categories.name ILIKE ...
 
     === جدول الأقسام: categories ===

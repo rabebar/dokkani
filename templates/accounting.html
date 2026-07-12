@@ -93,12 +93,12 @@ tr:last-child td{border-bottom:none}
       <div class="pc">
         <div class="pc-ico">💰</div>
         <div class="pc-val green">{{ stats.daily_profit }}₪</div>
-        <div class="pc-lbl">ربح اليوم الإجمالي</div>
+        <div class="pc-lbl">ربح المنتجات اليوم</div>
       </div>
       <div class="pc">
         <div class="pc-ico">🛒</div>
         <div class="pc-val orange">{{ stats.total_sales }}₪</div>
-        <div class="pc-lbl">إجمالي المبيعات</div>
+        <div class="pc-lbl">إجمالي المبيعات مع التوصيل</div>
       </div>
       <div class="pc">
         <div class="pc-ico">📦</div>
@@ -109,27 +109,27 @@ tr:last-child td{border-bottom:none}
 
     <!-- الأرباح حسب القسم -->
     <div class="card">
-      <div class="chd">📊 الأرباح حسب القسم</div>
+      <div class="chd">📊 ملخص اليوم</div>
       <div class="cbody">
         <div class="pr">
-          <div class="pl">🛒 سوبرماركت</div>
+          <div class="pl">مبيعات المنتجات</div>
           <div class="pb"><div class="pbf" style="width:65%;background:var(--g4)"></div></div>
+          <div class="pv">{{ stats.products_sales }}₪</div>
+        </div>
+        <div class="pr">
+          <div class="pl">رسوم التوصيل</div>
+          <div class="pb"><div class="pbf" style="width:40%;background:var(--orange)"></div></div>
+          <div class="pv">{{ stats.delivery_total }}₪</div>
+        </div>
+        <div class="pr">
+          <div class="pl">ربح المنتجات</div>
+          <div class="pb"><div class="pbf" style="width:25%;background:var(--blue)"></div></div>
           <div class="pv">{{ stats.daily_profit }}₪</div>
         </div>
         <div class="pr">
-          <div class="pl">🥩 ملحمة</div>
-          <div class="pb"><div class="pbf" style="width:40%;background:var(--orange)"></div></div>
-          <div class="pv">0₪</div>
-        </div>
-        <div class="pr">
-          <div class="pl">🥦 خضار</div>
-          <div class="pb"><div class="pbf" style="width:25%;background:var(--blue)"></div></div>
-          <div class="pv">0₪</div>
-        </div>
-        <div class="pr">
-          <div class="pl">🚗 توصيل</div>
+          <div class="pl">طلبات مكتملة</div>
           <div class="pb"><div class="pbf" style="width:50%;background:#9c27b0"></div></div>
-          <div class="pv">0₪</div>
+          <div class="pv">{{ stats.completed_count }}</div>
         </div>
       </div>
     </div>
@@ -160,12 +160,13 @@ tr:last-child td{border-bottom:none}
         <div class="chd">✨ صافي الربح</div>
         <div class="cbody">
           <div class="net-box">
-            <div class="net-lbl">💰 صافي ربحك اليوم</div>
+            <div class="net-lbl">💰 صافي ربح المنتجات اليوم</div>
             <div class="net-val">{{ stats.net_profit }}₪</div>
             <div class="net-sub">بعد خصم جميع المصاريف</div>
           </div>
           <table style="margin-top:14px">
-            <tr><td>الربح الإجمالي</td><td><b style="color:var(--g2)">{{ stats.daily_profit }}₪</b></td></tr>
+            <tr><td>ربح المنتجات</td><td><b style="color:var(--g2)">{{ stats.daily_profit }}₪</b></td></tr>
+            <tr><td>رسوم التوصيل</td><td><b style="color:var(--orange)">{{ stats.delivery_total }}₪</b></td></tr>
             <tr><td>المصاريف</td><td><b style="color:var(--red)">{{ stats.total_expenses }}₪</b></td></tr>
             <tr class="total-row"><td>الصافي</td><td><b>{{ stats.net_profit }}₪</b></td></tr>
           </table>
