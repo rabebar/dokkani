@@ -17,6 +17,7 @@ from database import (
     get_products, get_products_with_sell_price, add_product, update_product, toggle_product, delete_product,
     get_orders, add_order, update_order_status,
     get_customers, delete_customer,
+    normalize_phone_digits, phone_lookup_variants,
     get_daily_stats, get_order_profit, get_selling_price,
     calculate_delivery_fee,
     import_excel_to_db
@@ -409,7 +410,11 @@ def api_admin_search_all():
 @rate_limit(max_calls=10, window=60)
 def place_order():
     data = request.json
+    data['phone'] = normalize_phone_digits(data.get('phone'))
+    data['whatsapp'] = normalize_phone_digits(data.get('whatsapp') or data.get('phone'))
     phone = data.get('phone')
+    if not phone:
+        return jsonify({'success': False, 'message': 'Phone number is required'}), 400
     items = data.get('items', []) or []
     products_total = round(sum(
         float(item.get('price') or 0) * float(item.get('qty') or 1)
@@ -718,10 +723,13 @@ def api_get_stats():
 @app.route('/api/get-customer/<phone>')
 def api_get_customer(phone):
     from database import execute_query
-    clean_phone = phone.strip()
+    variants = phone_lookup_variants(phone)
+    if not variants:
+        return jsonify({'success': False, 'message': 'الرقم غير مسجل مسبقاً'})
+    placeholders = ','.join(['?'] * len(variants))
     customer = execute_query(
-        'SELECT name, phone, whatsapp, neighborhood, address, lat, lng FROM customers WHERE phone=?',
-        (clean_phone,), fetchone=True
+        f'SELECT name, phone, whatsapp, neighborhood, address, lat, lng FROM customers WHERE phone IN ({placeholders}) OR whatsapp IN ({placeholders}) LIMIT 1',
+        tuple(variants + variants), fetchone=True
     )
     if customer:
         return jsonify({'success': True, 'customer': customer})

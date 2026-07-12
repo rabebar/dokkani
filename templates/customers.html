@@ -179,8 +179,17 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);dis
 <script>
 let deletePhone = null;
 
+function normalizeWaPhone(phone){
+  let digits = String(phone || '').replace(/\D/g,'');
+  if(digits.startsWith('00')) digits = digits.slice(2);
+  if(digits.startsWith('970') || digits.startsWith('972')) return digits;
+  if(digits.startsWith('0')) return '970' + digits.slice(1);
+  return digits ? '970' + digits : '';
+}
+
 function openWA(phone){
-  window.open(`https://wa.me/970${phone.replace(/\D/g,'')}`, '_blank');
+  const waPhone = normalizeWaPhone(phone);
+  if(waPhone) window.open(`https://wa.me/${waPhone}`, '_blank');
 }
 function openMap(lat, lng){
   window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');

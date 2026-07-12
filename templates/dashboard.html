@@ -203,6 +203,7 @@ tr:hover td{background:#fafff9}
               data-id="{{ o.id }}"
               data-name="{{ o.name | e }}"
               data-phone="{{ o.phone }}"
+              data-whatsapp="{{ o.whatsapp or o.phone }}"
               data-addr="{{ o.neighborhood }} — {{ o.address | e }}"
               data-total="{{ o.final_total }}"
               data-notes="{{ o.notes | e if o.notes else '' }}"
@@ -241,7 +242,7 @@ tr:hover td{background:#fafff9}
             </td>
             <td>
               <div class="act-btns">
-                <button class="abt abt-wa" onclick="openWA('{{ o.phone }}', '{{ o.id }}')">💬</button>
+                <button class="abt abt-wa" onclick="openWA('{{ o.whatsapp or o.phone }}', '{{ o.id }}')">💬</button>
                 {% if o.lat %}
                 <button class="abt abt-map" onclick="openMap({{ o.lat }}, {{ o.lng }})">🗺️</button>
                 {% endif %}
@@ -302,9 +303,17 @@ function openMap(lat, lng){
 }
 
 // 4. فتح واتساب
+function normalizeWaPhone(phone){
+  let digits = String(phone || '').replace(/\D/g,'');
+  if(digits.startsWith('00')) digits = digits.slice(2);
+  if(digits.startsWith('970') || digits.startsWith('972')) return digits;
+  if(digits.startsWith('0')) return '970' + digits.slice(1);
+  return digits ? '970' + digits : '';
+}
 function openWA(phone, orderId){
   const msg = encodeURIComponent(`مرحبا، طلبك ${orderId} من دكّاني 🛒`);
-  window.open(`https://wa.me/970${phone.replace(/\D/g,'')}?text=${msg}`, '_blank');
+  const waPhone = normalizeWaPhone(phone);
+  if(waPhone) window.open(`https://wa.me/${waPhone}?text=${msg}`, '_blank');
 }
 
 // 5. تحديث الحالة
@@ -360,10 +369,10 @@ function clearCache() {
 function openModalFromRow(row) {
   const d = row.dataset;
   const items = JSON.parse(d.items || '[]');
-  openOrderModal(d.id, d.name, d.phone, d.addr, d.total, d.notes, items);
+  openOrderModal(d.id, d.name, d.phone, d.whatsapp, d.addr, d.total, d.notes, items);
 }
 
-function openOrderModal(id, name, phone, addr, total, notes, items) {
+function openOrderModal(id, name, phone, whatsapp, addr, total, notes, items) {
   document.getElementById('m-order-id').textContent = 'تفاصيل الطلب #' + id;
   document.getElementById('m-cust-name').textContent = '👤 ' + name;
   document.getElementById('m-cust-phone').textContent = '📞 ' + phone;
@@ -381,7 +390,7 @@ list.innerHTML = items.map(i => {
   } else {
     nBox.style.display = 'none';
   }
-  document.getElementById('m-btn-wa').onclick = () => openWA(phone, id);
+  document.getElementById('m-btn-wa').onclick = () => openWA(whatsapp || phone, id);
   document.getElementById('m-btn-call').onclick = () => window.location.href = 'tel:' + phone;
   document.getElementById('order-details-modal').style.display = 'flex';
 }
@@ -427,4 +436,3 @@ function closeOrderModal() {
 </style>
 </body>
 </html>
-

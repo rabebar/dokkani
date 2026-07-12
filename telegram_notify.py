@@ -9,6 +9,19 @@ from config import Config
 ALERT_SOUND = os.path.join('static', 'alert.mp3')
 
 
+def normalize_whatsapp_phone(raw, default_country='970'):
+    phone = ''.join(ch for ch in str(raw or '') if ch.isdigit())
+    if phone.startswith('00'):
+        phone = phone[2:]
+    if phone.startswith('970') or phone.startswith('972'):
+        return phone
+    if phone.startswith('0'):
+        return default_country + phone[1:]
+    if phone:
+        return default_country + phone
+    return ''
+
+
 def send_telegram(message):
     """إرسال رسالة نصية"""
     try:
@@ -56,20 +69,7 @@ def notify_new_order(order):
             return "0.0"
 
     # رابط واتساب
-    phone = (order.get('whatsapp') or order.get('phone') or '')
-    phone = ''.join(ch for ch in phone if ch.isdigit())
-    if phone.startswith('970'):
-        pass
-    elif phone.startswith('972'):
-        pass
-    elif phone.startswith('00970'):
-        phone = phone[2:]
-    elif phone.startswith('00972'):
-        phone = phone[2:]
-    elif phone.startswith('0'):
-        phone = '970' + phone[1:]
-    else:
-        phone = '970' + phone
+    phone = normalize_whatsapp_phone(order.get('whatsapp') or order.get('phone'))
     wa_link  = f"https://wa.me/{phone}" if phone else ''
 
     # رابط الخريطة

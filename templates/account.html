@@ -38,6 +38,10 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 .edit-field input,.edit-field textarea{width:100%;padding:10px 13px;border:1.5px solid var(--g200);border-radius:9px;font-family:'Cairo',sans-serif;font-size:16px;outline:none;background:#f9fafb}
 .edit-field input:focus,.edit-field textarea:focus{border-color:var(--g4);background:#fff}
 .edit-field textarea{resize:none}
+.phone-row{display:grid;grid-template-columns:112px 1fr;gap:8px}
+.phone-row select{width:100%;padding:10px 8px;border:1.5px solid var(--g200);border-radius:9px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;background:#fff;color:var(--g1);outline:none}
+.wa-same{display:flex;align-items:center;gap:8px;margin:6px 0 12px;font-size:12px;color:var(--g2);font-weight:700}
+.wa-same input{width:auto;accent-color:var(--g2)}
 .save-btn{width:100%;padding:13px;background:var(--g2);color:#fff;border:none;border-radius:10px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
 
 /* --- القالب الموحد لشريط التنقل السفلي --- */
@@ -100,8 +104,27 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
     <div class="card-title">✏️ تعديل بياناتي</div>
     <div style="padding:16px">
       <div class="edit-field"><label>الاسم</label><input type="text" id="edit-name"></div>
-      <div class="edit-field"><label>الهاتف</label><input type="tel" id="edit-phone" dir="ltr"></div>
-      <div class="edit-field"><label>واتساب</label><input type="tel" id="edit-wa" dir="ltr"></div>
+      <div class="edit-field">
+        <label>الهاتف</label>
+        <div class="phone-row">
+          <select id="edit-phone-country" dir="ltr">
+            <option value="970">+970 فلسطين</option>
+            <option value="972">+972 إسرائيل</option>
+          </select>
+          <input type="tel" id="edit-phone" dir="ltr" inputmode="tel">
+        </div>
+      </div>
+      <div class="edit-field">
+        <label>واتساب</label>
+        <div class="phone-row">
+          <select id="edit-wa-country" dir="ltr">
+            <option value="970">+970 فلسطين</option>
+            <option value="972">+972 إسرائيل</option>
+          </select>
+          <input type="tel" id="edit-wa" dir="ltr" inputmode="tel">
+        </div>
+      </div>
+      <label class="wa-same"><input type="checkbox" id="edit-wa-same" onchange="toggleEditWhatsapp()"> واتساب هو نفس رقم الهاتف</label>
       <div class="edit-field"><label>المنطقة</label><input type="text" id="edit-hood"></div>
       <div class="edit-field"><label>العنوان</label><textarea id="edit-addr" rows="2"></textarea></div>
       <button class="save-btn" onclick="saveEdits()">💾 حفظ التعديلات</button>
@@ -174,6 +197,38 @@ body{font-family:'Cairo',sans-serif;background:var(--g100);color:var(--g800);pad
 <script>
 const profile = JSON.parse(localStorage.getItem('dokkani_profile') || '{}');
 
+function digitsOnly(value){
+  return String(value || '').replace(/\D/g, '');
+}
+
+function splitPhoneNumber(value, fallbackCountry='970'){
+  let digits = digitsOnly(value);
+  if(digits.startsWith('00')) digits = digits.slice(2);
+  if(digits.startsWith('970') || digits.startsWith('972')){
+    return {country: digits.slice(0,3), local: digits.slice(3).replace(/^0+/, '')};
+  }
+  return {country: fallbackCountry, local: digits.replace(/^0+/, '')};
+}
+
+function fillPhoneFields(prefixId, localId, value, fallbackCountry='970'){
+  const parsed = splitPhoneNumber(value, fallbackCountry);
+  document.getElementById(prefixId).value = parsed.country;
+  document.getElementById(localId).value = parsed.local;
+}
+
+function normalizePhone(prefixId, localId){
+  const country = document.getElementById(prefixId).value || '970';
+  const local = digitsOnly(document.getElementById(localId).value).replace(/^0+/, '');
+  return local ? country + local : '';
+}
+
+function toggleEditWhatsapp(){
+  const same = document.getElementById('edit-wa-same').checked;
+  document.getElementById('edit-wa-country').disabled = same;
+  document.getElementById('edit-wa').disabled = same;
+  document.getElementById('edit-wa').style.opacity = same ? '.55' : '1';
+}
+
 function loadProfile(){
   if(!profile.name){
     window.location.href='/'; return;
@@ -184,8 +239,10 @@ function loadProfile(){
   document.getElementById('st-area').textContent = profile.neighborhood ? profile.neighborhood.substring(0,5) : '—';
 
   document.getElementById('edit-name').value  = profile.name || '';
-  document.getElementById('edit-phone').value = profile.phone || '';
-  document.getElementById('edit-wa').value    = profile.whatsapp || '';
+  fillPhoneFields('edit-phone-country', 'edit-phone', profile.phone || '', profile.phone_country || '970');
+  fillPhoneFields('edit-wa-country', 'edit-wa', profile.whatsapp || profile.phone || '', profile.whatsapp_country || profile.phone_country || '970');
+  document.getElementById('edit-wa-same').checked = !profile.whatsapp || profile.whatsapp === profile.phone || profile.whatsapp_same_as_phone === true;
+  toggleEditWhatsapp();
   document.getElementById('edit-hood').value  = profile.neighborhood || '';
   document.getElementById('edit-addr').value  = profile.address || '';
 
@@ -208,8 +265,13 @@ function loadProfile(){
 
 function saveEdits(){
   profile.name         = document.getElementById('edit-name').value.trim();
-  profile.phone        = document.getElementById('edit-phone').value.trim();
-  profile.whatsapp     = document.getElementById('edit-wa').value.trim();
+  profile.phone        = normalizePhone('edit-phone-country', 'edit-phone');
+  profile.phone_country = document.getElementById('edit-phone-country').value;
+  profile.phone_local   = document.getElementById('edit-phone').value.trim();
+  profile.whatsapp_same_as_phone = document.getElementById('edit-wa-same').checked;
+  profile.whatsapp     = profile.whatsapp_same_as_phone ? profile.phone : normalizePhone('edit-wa-country', 'edit-wa');
+  profile.whatsapp_country = document.getElementById('edit-wa-country').value;
+  profile.whatsapp_local   = document.getElementById('edit-wa').value.trim();
   profile.neighborhood = document.getElementById('edit-hood').value.trim();
   profile.address      = document.getElementById('edit-addr').value.trim();
   localStorage.setItem('dokkani_profile', JSON.stringify(profile));

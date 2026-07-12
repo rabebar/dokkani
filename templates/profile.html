@@ -28,6 +28,11 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
 .field input,.field textarea{width:100%;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:10px;font-family:'Cairo',sans-serif;font-size:16px;outline:none;transition:all .2s;background:#f9fafb}
 .field input:focus,.field textarea:focus{border-color:#43a047;background:#fff;box-shadow:0 0 0 3px rgba(67,160,71,.1)}
 .field textarea{resize:none}
+.phone-row{display:grid;grid-template-columns:112px 1fr;gap:8px}
+.phone-row select{width:100%;padding:12px 8px;border:1.5px solid #e0e0e0;border-radius:10px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;background:#fff;color:#1b5e20;outline:none}
+.wa-same{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:#2e7d32;font-weight:700}
+.wa-same input{width:auto;accent-color:#2e7d32}
+.phone-hint{font-size:10.5px;color:#777;margin-top:4px;direction:rtl}
 .loc-btn{width:100%;padding:13px;background:#e8f5e9;border:1.5px dashed #43a047;border-radius:10px;font-family:'Cairo',sans-serif;font-size:13.5px;font-weight:700;color:#2e7d32;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
 .loc-btn.ok{background:#c8e6c9;border-style:solid;border-color:#2e7d32}
 .loc-status{font-size:11.5px;color:#43a047;margin-top:6px;text-align:center;display:none}
@@ -86,12 +91,26 @@ body{font-family:'Cairo',sans-serif;background:linear-gradient(145deg,#1b5e20 0%
     </div>
     <div class="field">
       <label>📞 رقم الهاتف *</label>
-      <input type="tel" id="phone" placeholder="مثال: 059XXXXXXX">
+      <div class="phone-row">
+        <select id="phone-country" dir="ltr">
+          <option value="970">+970 فلسطين</option>
+          <option value="972">+972 إسرائيل</option>
+        </select>
+        <input type="tel" id="phone" dir="ltr" inputmode="tel" placeholder="59XXXXXXX">
+      </div>
+      <div class="phone-hint">اكتب الرقم المحلي بدون صفر البداية، أو اترك الصفر وسيتم تصحيحه تلقائيا.</div>
       <div class="err" id="err-phone">الرجاء إدخال رقم صحيح</div>
     </div>
     <div class="field" id="field-whatsapp">
       <label>💬 واتساب (اختياري)</label>
-      <input type="tel" id="whatsapp" placeholder="مثال: 059XXXXXXX">
+      <div class="phone-row">
+        <select id="whatsapp-country" dir="ltr">
+          <option value="970">+970 فلسطين</option>
+          <option value="972">+972 إسرائيل</option>
+        </select>
+        <input type="tel" id="whatsapp" dir="ltr" inputmode="tel" placeholder="اتركه فارغا إذا كان نفس رقم الهاتف">
+      </div>
+      <label class="wa-same"><input type="checkbox" id="same-whatsapp" checked onchange="toggleWhatsappInput()"> واتساب هو نفس رقم الهاتف</label>
     </div>
     <div class="field" id="field-hood">
       <label>🏘️ الحي والمنطقة *</label>
@@ -148,6 +167,38 @@ async function installApp(){
 
 function closeInstall(){ document.getElementById('install-bar').classList.remove('show'); }
 
+function digitsOnly(value){
+  return String(value || '').replace(/\D/g, '');
+}
+
+function splitPhoneNumber(value, fallbackCountry='970'){
+  let digits = digitsOnly(value);
+  if(digits.startsWith('00')) digits = digits.slice(2);
+  if(digits.startsWith('970') || digits.startsWith('972')){
+    return {country: digits.slice(0,3), local: digits.slice(3).replace(/^0+/, '')};
+  }
+  return {country: fallbackCountry, local: digits.replace(/^0+/, '')};
+}
+
+function normalizePhone(prefixId, localId){
+  const country = document.getElementById(prefixId).value || '970';
+  const local = digitsOnly(document.getElementById(localId).value).replace(/^0+/, '');
+  return local ? country + local : '';
+}
+
+function fillPhoneFields(prefixId, localId, value, fallbackCountry='970'){
+  const parsed = splitPhoneNumber(value, fallbackCountry);
+  document.getElementById(prefixId).value = parsed.country;
+  document.getElementById(localId).value = parsed.local;
+}
+
+function toggleWhatsappInput(){
+  const same = document.getElementById('same-whatsapp').checked;
+  document.getElementById('whatsapp-country').disabled = same;
+  document.getElementById('whatsapp').disabled = same;
+  document.getElementById('whatsapp').style.opacity = same ? '.55' : '1';
+}
+
 function switchMode(mode) {
   const isNew = mode === 'new';
   document.getElementById('tab-new').className = isNew ? 'tab-btn tab-active' : 'tab-btn tab-inactive';
@@ -165,7 +216,7 @@ function switchMode(mode) {
 }
 
 function checkCustomer() {
-  const phone = document.getElementById('phone').value.trim();
+  const phone = normalizePhone('phone-country', 'phone');
   if(!phone) { alert('يرجى إدخال رقم الهاتف أولاً'); return; }
   
   const btn = document.getElementById('login-btn');
@@ -173,7 +224,7 @@ function checkCustomer() {
   btn.textContent = '⏳ جاري التحقق...';
   btn.disabled = true;
 
-  fetch(`/api/get-customer/${phone}`)
+  fetch(`/api/get-customer/${encodeURIComponent(phone)}`)
     .then(r => r.json())
     .then(data => {
       if(data.success) {
@@ -200,6 +251,7 @@ window.onload = () => {
       if(p.name && p.phone) window.location.href = '/shop';
     } catch(e) {}
   }
+  toggleWhatsappInput();
 };
 
 function getLocation(){
@@ -229,8 +281,9 @@ function showErr(id, show){ document.getElementById(id).style.display = show ? '
 
 function saveProfile(){
   const name         = document.getElementById('name').value.trim();
-  const phone        = document.getElementById('phone').value.trim();
-  const whatsapp     = document.getElementById('whatsapp').value.trim();
+  const phone        = normalizePhone('phone-country', 'phone');
+  const sameWhatsapp = document.getElementById('same-whatsapp').checked;
+  const whatsapp     = sameWhatsapp ? phone : normalizePhone('whatsapp-country', 'whatsapp');
   const neighborhood = document.getElementById('neighborhood').value.trim();
   const address      = document.getElementById('address').value.trim();
 
@@ -242,7 +295,18 @@ function saveProfile(){
   if(!valid) return;
 
   localStorage.setItem('dokkani_profile', JSON.stringify({
-    name, phone, whatsapp, neighborhood, address, lat:uLat, lng:uLng
+    name,
+    phone,
+    whatsapp: whatsapp || phone,
+    phone_country: document.getElementById('phone-country').value,
+    phone_local: document.getElementById('phone').value.trim(),
+    whatsapp_country: document.getElementById('whatsapp-country').value,
+    whatsapp_local: document.getElementById('whatsapp').value.trim(),
+    whatsapp_same_as_phone: sameWhatsapp,
+    neighborhood,
+    address,
+    lat:uLat,
+    lng:uLng
   }));
   window.location.href = '/shop';
 }

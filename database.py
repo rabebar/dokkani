@@ -10,6 +10,32 @@ from psycopg2 import OperationalError, InterfaceError
 from psycopg2.extras import RealDictCursor
 from config import Config
 import math
+
+def normalize_phone_digits(raw, default_country='970'):
+    digits = ''.join(ch for ch in str(raw or '') if ch.isdigit())
+    if digits.startswith('00'):
+        digits = digits[2:]
+    if digits.startswith('970') or digits.startswith('972'):
+        return digits
+    if digits.startswith('0'):
+        return default_country + digits[1:]
+    if digits:
+        return default_country + digits
+    return ''
+
+def phone_lookup_variants(raw, default_country='970'):
+    original = str(raw or '').strip()
+    normalized = normalize_phone_digits(original, default_country)
+    variants = []
+    for value in (original, normalized):
+        if value and value not in variants:
+            variants.append(value)
+    if normalized.startswith(('970', '972')) and len(normalized) > 3:
+        local = normalized[3:]
+        for value in ('0' + local, local):
+            if value and value not in variants:
+                variants.append(value)
+    return variants
 # إعداد تجمّع الاتصالات (Connection Pool)
 db_url = os.environ.get('DATABASE_URL') or getattr(Config, 'DATABASE_URL', None)
 IS_PRODUCTION = os.environ.get('RENDER') is not None or os.environ.get('DYNO') is not None
@@ -552,6 +578,8 @@ def clear_all_products():
 
 # --- دوال الطلبات ---
 def add_order(data):
+    data['phone'] = normalize_phone_digits(data.get('phone'))
+    data['whatsapp'] = normalize_phone_digits(data.get('whatsapp') or data.get('phone'))
     items_json = json.dumps(data.get('items', []), ensure_ascii=False)
     order_id = execute_query('''INSERT INTO orders
         (name, phone, whatsapp, neighborhood, address, lat, lng, items, total, delivery, profit, payment, notes, status)
@@ -562,12 +590,24 @@ def add_order(data):
          data.get('total'), data.get('delivery'), data.get('profit'),
          data.get('payment'), data.get('notes')), commit=True)
 
-    existing = execute_query('SELECT id, orders_count, total_spent FROM customers WHERE phone=?', (data.get('phone'),), fetchone=True)
+    variants = phone_lookup_variants(data.get('phone'))
+    existing = None
+    if variants:
+        placeholders = ','.join(['?'] * len(variants))
+        existing = execute_query(
+            f'SELECT id, orders_count, total_spent FROM customers WHERE phone IN ({placeholders}) OR whatsapp IN ({placeholders}) LIMIT 1',
+            tuple(variants + variants),
+            fetchone=True
+        )
     if existing:
         new_count = (existing.get('orders_count') or 0) + 1
         new_total = (existing.get('total_spent') or 0) + ((data.get('total') or 0) + (data.get('delivery') or 0))
-        execute_query('UPDATE customers SET orders_count=?, total_spent=?, name=? WHERE id=?',
-                     (new_count, new_total, data.get('name'), existing.get('id')), commit=True)
+        execute_query('''UPDATE customers
+            SET orders_count=?, total_spent=?, name=?, phone=?, whatsapp=?, neighborhood=?, address=?, lat=?, lng=?
+            WHERE id=?''',
+            (new_count, new_total, data.get('name'), data.get('phone'), data.get('whatsapp'),
+             data.get('neighborhood'), data.get('address'), data.get('lat'), data.get('lng'),
+             existing.get('id')), commit=True)
     else:
         execute_query('''INSERT INTO customers (name, phone, whatsapp, neighborhood, address, lat, lng, orders_count, total_spent)
             VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)''',
@@ -578,7 +618,16 @@ def add_order(data):
 
 def get_orders(phone=None, status=None):
     if phone:
-        rows = execute_query('SELECT * FROM orders WHERE phone=? ORDER BY created_at DESC', (phone,), fetchall=True)
+        variants = phone_lookup_variants(phone)
+        if not variants:
+            rows = []
+        else:
+            placeholders = ','.join(['?'] * len(variants))
+            rows = execute_query(
+                f'SELECT * FROM orders WHERE phone IN ({placeholders}) OR whatsapp IN ({placeholders}) ORDER BY created_at DESC',
+                tuple(variants + variants),
+                fetchall=True
+            )
     elif status:
         rows = execute_query('SELECT * FROM orders WHERE status=? ORDER BY created_at DESC', (status,), fetchall=True)
     else:
