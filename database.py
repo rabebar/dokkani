@@ -178,7 +178,7 @@ def init_db():
         price          REAL NOT NULL,
         cost_price     REAL,
         sell_price     REAL,
-        profit_enabled INTEGER DEFAULT 0,
+        profit_enabled INTEGER DEFAULT 1,
         image          TEXT,
         unit           TEXT DEFAULT 'حبة',
         category_id    INTEGER,
@@ -210,11 +210,11 @@ def init_db():
         execute_query('ALTER TABLE products ADD COLUMN sell_price REAL', commit=True)
     except: pass
     try:
-        execute_query('ALTER TABLE products ADD COLUMN profit_enabled INTEGER DEFAULT 0', commit=True)
+        execute_query('ALTER TABLE products ADD COLUMN profit_enabled INTEGER DEFAULT 1', commit=True)
     except: pass
     execute_query('UPDATE products SET sell_price=price WHERE sell_price IS NULL', commit=True)
     execute_query('UPDATE products SET cost_price=price WHERE cost_price IS NULL', commit=True)
-    execute_query('UPDATE products SET profit_enabled=0 WHERE profit_enabled IS NULL', commit=True)
+    execute_query('UPDATE products SET profit_enabled=1 WHERE profit_enabled IS NULL', commit=True)
 
     execute_query(f'''CREATE TABLE IF NOT EXISTS orders (
         id           {pk},
@@ -507,7 +507,7 @@ def seed_products_from_csv():
 
             execute_query(
                 'INSERT INTO products (name, price, cost_price, sell_price, profit_enabled, unit, category_id, subcategory_id, image, barcode, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                (name, price, price, price, 0, unit, category_id, subcategory_id, image, barcode, sort_index),
+                (name, price, price, price, 1, unit, category_id, subcategory_id, image, barcode, sort_index),
                 commit=True
             )
             created += 1
@@ -573,7 +573,7 @@ def get_products_with_sell_price(category_id=None, subcategory_id=None, visible_
         p['unit_profit'] = get_product_unit_profit(p)
     return products
 
-def add_product(name, price, unit, category_id, subcategory_id=None, image=None, barcode=None, cost_price=None, sell_price=None, profit_enabled=0):
+def add_product(name, price, unit, category_id, subcategory_id=None, image=None, barcode=None, cost_price=None, sell_price=None, profit_enabled=1):
     sell_price = price if sell_price is None else sell_price
     cost_price = sell_price if cost_price is None else cost_price
     execute_query('''INSERT INTO products
@@ -582,7 +582,7 @@ def add_product(name, price, unit, category_id, subcategory_id=None, image=None,
         (name, sell_price, cost_price, sell_price, int(bool(profit_enabled)), unit, category_id, subcategory_id, image, barcode),
         commit=True)
 
-def update_product(prod_id, name, price, unit, category_id, subcategory_id=None, image=None, barcode=None, cost_price=None, sell_price=None, profit_enabled=0):
+def update_product(prod_id, name, price, unit, category_id, subcategory_id=None, image=None, barcode=None, cost_price=None, sell_price=None, profit_enabled=1):
     sell_price = price if sell_price is None else sell_price
     cost_price = sell_price if cost_price is None else cost_price
     if image:

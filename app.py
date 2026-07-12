@@ -605,7 +605,7 @@ def api_add_product():
     subcategory_id = request.form.get('subcategory_id')
     subcategory_id = int(subcategory_id) if subcategory_id else None
     barcode = request.form.get('barcode')
-    profit_enabled = request.form.get('profit_enabled') == '1'
+    profit_enabled = request.form.get('profit_enabled', '1') == '1'
     image = save_upload(request.files.get('image'), 'prod')
     add_product(name, price, unit, category_id, subcategory_id, image, barcode, cost_price, sell_price, profit_enabled)
     return jsonify({'success': True})

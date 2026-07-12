@@ -688,7 +688,7 @@ tr.prod-hidden td  { opacity: .5; }
               <th>سعر التكلفة</th>
               <th>سعر البيع</th>
               <th>ربح الوحدة</th>
-              <th>يحتسب؟</th>
+              <th>لا يحتسب ربح</th>
               <th>الوحدة</th>
               <th>الحالة</th>
               <th>إجراء</th>
@@ -724,11 +724,7 @@ tr.prod-hidden td  { opacity: .5; }
               <td><input class="price-input quick-sell" type="number" step="0.1" min="0" value="{{ "%.1f"|format(sell) }}" onchange="quickSavePricing(this)"></td>
               <td><span class="price-profit">{{ "%.1f"|format(unit_profit if unit_profit > 0 else 0) }}₪</span></td>
               <td>
-                {% if p.profit_enabled %}
-                  <input type="checkbox" class="quick-profit" checked onchange="quickSavePricing(this)" title="يدخل في حساب الأرباح">
-                {% else %}
-                  <input type="checkbox" class="quick-profit" onchange="quickSavePricing(this)" title="يدخل في حساب الأرباح">
-                {% endif %}
+                <input type="checkbox" class="quick-profit" {% if not p.profit_enabled %}checked{% endif %} onchange="quickSavePricing(this)" title="لا يحتسب ربح">
               </td>
               <td><span class="unit-badge">{{ p.unit }}</span></td>
               <td>
@@ -872,7 +868,7 @@ tr.prod-hidden td  { opacity: .5; }
       <div class="grid-2">
         <label class="profit-toggle">
           <input type="checkbox" id="prod-profit-enabled" onchange="calcSell()">
-          يدخل هذا المنتج في حساب الأرباح
+          لا يحتسب ربح
         </label>
         <div class="field">
           <label>📈 ربح الوحدة</label>
@@ -1025,7 +1021,7 @@ function previewImg(input, previewId) {
 function calcSell() {
   const cost = parseFloat(document.getElementById('prod-cost').value) || 0;
   const sell = parseFloat(document.getElementById('prod-price').value) || 0;
-  const enabled = document.getElementById('prod-profit-enabled').checked;
+  const enabled = !document.getElementById('prod-profit-enabled').checked;
   const profit = enabled ? Math.max(sell - cost, 0) : 0;
   document.getElementById('prod-sell').value = profit.toFixed(1) + '₪';
 }
@@ -1205,7 +1201,7 @@ function openProdModal(id=null, name='', price=0, unit='حبة', catId=null, sub
   document.getElementById('prod-name').value = name;
   document.getElementById('prod-price').value = price || '';
   document.getElementById('prod-cost').value = (costPrice !== null && costPrice !== undefined) ? costPrice : (price || '');
-  document.getElementById('prod-profit-enabled').checked = !!Number(profitEnabled);
+  document.getElementById('prod-profit-enabled').checked = !Number(profitEnabled);
   document.getElementById('prod-unit').value = unit;
   document.getElementById('prod-barcode').value = barcode || '';
   document.getElementById('barcode-results').style.display = 'none';
@@ -1277,7 +1273,7 @@ function quickSavePricing(input) {
   const id = row.dataset.id;
   const cost = parseFloat(row.querySelector('.quick-cost').value) || 0;
   const sell = parseFloat(row.querySelector('.quick-sell').value) || 0;
-  const profitEnabled = row.querySelector('.quick-profit').checked ? '1' : '0';
+  const profitEnabled = row.querySelector('.quick-profit').checked ? '0' : '1';
   const profit = profitEnabled === '1' ? Math.max(sell - cost, 0) : 0;
 
   const fd = new FormData();
@@ -1314,7 +1310,7 @@ function saveProd() {
   const name  = document.getElementById('prod-name').value.trim();
   const price = document.getElementById('prod-price').value;
   const costPrice = document.getElementById('prod-cost').value;
-  const profitEnabled = document.getElementById('prod-profit-enabled').checked ? '1' : '0';
+  const profitEnabled = document.getElementById('prod-profit-enabled').checked ? '0' : '1';
   const unit  = document.getElementById('prod-unit').value;
   const catId = document.getElementById('prod-cat').value;
   const subId = document.getElementById('prod-subcat').value;
@@ -1358,7 +1354,7 @@ function saveProd() {
             row.cells[5].querySelector('.quick-cost').value = parseFloat(costPrice).toFixed(1);
             row.cells[6].querySelector('.quick-sell').value = parseFloat(price).toFixed(1);
             row.cells[7].querySelector('.price-profit').innerText = document.getElementById('prod-sell').value;
-            row.cells[8].querySelector('.quick-profit').checked = profitEnabled === '1';
+            row.cells[8].querySelector('.quick-profit').checked = profitEnabled !== '1';
             // تحديث الباركود
             if (barcode) {
               row.cells[4].innerHTML = `<span class="barcode-badge">${barcode}</span>`;
